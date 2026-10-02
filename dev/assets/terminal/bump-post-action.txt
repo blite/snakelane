@@ -1,0 +1,14 @@
+$ snakelane bump --post-action
+# snakelane bump: pick the build number, write it to the pbxproj and
+# stamp it into this archive (the app, every .appex, the archive's
+# summary). A post-action because writing the project file during a
+# build makes Xcode cancel the archive. Absolute path because Xcode's
+# post-action PATH does not include ~/.local/bin. Log:
+# /tmp/snakelane-<app>-bump-build.log
+SNAKELANE="$HOME/.local/bin/snakelane"
+if [ ! -x "$SNAKELANE" ]; then
+  echo "[$(date +%Y-%m-%dT%H:%M:%S)] $SNAKELANE not found, archive NOT stamped; install it: see the snakelane README" >> /tmp/snakelane-bump-build.log
+  exit 1
+fi
+cd "${PROJECT_DIR:-${SRCROOT:-.}}" 2>/dev/null  # snakelane also falls back to $PROJECT_DIR
+"$SNAKELANE" bump --archive "$ARCHIVE_PATH"
