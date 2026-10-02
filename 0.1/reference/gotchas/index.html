@@ -1,0 +1,1969 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="An opinionated App Store Connect CLI for indie Apple developers and coding agents. Keep listings, screenshots, and purchase catalogues in your repo, review changes, and ship with a focused Python workflow.">
+      
+      
+      
+        <link rel="canonical" href="https://blite.github.io/snakelane/0.1/reference/gotchas/">
+      
+      
+        <link rel="prev" href="../config/">
+      
+      
+        <link rel="next" href="../../design/foundations/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>App Store Connect traps - snakelane</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#gotchas" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="snakelane" class="md-header__button md-logo" aria-label="snakelane" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            snakelane
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              App Store Connect traps
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/blite/snakelane" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    blite/snakelane
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../.." class="md-tabs__link">
+          
+  
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../commands/store/" class="md-tabs__link">
+          
+  
+  
+  Commands
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../config/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../design/foundations/" class="md-tabs__link">
+          
+  
+  
+  Design
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../changelog/" class="md-tabs__link">
+          
+  
+  
+  Project
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="snakelane" class="md-nav__button md-logo" aria-label="snakelane" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    snakelane
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/blite/snakelane" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    blite/snakelane
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The config and the metadata tree
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../framing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Framing screenshots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../showcase/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screenshot showcase
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using it with a coding agent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Commands
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/screenshots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    shoot · frame · check
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/gallery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    gallery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/lint/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    lint · translations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/release/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ship · bump · status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/packs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    packs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    auth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config keys
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    App Store Connect traps
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    App Store Connect traps
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#product-ids-and-the-iap-catalogue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Product IDs and the IAP catalogue
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#listing-text-and-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Listing text and categories
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#screenshots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Screenshots
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#app-previews" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        App Previews
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#simulators-and-ui-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Simulators and UI tests
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#xcode-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Xcode project
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#credentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Credentials
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/foundations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project, client and listing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/screenshots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Shooting and uploading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/framing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Framing and the gallery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/release/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Releasing and purchases
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../adr/0001-no-pbxproj-library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR 1: no pbxproj library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../adr/0002-jpeg-only-screenshot-decks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR 2: JPEG-only screenshots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../adr/0003-lint-subscription-legal-links/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR 3: subscription links in lint
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#product-ids-and-the-iap-catalogue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Product IDs and the IAP catalogue
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#listing-text-and-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Listing text and categories
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#screenshots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Screenshots
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#app-previews" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        App Previews
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#simulators-and-ui-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Simulators and UI tests
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#xcode-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Xcode project
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#credentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Credentials
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/blite/snakelane/edit/main/docs/reference/gotchas.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="gotchas">Gotchas<a class="headerlink" href="#gotchas" title="Permanent link">&para;</a></h1>
+<p>Each of these cost a debugging session or a rejection round-trip. They're grouped by where
+they bite. None is specific to fastlane: they are App Store Connect, Apple ingest, simulator
+and Xcode-project behaviours that outlived the tooling that first exposed them.</p>
+<h2 id="product-ids-and-the-iap-catalogue">Product IDs and the IAP catalogue<a class="headerlink" href="#product-ids-and-the-iap-catalogue" title="Permanent link">&para;</a></h2>
+<p><strong>Only alphanumerics, underscores and periods.</strong> Anything else is a 409 at creation:
+<code>A product ID can only contain alphanumeric characters, underscores, and periods</code>. Hyphens
+and spaces are the two that occur naturally. Convert both to underscores, in one derivation
+function rather than per name:</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">product_safe</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">c</span> <span class="k">if</span> <span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">isascii</span><span class="p">()</span> <span class="ow">and</span> <span class="n">c</span><span class="o">.</span><span class="n">isalnum</span><span class="p">())</span> <span class="ow">or</span> <span class="n">c</span> <span class="o">==</span> <span class="s2">"_"</span> <span class="k">else</span> <span class="s2">"_"</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">name</span><span class="p">)</span>
+</code></pre></div>
+<p>Folder names keep their hyphens, because a folder name is often also an <strong>asset pack ID</strong>,
+where App Store Connect <em>does</em> allow them. The two names diverge for exactly the multi-word
+themes; one function in each language should know that, and a test should assert every
+generated ID matches <code>^[A-Za-z0-9_.]+$</code>.</p>
+<p><strong>A failed push is not atomic.</strong> Products before the failure in file order already exist and
+are permanent. Always follow a failed push with <code>snakelane store iap show</code> before changing
+anything: reconcile against what ASC now holds, not what the file says.</p>
+<p><strong>A product ID is permanent from its first sale.</strong> It cannot be renamed and must never be
+repointed at different content: a customer who bought one owns whatever it names, forever.</p>
+<p><strong>Repricing is refused on purpose.</strong> <code>iap push</code> will not change the price of a live product,
+so a routine catalogue sync cannot reprice something customers are buying. Reprice in the
+web UI, deliberately.</p>
+<p><strong>Every IAP needs an App Review screenshot, and its size rule is folklore, not documentation.</strong>
+Without one the product sits at <code>MISSING_METADATA</code> and cannot be submitted, however complete
+everything else is. The size everyone quotes is <strong>640×920</strong>, the iPhone 4 screen minus its
+status bar, which is why it looks so unlike any modern device. Apple's own current
+<a href="https://developer.apple.com/help/app-store-connect/reference/in-app-purchase-information">help page</a> states no dimensions at all; third-party sources split between "exactly 640×920"
+and "at least 640×920" (with tvOS 1920×1080 and macOS 1280×800). Treat 640×920 as the floor,
+expect the upload to be the real validator, and do not spend long hand-crafting a canvas:
+developer-forum threads report "incorrect size" rejections even at documented sizes, so let
+the API adjudicate.</p>
+<p>The screenshot is for the reviewer's eyes only and never appears on the App Store. It should
+show the purchase in context (the sheet or screen where that product is offered, with its
+price visible), because its job is to help a reviewer find and exercise the purchase. A
+single shot of the store sheet can legitimately serve an entire catalogue of products sold
+through the same UI; there is no requirement that each product have a distinct image.</p>
+<p><code>iap push</code> uploads one only when none exists, because replacing a screenshot re-opens an
+approved product for review.</p>
+<h2 id="listing-text-and-categories">Listing text and categories<a class="headerlink" href="#listing-text-and-categories" title="Permanent link">&para;</a></h2>
+<p><strong>Sub-categories must be fully qualified.</strong> <code>GAMES_PUZZLE</code>, not <code>PUZZLE</code>; a bare name gives
+<code>/data/relationships/primarySubcategoryOne - invalid value</code>.</p>
+<p><strong>Never push an empty string.</strong> ASC has no "leave this field alone", so <code>""</code> clobbers what is
+live. A missing or blank local file must mean "no opinion" and be skipped.</p>
+<p><strong><code>filter[bundleId]</code> is a prefix match.</strong> Querying <code>com.example.App</code> also returns
+<code>com.example.AppPlus</code>. Taking the first result once pointed a push at the wrong app's
+listing, stopped only by an unrelated name-collision error. Compare bundle ids exactly <em>and</em>
+assert the numeric <code>apple_id</code>.</p>
+<p><strong>Field limits:</strong> name 30, subtitle 30, keywords 100, promotional text 170, description 4000.
+Check locally before the call, so an over-length field is a typo rather than a half-applied
+push.</p>
+<p><strong>The name, subtitle and keywords must not mention price, not even "free".</strong> <a href="https://developer.apple.com/app-store/review/guidelines/#2.3.7">Guideline
+2.3.7</a> (Accurate Metadata) treats any reference to the app's price or business model as
+inappropriate in these fields, and it explicitly names free/discounted claims too: "No ads.
+Play free. Buy once." was rejected for exactly this ("Play free" and "Buy once" both read as
+price references), even though the app genuinely is free with an optional unlock. The
+guideline's own suggested fix is to move that claim into <code>description.txt</code>, where Apple's
+rejection note says it belongs. Pricing and "free"/"buy" language is fine there, and not in
+<code>name.txt</code>, <code>subtitle.txt</code> or <code>keywords.txt</code>. Reject any subtitle draft
+containing "free", "price", "buy", "discount", "sale", "% off" or similar before it goes out
+for review, not after.</p>
+<p><strong>Reviewers want privacy and terms links inside <code>description.txt</code>.</strong> Populating ASC's
+<code>privacyPolicyUrl</code> attribute is not the whole obligation. <a href="https://developer.apple.com/app-store/review/guidelines/#3.1.2">Guideline 3.1.2</a> requires functional
+links to both the Terms of Use (EULA) and the privacy policy <em>in the description</em>, and
+reviewers apply it more broadly than the letter: apps with only a non-consumable unlock get
+asked too. ~130 characters against a 4000 limit, versus a multi-day rejection round-trip:</p>
+<div class="highlight"><pre><span></span><code>PRIVACY AND TERMS
+
+Privacy Policy: https://&lt;host&gt;/privacy/
+Terms of Use: https://&lt;host&gt;/terms/
+</code></pre></div>
+<p>Check both return 200 before submitting; a dead link reads worse than no link. With no
+custom terms page, link Apple's standard EULA:
+<code>https://www.apple.com/legal/internet-services/itunes/dev/stdeula/</code>.</p>
+<h2 id="screenshots">Screenshots<a class="headerlink" href="#screenshots" title="Permanent link">&para;</a></h2>
+<p><strong>The caption band must not add height.</strong> ASC enforces <a href="https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications">exact dimensions per display type</a>
+(2778×1284 for iPhone 6.5", 2752×2064 for iPad 13"), so a band stacked <em>above</em> a
+full-size capture makes the output ~13 % taller and every shot rejects with "Invalid screen
+size". <code>snakelane frame</code> keeps the size in every layout: <code>full-bleed</code> paints the caption
+over the capture's top strip; <code>stacked</code> scales the capture into the area below the band
+and centres it, letterboxing the sides in the band colour.</p>
+<p><strong>Prefer <code>stacked</code> unless the app leaves its top strip empty.</strong> <code>full-bleed</code> is the
+tidier-looking option, and the one that quietly destroys UI. It was chosen for PuzzleReef
+because the top fifth of every shot is sky, which is true of the backdrop and false of the
+app. That app is landscape-only, and its top strip carries the mascot, the developer buttons
+and the close ×, so 13.5 % of 1284 px cut the close button in half on every shot of the
+first real deck. Look at a framed shot before deciding; on a
+landscape layout the answer is almost always <code>stacked</code>. An app that does leave the strip empty
+gets its depth from <code>shoot</code> (the banner handoff), so the two never drift.</p>
+<p><strong>Read the sizes off App Store Connect, not off a guide.</strong> ASC names the accepted sizes for
+each slot on the media page itself, and that is the only source that is about <em>your</em> app.
+Third-party articles are confidently wrong in both directions. Several insist the 6.9" iPhone
+set is mandatory when ASC offers 6.5" as the default slot, which would have sent a whole deck
+to the wrong class.</p>
+<p><strong>Shoot the iPad at 13-inch (2064×2752), not 12.9-inch (2048×2732).</strong> Sixteen pixels apart,
+nearly the same physical panel, and ASC lists the 13" as the iPad slot's size while the 12.9"
+is legacy. Both upload under the same <code>APP_IPAD_PRO_3GEN_129</code> display type, so nothing in the
+API name tells you which you have. The pixel size is the only signal, and
+<code>SCREENSHOT_DISPLAY_TYPES</code> is what has to know both.
+Feeding a 13" shot to a table that lists only the 12.9" fails the push with "unknown
+screenshot pixel size", which is at least loud. The trap is the simulator naming: the device
+is called for its chip ("iPad Pro 13-inch (M5)"), while the legacy one is called for its
+inches ("iPad Pro (12.9-inch) (6th generation)"), so the older, wronger device is the one
+that reads like the deliberate choice.</p>
+<p><strong>Name the simulator, not the size, when asking for hand-shot captures.</strong> A person shooting
+by hand picks a device from a menu, and the size follows from it; asking for "2778×1284"
+leaves them to reverse-engineer which device that is, and several devices are one row apart
+in the menu with a different size. The two ASC default slots today:</p>
+<table>
+<thead>
+<tr>
+<th>Slot</th>
+<th>Pixels (landscape)</th>
+<th>Simulator</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>iPhone 6.5"</td>
+<td>2778×1284</td>
+<td><strong>iPhone 14 Plus</strong></td>
+<td>Also iPhone 12/13/14 Pro Max. NOT iPhone 15/16/17: those are 6.3"/6.9" classes at different sizes.</td>
+</tr>
+<tr>
+<td>iPad 13"</td>
+<td>2752×2064</td>
+<td><strong>iPad Pro 13-inch (M4)</strong> or later</td>
+<td>NOT "iPad Pro (12.9-inch) (6th generation)", which is 2732×2048.</td>
+</tr>
+</tbody>
+</table>
+<p>Verify rather than trust the table: <code>xcrun simctl list devices available</code> names what is
+installed on this machine, and one capture's pixel size confirms the class in one step.</p>
+<p><strong>Landscape-only apps must be captured with the simulator rotated.</strong> ⌘← / ⌘→ before
+capturing, not after; a portrait capture of a landscape app is not a rotated landscape shot,
+it is the landscape scene letterboxed into a portrait canvas with black bars, and the usable
+band is the wrong aspect ratio for every slot. Cropping can't save it; the shot has to be
+retaken.</p>
+<p><strong>Shoot with a Release-configuration scheme, not the debug one.</strong> Otherwise anything gated on
+<code>DEBUG</code> or a developer flag (an FPS/node HUD, autoplay and flag buttons, a developer menu door)
+is in every capture, and it is easy to stop seeing after a week of looking at it.
+Set up a scheme whose Run action uses Release before the first deck rather than after.</p>
+<p><strong>Alpha channels are rejected.</strong> Decks are JPEG only, which can't carry one; the push refuses a
+PNG in a deck, and <code>iap.yml</code> refuses a PNG <code>review_screenshot</code>.</p>
+<p><strong>Pixels are not points.</strong> <code>XCUIScreen.main.screenshot().image</code> arrives at scale 3;
+<code>UIImage(named:)</code> loads a bezel PNG at scale 1; <code>image.size</code> reports points. Mixing them
+produces a tiny screenshot inside a huge bezel. Work in pixels throughout
+(<code>cgImage.width</code> / <code>cgImage.height</code> with a <code>format.scale = 1</code> renderer), and re-check on both
+iPhone (3×) and iPad (2×) after any change.</p>
+<p><strong>Clip the screenshot to the bezel's corner radius.</strong> Apple's bezel PNGs have a rounded
+transparent screen area; a raw rectangular screenshot underneath leaves square corners
+poking out at all four. Clip to a <code>UIBezierPath(roundedRect:cornerRadius:)</code> matching the
+device. A wrong radius is visible within a few pixels.</p>
+<p><strong>Bezel PNGs may not reach the UI-test bundle (Xcode 16 synchronized groups).</strong> Test folders
+under <code>PBXFileSystemSynchronizedRootGroup</code> bundle only what the target's
+<code>membershipExceptions</code> lists. A file that is not listed returns nil from
+<code>Bundle.url(forResource:)</code> and framing silently falls back to the unframed shot. After
+adding <code>&lt;UITestTarget&gt;/DeviceFrames/&lt;Device&gt;-Portrait.png</code>, add that path to the target's
+<code>membershipExceptions</code> in <code>project.pbxproj</code>. Do the same for <code>FramedScreenshot.swift</code> if
+the group requires explicit listing for sources.</p>
+<h2 id="app-previews">App Previews<a class="headerlink" href="#app-previews" title="Permanent link">&para;</a></h2>
+<p>Raw <code>simctl io recordVideo</code> output can't be uploaded. It captures at the simulator's native
+pixel size, at its native frame rate (often 60 fps, sometimes 48 or 37), with no audio
+track, and Apple rejects all three. Every raw <code>.mov</code> needs an ffmpeg pass.</p>
+<p><strong>Resolution must equal <a href="https://developer.apple.com/help/app-store-connect/reference/app-information/app-preview-specifications">Apple's canonical pair</a> for the preview type.</strong> Strict equality, not
+"close enough":</p>
+<table>
+<thead>
+<tr>
+<th>Preview type</th>
+<th>Dimensions (portrait)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>IPHONE_67</code> / <code>IPHONE_65</code> / <code>IPHONE_61</code> / <code>IPHONE_58</code></td>
+<td><strong>886×1920</strong></td>
+</tr>
+<tr>
+<td><code>IPHONE_55</code> / <code>IPHONE_40</code></td>
+<td><strong>1080×1920</strong></td>
+</tr>
+<tr>
+<td><code>IPHONE_47</code></td>
+<td><strong>750×1334</strong></td>
+</tr>
+<tr>
+<td><code>IPAD_PRO_3GEN_129</code> / <code>IPAD_PRO_3GEN_11</code> / <code>IPAD_105</code></td>
+<td><strong>1200×1600</strong></td>
+</tr>
+<tr>
+<td><code>IPAD_PRO_129</code></td>
+<td><strong>1200×1600</strong> or <strong>900×1200</strong></td>
+</tr>
+<tr>
+<td><code>IPAD_97</code></td>
+<td><strong>900×1200</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Note 886×1920 is <em>narrower</em> than the 1320×2868 an iPhone 17 Pro Max captures, so the
+transcode is a downscale plus pad. Pick the iPad token by generation as well as inches:
+"iPad Pro 12.9-inch 6th gen" is <code>IPAD_PRO_129</code>, "iPad Pro 13-inch (M4)" is
+<code>IPAD_PRO_3GEN_129</code>.</p>
+<p><strong>30 fps cap.</strong> Above that, Apple's ingest rejects with "frame rate is too high", after the
+upload has succeeded. <code>recordVideo</code> does not honour <code>-r</code>; put <code>fps=30</code> first in the filter chain.</p>
+<p><strong>An audio track is mandatory</strong>, even for a silent app: "preview contains unsupported or
+corrupted audio". Generate silence in the same pass.</p>
+<p><strong>Prefer <code>.m4v</code> with <code>+faststart</code></strong> so the moov atom is at the head.</p>
+<div class="highlight"><pre><span></span><code>ffmpeg<span class="w"> </span>-y<span class="w"> </span>-f<span class="w"> </span>lavfi<span class="w"> </span>-i<span class="w"> </span><span class="s2">"anullsrc=channel_layout=stereo:sample_rate=44100"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-i<span class="w"> </span>raw.mov<span class="w"> </span>-shortest<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-vf<span class="w"> </span><span class="s2">"fps=30,scale=W:H:force_original_aspect_ratio=decrease,pad=W:H:(ow-iw)/2:(oh-ih)/2:black,setsar=1"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-c:v<span class="w"> </span>libx264<span class="w"> </span>-preset<span class="w"> </span>slow<span class="w"> </span>-crf<span class="w"> </span><span class="m">22</span><span class="w"> </span>-pix_fmt<span class="w"> </span>yuv420p<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-c:a<span class="w"> </span>aac<span class="w"> </span>-b:a<span class="w"> </span>128k<span class="w"> </span>-movflags<span class="w"> </span>+faststart<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>out.m4v
+</code></pre></div>
+<p><strong>Apple ingests asynchronously and rejects after the fact.</strong> A successful upload means the
+bytes arrived, not that Apple accepted them. Ingest runs 5–25 minutes later, and its failures
+appear only in the ASC web UI, never in the push log. Check App Information → Preview status
+after every previews push, even one that reported success.</p>
+<p><strong>Three previews per locale per device type.</strong> A fourth displaces the oldest.</p>
+<h2 id="simulators-and-ui-tests">Simulators and UI tests<a class="headerlink" href="#simulators-and-ui-tests" title="Permanent link">&para;</a></h2>
+<p><strong>UI-test clones are invisible to a bare <code>simctl</code>.</strong> <code>xcodebuild test</code> clones simulators into
+<code>~/Library/Developer/XCTestDevices</code>, a CoreSimulator set separate from the default one.
+Every <code>simctl</code> call against a clone needs <code>--set ~/Library/Developer/XCTestDevices</code>.</p>
+<p><strong>Record against the clone, not the parent.</strong> Starting <code>recordVideo</code> on the parent device
+(the one named "iPhone 17 Pro Max") while tests run on a clone captures a black screen or a
+0-byte file. Poll the XCTestDevices set for a booted clone and record against its UDID.</p>
+<p><strong>Sandbox StoreKit purchases leak into later test runs.</strong> An app that seeds entitlements from
+<code>Transaction.currentEntitlements</code> will see packs a developer bought while debugging as owned
+in every subsequent run. Guard the seed on a <code>UITests</code> launch argument; clear existing state
+with Xcode → Debug → StoreKit → Manage Transactions → Delete All.</p>
+<h2 id="xcode-project">Xcode project<a class="headerlink" href="#xcode-project" title="Permanent link">&para;</a></h2>
+<p><strong>Nothing may write the <code>.pbxproj</code> from a build phase.</strong> Xcode watches the project file and
+cancels a build whose project changes underneath it. The symptom points nowhere:
+the log ends <code>Build stopped</code> after the last task with no error anywhere, nothing lands in
+the Organizer, and command-line <code>xcodebuild archive</code> keeps succeeding because no IDE is
+watching.</p>
+<p><strong>Bump the build number in the scheme's <a href="https://developer.apple.com/documentation/xcode/customizing-the-build-schemes-for-a-project#Run-tasks-before-or-after-scheme-actions">Archive post-action</a>, not a build phase or a
+pre-action.</strong> A post-action runs once the archive is finished, so it can write the pbxproj
+safely (keeping the pbxproj the single durable record) and stamp the finished archive.
+A pre-action is off by one (<code>xcodebuild</code> snapshots build settings before pre-actions run); a
+build phase either cancels ⌘-Archive (writing the pbxproj) or, with a separate counter file,
+leaves two records that drift apart; and a build phase can't stamp the product at all in an
+app that embeds an extension. <code>SKILL.md</code> → Build numbers has the whole history.</p>
+<p><strong>Check that the hook exists, as well as the script.</strong> An app can use snakelane with
+nothing wired to call it (no phase, no post-action), and then every archive silently keeps
+the old number. <code>grep -n PostActions</code> the app's <code>.xcscheme</code>; <code>/tmp/snakelane-&lt;app&gt;-bump-build.log</code> gets a
+line from every run, even one that bails.</p>
+<p><strong>A post-action needs an Environment Buildable.</strong> Without one set to the app target, the
+script runs with <code>ARCHIVE_PATH</code> and <code>PROJECT_DIR</code> empty. Log unconditionally at the top of
+the script, so a post-action that never ran and one that ran and bailed look different.</p>
+<p><strong>Multi-platform schemes need an explicit destination.</strong> Without one, <code>xcodebuild</code> can pick
+the Mac target in a scheme that supports iOS and macOS. Pass
+<code>-destination 'generic/platform=iOS'</code> when archiving for iOS.</p>
+<h2 id="credentials">Credentials<a class="headerlink" href="#credentials" title="Permanent link">&para;</a></h2>
+<p><strong><code>altool</code> finds the API key by filename, not by path:</strong> <code>AuthKey_&lt;key_id&gt;.p8</code>, in a fixed
+set of directories. So <code>snakelane auth setup</code> installs it under exactly that name in
+<code>~/.appstoreconnect/private_keys</code>: <code>xcodebuild</code>, <code>altool</code> and snakelane then share one copy.
+Don't copy the key into <code>~/.private_keys</code> as well; a second copy of a credential is one more
+place for it to leak from.</p>
+<p><strong>Environment variables don't reach Xcode.</strong> An Xcode launched from the Dock has none of a
+shell's variables, so a scheme post-action that relies on them silently runs without them.
+snakelane reads only files under <code>$HOME</code> for this reason.</p>
+<p><strong>One key serves the whole team.</strong> It is <a href="https://developer.apple.com/documentation/appstoreconnectapi/creating-api-keys-for-app-store-connect-api">team-scoped</a>, so one <code>auth setup</code> covers every app in
+the family.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../config/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Config keys">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Config keys
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../../design/foundations/" class="md-footer__link md-footer__link--next" aria-label="Next: Project, client and listing">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Project, client and listing
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      MIT licensed. Not affiliated with Apple or fastlane.
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.footer", "navigation.instant", "search.highlight", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

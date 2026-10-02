@@ -1,0 +1,8 @@
+$ snakelane store screenshots push --dry-run
+  (developer-chrome check skipped: needs macOS and the snakelane[check] extra)
+  (no screenshots under ~/trailhead/metadata/ios/screenshots/en-AU — skipping en-AU; the App Store shows the primary language's)
+  [dry-run] en-US/APP_IPAD_PRO_3GEN_129: 3 file(s) — ss-01.jpg, ss-02.jpg, ss-03.jpg
+  [dry-run] en-US/APP_IPHONE_65: 3 file(s) — ss-01.jpg, ss-02.jpg, ss-03.jpg
+  [dry-run] de-DE/APP_IPHONE_65: 3 file(s) — ss-01.jpg, ss-02.jpg, ss-03.jpg
+
+[dry-run] no API key set up (`snakelane auth setup`), so the live screenshot sets were not read: the plan above is local only (what would be uploaded, not what would be deleted first). Nothing was written.

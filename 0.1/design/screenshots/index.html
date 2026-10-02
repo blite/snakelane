@@ -1,0 +1,2769 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="An opinionated App Store Connect CLI for indie Apple developers and coding agents. Keep listings, screenshots, and purchase catalogues in your repo, review changes, and ship with a focused Python workflow.">
+      
+      
+      
+        <link rel="canonical" href="https://blite.github.io/snakelane/0.1/design/screenshots/">
+      
+      
+        <link rel="prev" href="../foundations/">
+      
+      
+        <link rel="next" href="../framing/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Shooting and uploading - snakelane</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#design-notes-shooting-and-uploading-screenshots" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="snakelane" class="md-header__button md-logo" aria-label="snakelane" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            snakelane
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Shooting and uploading
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/blite/snakelane" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    blite/snakelane
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../.." class="md-tabs__link">
+          
+  
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../commands/store/" class="md-tabs__link">
+          
+  
+  
+  Commands
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/config/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../foundations/" class="md-tabs__link">
+          
+  
+  
+  Design
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../changelog/" class="md-tabs__link">
+          
+  
+  
+  Project
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="snakelane" class="md-nav__button md-logo" aria-label="snakelane" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    snakelane
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/blite/snakelane" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    blite/snakelane
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The config and the metadata tree
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/framing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Framing screenshots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../showcase/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screenshot showcase
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using it with a coding agent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Commands
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/screenshots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    shoot · frame · check
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/gallery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    gallery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/lint/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    lint · translations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/release/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ship · bump · status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/packs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    packs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    auth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config keys
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/gotchas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    App Store Connect traps
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../foundations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project, client and listing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Shooting and uploading
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Shooting and uploading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#shooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Shooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#one-shared-screenshots-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One shared screenshots config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-default-lineup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The default lineup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-mac-lanes-window-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Mac lane's window size
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#simulators-are-addressed-by-udid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Simulators are addressed by UDID
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-status-bar-is-pinned-to-941" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The status bar is pinned to 9:41
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tests-run-serially" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests run serially
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-mac-lane-checks-for-developer-mode-and-automation-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Mac lane checks for developer mode and Automation Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-locale-travels-in-a-file-not-the-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The locale travels in a file, not the environment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-reframe-test-finds-its-own-trees" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The reframe test finds its own trees
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-a-shoot-clears" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What a shoot clears
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#two-devices-cannot-share-a-deck-folder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two devices cannot share a deck folder
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-failed-shoot-puts-the-previous-deck-back" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A failed shoot puts the previous deck back
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-plan-and-the-dry-run-share-one-code-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The plan and the dry run share one code path
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#framing-runs-after-every-pass" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Framing runs after every pass
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-launch-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        No launch mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extracting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extracting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Extracting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#extraction-is-a-function-not-a-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extraction is a function, not a script
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shot-names-may-contain-hyphens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shot names may contain hyphens
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#files-are-named-by-slot-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Files are named by slot only
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#extraction-writes-jpeg" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extraction writes JPEG
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#an-empty-extraction-stops-the-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        An empty extraction stops the run
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-developer-chrome-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The developer-chrome check
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The developer-chrome check">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-the-check-exists" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why the check exists
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-it-looks-for" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it looks for
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#it-reads-only-an-enlarged-corner" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        It reads only an enlarged corner
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-missing-vision-install-refuses-rather-than-passes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A missing Vision install refuses rather than passes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-push-runs-the-check-up-front-as-a-subprocess" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The push runs the check up front, as a subprocess
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#display-types-and-sizes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Display types and sizes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Display types and sizes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-display-type-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The display-type table
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#non-default-sizes-are-a-warning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Non-default sizes are a warning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#at-most-ten-screenshots-per-set" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        At most ten screenshots per set
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pillow-replaced-the-hand-rolled-image-decoders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pillow replaced the hand-rolled image decoders
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#an-app-previews-slot-comes-from-the-screenshots-beside-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        An App Preview's slot comes from the screenshots beside it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#preview-slot-names-have-no-app_-prefix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Preview slot names have no APP_ prefix
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#video-dimensions-are-read-without-ffprobe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Video dimensions are read without ffprobe
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#underscore-prefixed-files-are-excluded" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Underscore-prefixed files are excluded
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-png-in-a-deck-is-an-error" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A PNG in a deck is an error
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#iphone-and-ipad-share-one-tree" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        iPhone and iPad share one tree
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#uploading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Uploading
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Uploading">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#remote-mirrors-local" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remote mirrors local
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#an-empty-local-deck-deletes-the-live-sets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        An empty local deck deletes the live sets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-whole-plan-is-built-before-the-first-delete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The whole plan is built before the first delete
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-killed-shoot-blocks-the-push" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A killed shoot blocks the push
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-dry-run-without-credentials-still-shows-the-local-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A dry run without credentials still shows the local plan
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#previews-and-screenshots-are-separate-pushes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Previews and screenshots are separate pushes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#processing-is-verified-and-rejects-are-retried-once" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Processing is verified, and rejects are retried once
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#screenshots-show" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        screenshots show
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../framing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Framing and the gallery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Releasing and purchases
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../adr/0001-no-pbxproj-library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR 1: no pbxproj library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../adr/0002-jpeg-only-screenshot-decks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR 2: JPEG-only screenshots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../adr/0003-lint-subscription-legal-links/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR 3: subscription links in lint
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#shooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Shooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#one-shared-screenshots-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One shared screenshots config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-default-lineup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The default lineup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-mac-lanes-window-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Mac lane's window size
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#simulators-are-addressed-by-udid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Simulators are addressed by UDID
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-status-bar-is-pinned-to-941" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The status bar is pinned to 9:41
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tests-run-serially" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests run serially
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-mac-lane-checks-for-developer-mode-and-automation-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Mac lane checks for developer mode and Automation Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-locale-travels-in-a-file-not-the-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The locale travels in a file, not the environment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-reframe-test-finds-its-own-trees" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The reframe test finds its own trees
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-a-shoot-clears" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What a shoot clears
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#two-devices-cannot-share-a-deck-folder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two devices cannot share a deck folder
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-failed-shoot-puts-the-previous-deck-back" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A failed shoot puts the previous deck back
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-plan-and-the-dry-run-share-one-code-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The plan and the dry run share one code path
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#framing-runs-after-every-pass" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Framing runs after every pass
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-launch-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        No launch mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extracting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extracting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Extracting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#extraction-is-a-function-not-a-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extraction is a function, not a script
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shot-names-may-contain-hyphens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shot names may contain hyphens
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#files-are-named-by-slot-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Files are named by slot only
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#extraction-writes-jpeg" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extraction writes JPEG
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#an-empty-extraction-stops-the-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        An empty extraction stops the run
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-developer-chrome-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The developer-chrome check
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The developer-chrome check">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-the-check-exists" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why the check exists
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-it-looks-for" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it looks for
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#it-reads-only-an-enlarged-corner" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        It reads only an enlarged corner
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-missing-vision-install-refuses-rather-than-passes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A missing Vision install refuses rather than passes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-push-runs-the-check-up-front-as-a-subprocess" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The push runs the check up front, as a subprocess
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#display-types-and-sizes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Display types and sizes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Display types and sizes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-display-type-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The display-type table
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#non-default-sizes-are-a-warning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Non-default sizes are a warning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#at-most-ten-screenshots-per-set" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        At most ten screenshots per set
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pillow-replaced-the-hand-rolled-image-decoders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pillow replaced the hand-rolled image decoders
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#an-app-previews-slot-comes-from-the-screenshots-beside-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        An App Preview's slot comes from the screenshots beside it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#preview-slot-names-have-no-app_-prefix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Preview slot names have no APP_ prefix
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#video-dimensions-are-read-without-ffprobe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Video dimensions are read without ffprobe
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#underscore-prefixed-files-are-excluded" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Underscore-prefixed files are excluded
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-png-in-a-deck-is-an-error" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A PNG in a deck is an error
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#iphone-and-ipad-share-one-tree" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        iPhone and iPad share one tree
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#uploading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Uploading
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Uploading">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#remote-mirrors-local" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remote mirrors local
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#an-empty-local-deck-deletes-the-live-sets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        An empty local deck deletes the live sets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-whole-plan-is-built-before-the-first-delete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The whole plan is built before the first delete
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-killed-shoot-blocks-the-push" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A killed shoot blocks the push
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-dry-run-without-credentials-still-shows-the-local-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A dry run without credentials still shows the local plan
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#previews-and-screenshots-are-separate-pushes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Previews and screenshots are separate pushes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#processing-is-verified-and-rejects-are-retried-once" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Processing is verified, and rejects are retried once
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#screenshots-show" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        screenshots show
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/blite/snakelane/edit/main/docs/design/screenshots.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="design-notes-shooting-and-uploading-screenshots">Design notes: shooting and uploading screenshots<a class="headerlink" href="#design-notes-shooting-and-uploading-screenshots" title="Permanent link">&para;</a></h1>
+<p>These are the reasons behind decisions in <code>src/snakelane/screenshots/</code> (shoot, extract, check, media and upload), moved out of the code's comments so the code stays easy to scan.</p>
+<h2 id="shooting">Shooting<a class="headerlink" href="#shooting" title="Permanent link">&para;</a></h2>
+<h3 id="one-shared-screenshots-config">One shared screenshots config<a class="headerlink" href="#one-shared-screenshots-config" title="Permanent link">&para;</a></h3>
+<p><code>shoot</code> replaces the Fastfile's <code>screenshots</code> and <code>cleanup_sims</code> lanes, and before that eleven drifting copies of <code>Metadata/scripts/screenshots.py</code>. Everything that differed between those copies is now data: the <code>screenshots</code> object in the app's <code>snakelane.yml</code>. A typo'd key is an error rather than a silent fallback to a default, because that fallback is how a deck gets shot on the wrong scheme.</p>
+<h3 id="the-default-lineup">The default lineup<a class="headerlink" href="#the-default-lineup" title="Permanent link">&para;</a></h3>
+<p>The default iPhone is the iPhone 14 Plus, which shoots the 6.5" display class (1284x2778, <code>APP_IPHONE_65</code>), chosen over a current 6.9" device. App Store Connect's media page shows every class that was not uploaded natively as a dimmed, scaled copy, so the class that was shot is the only one that looks crisp there. Apple also scales a 6.5" deck up to 6.9" displays when no 6.9" set exists, but does not scale a 6.9" deck down. The physically 6.5-inch iPhone Air does not shoot this class: its 1260x2736 files under 6.9".</p>
+<p>This was re-decided on 2026-10-02. Apple's screenshot-specifications page now describes the scaling the other way (6.5" derived from 6.9"), and 6.9"-only apps are live. The default stayed 6.5" on the dimming argument alone.</p>
+<p>The iPad is the 13" iPad Pro, which ASC now requires. The 12.9" (2048x2732) is legacy and no longer an installed simulator on current Xcodes; both file under <code>APP_IPAD_PRO_3GEN_129</code>. Switching class means re-shooting, because the push reads the class from the pixels and a stale set left in ASC keeps being preferred. A full <code>shoot</code> clears the tree first, so it handles this on its own.</p>
+<h3 id="the-mac-lanes-window-size">The Mac lane's window size<a class="headerlink" href="#the-mac-lanes-window-size" title="Permanent link">&para;</a></h3>
+<p>App Store Connect accepts Mac screenshots at exactly 1280x800, 1440x900, 2560x1600 or 2880x1800. The app sizes its own window (<code>--ui-window-size</code>); 1440x900 points on a 2x display gives the largest of the four.</p>
+<h3 id="simulators-are-addressed-by-udid">Simulators are addressed by UDID<a class="headerlink" href="#simulators-are-addressed-by-udid" title="Permanent link">&para;</a></h3>
+<p>The shoot resolves each lineup entry to one UDID and hands that same UDID to the status-bar pin and to <code>xcodebuild</code>. A name-only destination (<code>name=X</code>) implies the latest OS, so a device that exists only on an older runtime was "not found" while <code>simctl</code> listed it as available, and the shoot died after clearing the deck. A name is also not unique: one "iPad Pro 13-inch (M5)" exists per installed runtime, so the status bar was pinned on one and the test ran on another. Among same-named devices the newest runtime wins, which is what a name-only destination used to mean, unless the entry pins an <code>os</code>. <code>reframe</code> resolves its host simulator the same way.</p>
+<h3 id="the-status-bar-is-pinned-to-941">The status bar is pinned to 9:41<a class="headerlink" href="#the-status-bar-is-pinned-to-941" title="Permanent link">&para;</a></h3>
+<p>A deck should hide the status bar outright (the template's <code>UITestScreenshotScenario.hidesStatusBar</code>), and then the pin changes nothing. It stays because <code>simctl</code> can only override the bar's contents, not hide it, so a screen that escapes the flag shows a canonical 9:41 rather than the machine's clock. One deck went out reading 11:45, 11:46 and 11:47 across three shots, with the simulator's dotted placeholder carrier.</p>
+<p>The device is booted first and <code>bootstatus -b</code> waits for the boot. <code>simctl status_bar</code> against a shut-down device prints "Unable to lookup in current state: Shutdown" to stderr without failing, so the override silently does not apply. That produced a deck with a charging-bolt battery left over from a previous boot's override. Overrides live on the device, and test clones inherit them.</p>
+<h3 id="tests-run-serially">Tests run serially<a class="headerlink" href="#tests-run-serially" title="Permanent link">&para;</a></h3>
+<p><code>xcodebuild</code> gets <code>-parallel-testing-enabled NO</code>. On iOS this keeps the test on the parent simulator the status-bar pin already booted, rather than a cold test clone: cold clone boots are where XCUITest's launch request races SpringBoard and retries with a huge <code>wait_for_debugger</code> dump. <code>ship</code> runs its tests the same way. On a Mac the reason is stronger: parallel workers are separate copies of the app on the same desktop, and one's capture can catch another's window.</p>
+<h3 id="the-mac-lane-checks-for-developer-mode-and-automation-mode">The Mac lane checks for developer mode and Automation Mode<a class="headerlink" href="#the-mac-lane-checks-for-developer-mode-and-automation-mode" title="Permanent link">&para;</a></h3>
+<p>Both switches are administrator actions, so the shoot prints the commands rather than running them. They are once per machine, though an OS upgrade turns Automation Mode back off. Without developer mode the failure arrives after the whole project has built, as "The test runner failed to initialize for UI testing (Underlying Error: Authentication canceled…)", which names a dialog rather than the switch. Without Automation Mode every synthesized click and key is dropped after about five seconds with no error. The no-authentication setting is used because a run that asks for a password part-way through is a run nobody is watching.</p>
+<p>The check reads <code>automationmodetool</code>'s state line, not its password line. The tool prints "DOES NOT REQUIRE user authentication" whether the mode is on or off, and reading that as "on" once let a disabled Mac through to a build that dropped every click. The iOS lane needs neither switch, because the simulator is not the host.</p>
+<h3 id="the-locale-travels-in-a-file-not-the-environment">The locale travels in a file, not the environment<a class="headerlink" href="#the-locale-travels-in-a-file-not-the-environment" title="Permanent link">&para;</a></h3>
+<p>Every <code>xcodebuild test</code> gets <code>TEST_RUNNER_SNAKELANE_*</code> variables, but an iOS UI-test runner does not reliably see them. Measured in Jigsaw and Spades: neither <code>TEST_RUNNER_</code> variables nor <code>-testLanguage</code> reached the UI-test process, and a reframe root passed that way was silently ignored while the run reported success. So the locale also goes through a file on the host's disk, which the simulator can read (<code>/tmp/&lt;slug&gt;-screenshot-locale</code>, and <code>/tmp/&lt;slug&gt;-screenshot-banner.json</code> for the caption band's depth). The file is removed after the run, because a stale one would make a later test run from Xcode shoot in whatever language this run ended on.</p>
+<h3 id="the-reframe-test-finds-its-own-trees">The reframe test finds its own trees<a class="headerlink" href="#the-reframe-test-finds-its-own-trees" title="Permanent link">&para;</a></h3>
+<p>A reframe test derives the deck trees from <code>#filePath</code> rather than being handed a root. A root passed through the runner's environment never arrived in Spades, whose iPad deck was re-framed zero times while every run reported success. Each platform re-frames on its own host because the banner is drawn with that platform's image type (UIKit or AppKit). Nothing is launched, so any booted simulator will do, and the first in the lineup keeps it predictable.</p>
+<h3 id="what-a-shoot-clears">What a shoot clears<a class="headerlink" href="#what-a-shoot-clears" title="Permanent link">&para;</a></h3>
+<p>In <code>framed/</code>, every image goes, because the push uploads every image there and the two filters have to agree. With <code>ss-*</code> an image left from older naming (<code>&lt;device&gt;-NN.jpg</code>) survived every re-shoot and shipped beside the fresh deck. That happened in Solitaire (fixed 2026-09-12), and snakelane's first default reintroduced it (2026-10-02). In <code>raw/</code>, only the shots go: nothing uploads from <code>raw/</code>, and it is where comparison captures are kept on purpose (PuzzleReef's <code>unused-02-…-alt.png</code>).</p>
+<p>Only images are cleared, because the deck folders also hold the App Preview (<code>ap-01.*</code>), which takes minutes to record. Without the clear, a device change left the old set beside the new one, and the next push uploaded both: twelve near-duplicate shots in one ASC set. A full run sweeps every locale folder so a dropped locale stops shipping its old shots; a <code>--locales</code> run touches only the locales it re-shoots.</p>
+<h3 id="two-devices-cannot-share-a-deck-folder">Two devices cannot share a deck folder<a class="headerlink" href="#two-devices-cannot-share-a-deck-folder" title="Permanent link">&para;</a></h3>
+<p>Extracted filenames carry no device label, because the folder is the device class. Two devices mapped to the same folder would silently overwrite each other's <code>ss-NN</code> files and produce a deck that is half one phone and half another, so the shoot refuses.</p>
+<h3 id="a-failed-shoot-puts-the-previous-deck-back">A failed shoot puts the previous deck back<a class="headerlink" href="#a-failed-shoot-puts-the-previous-deck-back" title="Permanent link">&para;</a></h3>
+<p>Until 2026-10-02 the clear deleted every old shot up front. A UI test failing on locale three left the earlier locales empty or half-shot, and <code>store screenshots push</code> reads an empty locale folder as "delete the live sets" and a half one as the new deck. Now the previous deck is moved to <code>App.shoot_stash</code> (<code>.snakelane/&lt;app&gt;/previous-shoot/</code>) and moved back if anything fails. The stash is on the same volume, so moves are renames, and it survives a hard kill. A stash left by a killed run is refused rather than overwritten, since it may hold the only copy of the last good deck, and <code>store screenshots push</code> refuses too while it exists.</p>
+<h3 id="the-plan-and-the-dry-run-share-one-code-path">The plan and the dry run share one code path<a class="headerlink" href="#the-plan-and-the-dry-run-share-one-code-path" title="Permanent link">&para;</a></h3>
+<p><code>shoot</code> builds its whole plan first and then executes it, and <code>--dry-run</code> prints that same plan. One code path for both is the only way the dry run can be trusted to say what a real run would do.</p>
+<h3 id="framing-runs-after-every-pass">Framing runs after every pass<a class="headerlink" href="#framing-runs-after-every-pass" title="Permanent link">&para;</a></h3>
+<p>With <code>"frame": "snakelane"</code> the captions are drawn last, over the raws that just landed, and only after every device has shot, so a half-shot deck is never framed. It is the same call <code>reframe</code> makes, so a shoot and a reframe cannot drift. <code>reframe</code> exists because the banner is a pure image-to-image transform: redrawing it takes seconds, where a shoot takes ten minutes and re-rolls every timing-sensitive fixture.</p>
+<h3 id="no-launch-mode">No launch mode<a class="headerlink" href="#no-launch-mode" title="Permanent link">&para;</a></h3>
+<p>Until 2026-10-02 there was a second way to shoot, for Picnic Defense: launch the app once per
+stage with a <code>-ScreenshotStage &lt;name&gt;</code> argument and capture the simulator with <code>simctl io
+screenshot</code>, no UI test. It was removed so there is one way to shoot. An app that stages its
+own screens passes the same launch argument from a UI test and attaches a screenshot per stage;
+the staging code in the app doesn't change.</p>
+<h2 id="extracting">Extracting<a class="headerlink" href="#extracting" title="Permanent link">&para;</a></h2>
+<h3 id="extraction-is-a-function-not-a-script">Extraction is a function, not a script<a class="headerlink" href="#extraction-is-a-function-not-a-script" title="Permanent link">&para;</a></h3>
+<p>Extraction used to be <code>Scripts/extract_screenshots.py</code>, copied into every app repo and run as a subprocess. The shoot passed it a script path that moved whenever a repo reorganised its Scripts folder. It is one importable function now, which <code>shoot</code> calls after every pass.</p>
+<h3 id="shot-names-may-contain-hyphens">Shot names may contain hyphens<a class="headerlink" href="#shot-names-may-contain-hyphens" title="Permanent link">&para;</a></h3>
+<p>The attachment name pattern allows hyphens and digits after the first letter of a shot's name. PoolLog's shot names are hyphenated, where the card games' are single words, and the stricter single-word pattern silently counted PoolLog's whole deck as "unknown". An underscore still cannot appear in a name, which keeps the <code>_framed</code> and <code>_&lt;seq&gt;_</code> tails unambiguous.</p>
+<h3 id="files-are-named-by-slot-only">Files are named by slot only<a class="headerlink" href="#files-are-named-by-slot-only" title="Permanent link">&para;</a></h3>
+<p><code>01-MidTrick</code> becomes <code>ss-01</code>. The deck's order is the whole filename: each device class already has its own folder, so a device label in the name is redundant, and the shot's name lives in the UI test where it can be read rather than in a filename that has to be parsed. An App Preview sits beside the shots as <code>ap-01</code>.</p>
+<h3 id="extraction-writes-jpeg">Extraction writes JPEG<a class="headerlink" href="#extraction-writes-jpeg" title="Permanent link">&para;</a></h3>
+<p>Attachments arrive as PNG and are written as JPEG at quality 90 (see <a href="../../adr/0002-jpeg-only-screenshot-decks/">ADR 0002</a>). JPEG has no alpha channel, and ASC rejects screenshots that carry one, which XCUIScreen captures always do. The files are also about 5 to 10 times smaller. Quality 90 is what <code>snakelane frame</code> writes too, so a deck framed by the UI test and one framed afterwards match. JPEGs are written with no chroma subsampling, so caption text keeps sharp coloured edges.</p>
+<p>Until 2026-10-02 shots went through macOS's <code>sips</code>. Pillow makes extraction and framing one code path, and lets them run off a Mac.</p>
+<h3 id="an-empty-extraction-stops-the-run">An empty extraction stops the run<a class="headerlink" href="#an-empty-extraction-stops-the-run" title="Permanent link">&para;</a></h3>
+<p>A shoot that "succeeded" but produced no recognisable shot raises, rather than handing an empty folder to the push, which would read it as "delete the live sets".</p>
+<h2 id="the-developer-chrome-check">The developer-chrome check<a class="headerlink" href="#the-developer-chrome-check" title="Permanent link">&para;</a></h2>
+<h3 id="why-the-check-exists">Why the check exists<a class="headerlink" href="#why-the-check-exists" title="Permanent link">&para;</a></h3>
+<p>On 2026-09-11 PuzzleReef's whole deck (7 iPhone shots, 5 iPad, raw and framed) was shot from the plain Debug scheme instead of the Release one, and uploaded. Every shot carried SpriteKit's <code>nodes:… fps</code> HUD in the bottom-right corner and the developer buttons down the top-left. Nothing caught it: the framer drew a caption over the top and the push uploaded whatever bytes it found, so the first reviewer of those pixels was App Review. The listing doc already said, in bold, to use the Release scheme. The check is the mechanical version of that sentence, on the path the files actually travel.</p>
+<h3 id="what-it-looks-for">What it looks for<a class="headerlink" href="#what-it-looks-for" title="Permanent link">&para;</a></h3>
+<p>It looks for SpriteKit's frame-rate HUD: the literal <code>nodes:&lt;count&gt;</code> and <code>&lt;n&gt; fps</code> that <code>SKView.showsNodeCount</code> and <code>.showsFPS</code> paint. The SpriteKit apps set both inside <code>#if DEBUG</code>, and in those projects DEBUG and the developer-menu flag are never set apart. So a HUD also means the developer buttons were compiled in and every scene laid itself out around them. A HUD-bearing shot therefore cannot be rescued by cropping, because the composition underneath is not the one that ships. It has to be re-shot.</p>
+<p><code>nodes:107</code> is the reliable half of the HUD. Vision reads <code>fps</code> inconsistently against busy artwork (<code>60.0 fps</code> came back as <code>60.0 fosi</code> on ss-02), so <code>fps</code> is a supporting match. Both patterns tolerate the space Vision inserts after the colon. Language correction is off because it turns <code>nodes:107</code> into prose.</p>
+<h3 id="it-reads-only-an-enlarged-corner">It reads only an enlarged corner<a class="headerlink" href="#it-reads-only-an-enlarged-corner" title="Permanent link">&para;</a></h3>
+<p>Reading the full-width bottom 15% at native resolution missed 2 of the 7 known-bad iPhone shots. Vision returned nothing for ss-05 and only the "Change" pill for ss-04, because the HUD is a few small glyphs in a 2778x192 strip. Cropping to the corner the HUD occupies (45% by 6%) and enlarging 3x reads all 12 known-bad shots. A guard that calls a dirty file clean is worse than no guard, so prefer a crop that is too tight and an upscale that is too generous. Reading only the corner also keeps caption copy and in-game text away from the matcher.</p>
+<h3 id="a-missing-vision-install-refuses-rather-than-passes">A missing Vision install refuses rather than passes<a class="headerlink" href="#a-missing-vision-install-refuses-rather-than-passes" title="Permanent link">&para;</a></h3>
+<p>The check needs macOS's Vision framework through pyobjc, an optional extra. Without it, <code>snakelane check</code> exits 3 rather than passing: a guard that cannot run has to stop the push, not wave it through. Exit 3 is distinct because the push reads 1 as "developer chrome found" and 2 as "unreadable file", and a missing dependency is neither.</p>
+<h3 id="the-push-runs-the-check-up-front-as-a-subprocess">The push runs the check up front, as a subprocess<a class="headerlink" href="#the-push-runs-the-check-up-front-as-a-subprocess" title="Permanent link">&para;</a></h3>
+<p><code>store screenshots push</code> runs the check before its first App Store Connect call, over every locale at once. The push deletes each set before uploading its replacement, so a refusal partway through would leave ASC empty. It runs under <code>--dry-run</code> too, because a dry run is how the deck gets eyeballed. It runs <code>snakelane check</code> as a subprocess so the optional pyobjc dependency stays out of the base install. Availability is checked before running rather than inferred from the exit code, because an import failure inside the subprocess also exits 1, the code for "developer chrome found", and would blame the deck for a broken install. Any exit code other than 1 or 2 is reported as the checker failing, not as evidence about the deck.</p>
+<h2 id="display-types-and-sizes">Display types and sizes<a class="headerlink" href="#display-types-and-sizes" title="Permanent link">&para;</a></h2>
+<h3 id="the-display-type-table">The display-type table<a class="headerlink" href="#the-display-type-table" title="Permanent link">&para;</a></h3>
+<p>The display type is read from the image's pixel size. Both orientations are listed because a device rotated for a landscape shot still maps to the same slot. Which slot a deck fills is decided by what was shot, never by a config key. Sizes were verified against ASC on 2026-09-11 and Apple's screenshot-specifications page on 2026-10-02. Apple moves this (the iPad slot already went from 12.9" to 13"), so ASC's own media page is the arbiter.</p>
+<p>1290x2796, the third accepted 6.9" size (iPhone 14, 15 and 16 Pro Max and Plus), was missing until 2026-10-02, so a deck shot on one of those simulators failed the push as an unknown size. The legacy 12.9" iPad sizes stay mapped so an older deck still pushes until its next re-shoot. The iPad naming is a trap: the current device is named for its chip and the legacy one for its inches, so the older simulator is the one that reads like the deliberate choice.</p>
+<h3 id="non-default-sizes-are-a-warning">Non-default sizes are a warning<a class="headerlink" href="#non-default-sizes-are-a-warning" title="Permanent link">&para;</a></h3>
+<p>Any accepted size uploads. A size other than the default (6.5" iPhone, 13" iPad) gets a warning, because the class that was shot is the one ASC shows as uploaded rather than dimmed.</p>
+<h3 id="at-most-ten-screenshots-per-set">At most ten screenshots per set<a class="headerlink" href="#at-most-ten-screenshots-per-set" title="Permanent link">&para;</a></h3>
+<p>ASC takes 1 to 10 screenshots per set, and snakelane checks this locally. The push replaces each set wholesale, so Apple refusing the 11th file would land after the live set was deleted and ten were re-uploaded, and the deck would silently lose its last shot. Jigsaw's iPhone decks had 11.</p>
+<h3 id="pillow-replaced-the-hand-rolled-image-decoders">Pillow replaced the hand-rolled image decoders<a class="headerlink" href="#pillow-replaced-the-hand-rolled-image-decoders" title="Permanent link">&para;</a></h3>
+<p>Until 2026-10-02 snakelane carried its own PNG decoder (scanline unfiltering, Paeth prediction) and JPEG marker walk to keep Pillow out of the base install. That was about 150 lines of binary-format code to maintain, and the pure-Python alpha strip took about 1.6 s per screenshot. Pillow is a standard prebuilt wheel, and <code>frame</code> needed it anyway.</p>
+<h3 id="an-app-previews-slot-comes-from-the-screenshots-beside-it">An App Preview's slot comes from the screenshots beside it<a class="headerlink" href="#an-app-previews-slot-comes-from-the-screenshots-beside-it" title="Permanent link">&para;</a></h3>
+<p>Apple accepts 886x1920 for both the 6.5" and 6.9" preview slots, so a video's own pixels cannot say which deck it belongs to. The <code>ss-NN</code> shots in the same folder can: their display class is unambiguous, and one folder is one device class. The video's dimensions are then validated against what that slot accepts, so a wrong encode fails in seconds rather than at Apple's end hours later. An earlier version mapped 886x1920 straight to the 6.9" slot and invented a 1080x1920 entry for 6.5" that appears nowhere in Apple's table, which would have uploaded every 6.5" deck's preview into the 6.9" slot.</p>
+<p>886x1920 looks invented but is 1920 on the long edge at 19.5:9, the shape of every notched iPhone. 1080x1920 is the 16:9 size and belongs to the 5.5" and 4.0" slots. The iPad slot accepts 1200x1600 only; 900x1200 belongs to the 2nd-generation 12.9" preview type (<code>IPAD_PRO_129</code>). The table is a local pre-check from Apple's <a href="https://developer.apple.com/help/app-store-connect/reference/app-information/app-preview-specifications">app preview specifications</a>; ASC is the arbiter.</p>
+<h3 id="preview-slot-names-have-no-app_-prefix">Preview slot names have no APP_ prefix<a class="headerlink" href="#preview-slot-names-have-no-app_-prefix" title="Permanent link">&para;</a></h3>
+<p><code>AppScreenshotSet.screenshotDisplayType</code> for a device is <code>APP_IPHONE_67</code>, while <code>AppPreviewSet.previewType</code> for the same device is plain <code>IPHONE_67</code>. Passing the screenshot spelling is rejected with a bare 409 that names neither field.</p>
+<h3 id="video-dimensions-are-read-without-ffprobe">Video dimensions are read without ffprobe<a class="headerlink" href="#video-dimensions-are-read-without-ffprobe" title="Permanent link">&para;</a></h3>
+<p>The MP4 reader is hand-rolled because Pillow reads images, not video, and shelling out to ffprobe would make an upload depend on a Homebrew install that only the encode step needs. It walks <code>moov &gt; trak &gt; tkhd</code> and reads the width and height. An audio track's <code>tkhd</code> carries zeros, which is how the video track is picked out. The re-encode hint looks for an <code>encode_app_preview.sh</code> script rather than naming one, because the old per-repo copies kept it in different places or not at all.</p>
+<h3 id="underscore-prefixed-files-are-excluded">Underscore-prefixed files are excluded<a class="headerlink" href="#underscore-prefixed-files-are-excluded" title="Permanent link">&para;</a></h3>
+<p>A file whose name starts with an underscore is left out of the push. Because a push replaces each set wholesale, excluding a file also removes it from ASC on the next run, so the skip is printed. The check, the PNG refusal and the upload all apply the same rule, so an excluded file can neither block a push nor be mistaken for an uploaded one.</p>
+<h3 id="a-png-in-a-deck-is-an-error">A PNG in a deck is an error<a class="headerlink" href="#a-png-in-a-deck-is-an-error" title="Permanent link">&para;</a></h3>
+<p>A deck is JPEG only (<a href="../../adr/0002-jpeg-only-screenshot-decks/">ADR 0002</a>). A PNG left in one is an error rather than a silent skip, because a push replaces each set wholesale and an ignored file would quietly vanish from the store.</p>
+<h3 id="iphone-and-ipad-share-one-tree">iPhone and iPad share one tree<a class="headerlink" href="#iphone-and-ipad-share-one-tree" title="Permanent link">&para;</a></h3>
+<p>Until 2026-10-02 the iPad deck was a separate <code>ipados/</code> tree pretending to be a platform. Now iPhone and iPad shots of one iOS version sit side by side in <code>iphone/</code> and <code>ipad/</code>. The folders only keep same-named shots apart; the slot each file fills is still read from its pixels. Files are uploaded in name order, because ASC shows a set in the order its files were added and the <code>ss-NN</code> names are the order.</p>
+<h2 id="uploading">Uploading<a class="headerlink" href="#uploading" title="Permanent link">&para;</a></h2>
+<h3 id="remote-mirrors-local">Remote mirrors local<a class="headerlink" href="#remote-mirrors-local" title="Permanent link">&para;</a></h3>
+<p>A push empties each set it uploads to and deletes any set whose slot the local folders no longer produce. ASC has no replace-in-place call, only add and remove, so this matches fastlane's <code>overwrite_screenshots</code>. Without the stale-set sweep, changing the shoot's device class (6.9" to 6.5") left the old class's set live, and since ASC prefers a native set over scaling, the stale 6.9" deck kept being shown.</p>
+<h3 id="an-empty-local-deck-deletes-the-live-sets">An empty local deck deletes the live sets<a class="headerlink" href="#an-empty-local-deck-deletes-the-live-sets" title="Permanent link">&para;</a></h3>
+<p>An empty locale folder is an instruction, not a no-op. Skipping it once left a locale whose previews had all been deleted showing the old ones on the product page forever. A locale with no folder at all has no opinion and is skipped.</p>
+<h3 id="the-whole-plan-is-built-before-the-first-delete">The whole plan is built before the first delete<a class="headerlink" href="#the-whole-plan-is-built-before-the-first-delete" title="Permanent link">&para;</a></h3>
+<p>Every file's size is mapped to a slot, every video read, and the size and count limits checked across all locales before anything is deleted. A bad file in the last locale then fails while ASC still holds every locale's current deck.</p>
+<h3 id="a-killed-shoot-blocks-the-push">A killed shoot blocks the push<a class="headerlink" href="#a-killed-shoot-blocks-the-push" title="Permanent link">&para;</a></h3>
+<p>Both pushes refuse, dry run included, while a killed shoot's stash exists. A killed shoot leaves a deck that may be half done, and mirroring it would replace the live sets with it.</p>
+<h3 id="a-dry-run-without-credentials-still-shows-the-local-plan">A dry run without credentials still shows the local plan<a class="headerlink" href="#a-dry-run-without-credentials-still-shows-the-local-plan" title="Permanent link">&para;</a></h3>
+<p>The per-repo copies created the API client first and died on missing credentials, so a dry run, which is how a deck gets eyeballed, showed nothing offline. The local half (every file read, every size mapped to a slot) is most of what a dry run is for. The live half (which sets would be emptied or deleted) needs credentials, and is named as missing rather than silently skipped.</p>
+<h3 id="previews-and-screenshots-are-separate-pushes">Previews and screenshots are separate pushes<a class="headerlink" href="#previews-and-screenshots-are-separate-pushes" title="Permanent link">&para;</a></h3>
+<p>App Previews are separate ASC resources (<code>appPreviewSets</code> and <code>appPreviews</code>, with their own slot enum), so they have their own command. They share the deck folder so one folder is everything a device class needs. Apple transcodes a preview and can reject it after the bytes land, so the push waits for processing with a 20-minute budget instead of the 10 minutes used for images.</p>
+<h3 id="processing-is-verified-and-rejects-are-retried-once">Processing is verified, and rejects are retried once<a class="headerlink" href="#processing-is-verified-and-rejects-are-retried-once" title="Permanent link">&para;</a></h3>
+<p>Without waiting for Apple's ingest, "push complete" only means the bytes arrived. A rejected screenshot is deleted and re-uploaded once: transient ingest failures are real, and deterministic rejects fail again immediately. Uploads are tracked by Apple's resource id, never the file name. Every locale and device has an <code>ss-01.jpg</code>, and matching by name once retried an English rejection with the German file into the German set (found in review, 2026-10-02).</p>
+<h3 id="screenshots-show"><code>screenshots show</code><a class="headerlink" href="#screenshots-show" title="Permanent link">&para;</a></h3>
+<p>The fastlane migration tables mapped <code>show_screenshots</code> to this command before any copy implemented it. It answers the question the stale-set sweep raises: which display classes ASC holds right now, and how many files are in each.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../foundations/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Project, client and listing">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Project, client and listing
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../framing/" class="md-footer__link md-footer__link--next" aria-label="Next: Framing and the gallery">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Framing and the gallery
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      MIT licensed. Not affiliated with Apple or fastlane.
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.footer", "navigation.instant", "search.highlight", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
