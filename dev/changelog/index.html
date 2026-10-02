@@ -1487,6 +1487,23 @@
 major version is 0, a change that needs new <code>snakelane.yml</code> keys or changes a command's
 behaviour bumps the minor version. Each release is tagged <code>vX.Y.Z</code>.</p>
 <h2 id="unreleased">Unreleased<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>The skill's templates are split by platform</strong>: shared ones at the top of <code>assets/</code>,
+  iOS-only ones (<code>FramedScreenshot</code>, <code>VideoPreviewUITests</code>, <code>record_gameplay_video.sh</code>) in
+  <code>assets/ios/</code>, Mac-only ones in <code>assets/macos/</code>.</li>
+<li><strong>The Mac lane works from the templates.</strong> <code>ScreenshotsUITests.swift.template</code> builds for macOS:
+  it captures the app's window, fails a shot that isn't an App Store Connect Mac size, and
+  attaches only the raw shot (frame the Mac deck with <code>frame: snakelane</code>). A new
+  <code>macos/ScreenshotWindowSizer.swift.template</code> pins the app's window under <code>--ui-window-size</code>.
+  <code>FramedScreenshot.swift.template</code> is UIKit-only behind <code>#if canImport(UIKit)</code>.</li>
+<li><strong>Apps must change:</strong> the UI-test templates' launch sentinel is now <code>--ui-tests</code>, not a bare
+  <code>UITests</code>, which on a Mac AppKit opened as a file, so the app launched with no window. An app
+  that copied the templates should rename it in its tests and anywhere it reads the argument.</li>
+<li><strong><code>frame --platform macos</code></strong> frames only the Mac deck. It used to re-frame every deck with
+  raws, iOS included.</li>
+<li><strong>The Mac lane's Automation Mode check</strong> passes on a Mac where the mode can be switched on
+  without a password: the tool reads "disabled" at rest, and XCTest turns it on for the run.</li>
+</ul>
 <h2 id="010">0.1.0<a class="headerlink" href="#010" title="Permanent link">&para;</a></h2>
 <p>First release.</p>
 <ul>

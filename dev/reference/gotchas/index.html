@@ -1057,6 +1057,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-mac-lane" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Mac lane
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#xcode-project" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1546,6 +1557,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-mac-lane" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Mac lane
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#xcode-project" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1824,8 +1846,30 @@ Every <code>simctl</code> call against a clone needs <code>--set ~/Library/Devel
 0-byte file. Poll the XCTestDevices set for a booted clone and record against its UDID.</p>
 <p><strong>Sandbox StoreKit purchases leak into later test runs.</strong> An app that seeds entitlements from
 <code>Transaction.currentEntitlements</code> will see packs a developer bought while debugging as owned
-in every subsequent run. Guard the seed on a <code>UITests</code> launch argument; clear existing state
+in every subsequent run. Guard the seed on a <code>--ui-tests</code> launch argument; clear existing state
 with Xcode → Debug → StoreKit → Manage Transactions → Delete All.</p>
+<h2 id="the-mac-lane">The Mac lane<a class="headerlink" href="#the-mac-lane" title="Permanent link">&para;</a></h2>
+<p><strong>A dash-less launch argument opens no window.</strong> AppKit reads <code>-name value</code> pairs out of the
+arguments and takes any word left over as a file to open; a SwiftUI app launched that way
+opens no <code>WindowGroup</code> window, so every shot fails with "view did not appear". A bare
+<code>UITests</code> sentinel did it (the templates now pass <code>--ui-tests</code>), and so did the <code>69</code> a
+value-less flag orphans: <code>-resetProgress -startLevel 69</code> pairs <code>-resetProgress</code> with
+<code>-startLevel</code>. Pass <code>-name value</code> pairs first and value-less flags after them. To check a
+launch by hand: <code>open -g &lt;app&gt; --args …</code> and look for its window; a windowless app has only a
+menu bar in the test's UI hierarchy attachment.</p>
+<p><strong>Capture the window, at a size the app pins.</strong> On a Mac <code>app.screenshot()</code> is the whole
+display. The template captures the app's largest window and fails a shot that isn't 1280x800,
+1440x900, 2560x1600 or 2880x1800 pixels. XCUITest can't size a window, so the app does:
+<code>ScreenshotWindowSizer.swift</code> (from <code>assets/macos/</code>) pins the frame under
+<code>--ui-window-size=1440x900</code>, which a 2x display captures as 2880x1800.</p>
+<p><strong><code>FramedScreenshot</code> is UIKit.</strong> A Mac deck is framed by snakelane (<code>frame: snakelane</code>); the
+template attaches only raw shots there.</p>
+<p><strong>Automation Mode reads "disabled" at rest.</strong> After
+<code>sudo automationmodetool enable-automationmode-without-authentication</code> the tool still says
+"Automation Mode is disabled"; XCTest switches it on for each run without a password. The
+shoot's check accepts that.</p>
+<p><strong>Quit the app before a shoot.</strong> A copy running from Xcode's debugger can't be terminated by
+the test ("Failed to terminate"), and the first shot fails.</p>
 <h2 id="xcode-project">Xcode project<a class="headerlink" href="#xcode-project" title="Permanent link">&para;</a></h2>
 <p><strong>Nothing may write the <code>.pbxproj</code> from a build phase.</strong> Xcode watches the project file and
 cancels a build whose project changes underneath it. The symptom points nowhere:

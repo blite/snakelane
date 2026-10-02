@@ -1206,6 +1206,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#automation-mode-is-on-only-during-a-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automation Mode is on only during a run
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-locale-travels-in-a-file-not-the-environment" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2061,6 +2072,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#automation-mode-is-on-only-during-a-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automation Mode is on only during a run
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-locale-travels-in-a-file-not-the-environment" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2574,7 +2596,9 @@
 <p><code>xcodebuild</code> gets <code>-parallel-testing-enabled NO</code>. On iOS this keeps the test on the parent simulator the status-bar pin already booted, rather than a cold test clone: cold clone boots are where XCUITest's launch request races SpringBoard and retries with a huge <code>wait_for_debugger</code> dump. <code>ship</code> runs its tests the same way. On a Mac the reason is stronger: parallel workers are separate copies of the app on the same desktop, and one's capture can catch another's window.</p>
 <h3 id="the-mac-lane-checks-for-developer-mode-and-automation-mode">The Mac lane checks for developer mode and Automation Mode<a class="headerlink" href="#the-mac-lane-checks-for-developer-mode-and-automation-mode" title="Permanent link">&para;</a></h3>
 <p>Both switches are administrator actions, so the shoot prints the commands rather than running them. They are once per machine, though an OS upgrade turns Automation Mode back off. Without developer mode the failure arrives after the whole project has built, as "The test runner failed to initialize for UI testing (Underlying Error: Authentication canceled…)", which names a dialog rather than the switch. Without Automation Mode every synthesized click and key is dropped after about five seconds with no error. The no-authentication setting is used because a run that asks for a password part-way through is a run nobody is watching.</p>
-<p>The check reads <code>automationmodetool</code>'s state line, not its password line. The tool prints "DOES NOT REQUIRE user authentication" whether the mode is on or off, and reading that as "on" once let a disabled Mac through to a build that dropped every click. The iOS lane needs neither switch, because the simulator is not the host.</p>
+<p>The iOS lane needs neither switch, because the simulator is not the host.</p>
+<h3 id="automation-mode-is-on-only-during-a-run">Automation Mode is on only during a run<a class="headerlink" href="#automation-mode-is-on-only-during-a-run" title="Permanent link">&para;</a></h3>
+<p>The check first read only <code>automationmodetool</code>'s state line, after reading its password line as "on" once let a disabled Mac through to a build that dropped every click. But the state line says "Automation Mode is disabled" at rest on a correctly set-up Mac: in Word Search (2026-10, macOS 27) it read "disabled" before and after a Mac shoot and "ENABLED" while the test ran, because XCTest switches the mode on for its session once the no-password setting is made. The strict check could never pass, and sent the user back to <code>sudo</code> after they had run it. So the check now passes when the mode is on, or when it is off but can be switched on without a password. If clicks are dropped again with the mode reading "disabled" at rest, the earlier failure is back, and this note is where to start.</p>
 <h3 id="the-locale-travels-in-a-file-not-the-environment">The locale travels in a file, not the environment<a class="headerlink" href="#the-locale-travels-in-a-file-not-the-environment" title="Permanent link">&para;</a></h3>
 <p>Every <code>xcodebuild test</code> gets <code>TEST_RUNNER_SNAKELANE_*</code> variables, but an iOS UI-test runner does not reliably see them. Measured in Jigsaw and Spades: neither <code>TEST_RUNNER_</code> variables nor <code>-testLanguage</code> reached the UI-test process, and a reframe root passed that way was silently ignored while the run reported success. So the locale also goes through a file on the host's disk, which the simulator can read (<code>/tmp/&lt;slug&gt;-screenshot-locale</code>, and <code>/tmp/&lt;slug&gt;-screenshot-banner.json</code> for the caption band's depth). The file is removed after the run, because a stale one would make a later test run from Xcode shoot in whatever language this run ended on.</p>
 <h3 id="the-reframe-test-finds-its-own-trees">The reframe test finds its own trees<a class="headerlink" href="#the-reframe-test-finds-its-own-trees" title="Permanent link">&para;</a></h3>
