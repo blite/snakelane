@@ -224,3 +224,17 @@ def test_mixed_faces_render_and_lists_are_lines(app: project.App, capsys: pytest
     styled(app, captions={"1": "Every *hike*"})
     frame.frame_deck(app, "en-US")
     assert "the accent colour is ==word==" in capsys.readouterr().out, "old accent syntax gets a hint"
+
+
+def test_platform_frames_only_that_platforms_decks(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # `frame --platform macos` once re-framed the iOS decks from stale raws as well.
+    app = make_app(tmp_path, platforms=["ios", "macos"],
+                   screenshots={"frame": "snakelane", "framing": {"captions": {"1": "One"}}})
+    capture(app, "iphone", 1)
+    mac = project.DeckTree.for_deck(app, "mac").raw("en-US") / "ss-01.png"
+    mac.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGB", (2880, 1800), "white").save(mac)
+    monkeypatch.chdir(tmp_path)
+    frame.frame_command(platform="macos")
+    assert (project.DeckTree.for_deck(app, "mac").framed("en-US") / "ss-01.jpg").exists()
+    assert not project.DeckTree.for_deck(app, "iphone").framed("en-US").exists()

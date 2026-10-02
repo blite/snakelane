@@ -38,7 +38,11 @@ The device is booted first and `bootstatus -b` waits for the boot. `simctl statu
 
 Both switches are administrator actions, so the shoot prints the commands rather than running them. They are once per machine, though an OS upgrade turns Automation Mode back off. Without developer mode the failure arrives after the whole project has built, as "The test runner failed to initialize for UI testing (Underlying Error: Authentication canceled…)", which names a dialog rather than the switch. Without Automation Mode every synthesized click and key is dropped after about five seconds with no error. The no-authentication setting is used because a run that asks for a password part-way through is a run nobody is watching.
 
-The check reads `automationmodetool`'s state line, not its password line. The tool prints "DOES NOT REQUIRE user authentication" whether the mode is on or off, and reading that as "on" once let a disabled Mac through to a build that dropped every click. The iOS lane needs neither switch, because the simulator is not the host.
+The iOS lane needs neither switch, because the simulator is not the host.
+
+### Automation Mode is on only during a run
+
+The check first read only `automationmodetool`'s state line, after reading its password line as "on" once let a disabled Mac through to a build that dropped every click. But the state line says "Automation Mode is disabled" at rest on a correctly set-up Mac: in Word Search (2026-10, macOS 27) it read "disabled" before and after a Mac shoot and "ENABLED" while the test ran, because XCTest switches the mode on for its session once the no-password setting is made. The strict check could never pass, and sent the user back to `sudo` after they had run it. So the check now passes when the mode is on, or when it is off but can be switched on without a password. If clicks are dropped again with the mode reading "disabled" at rest, the earlier failure is back, and this note is where to start.
 
 ### The locale travels in a file, not the environment
 

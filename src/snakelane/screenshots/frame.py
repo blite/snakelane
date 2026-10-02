@@ -27,6 +27,7 @@ from .media import deck_files, save_jpeg
 # The canvas when "targets" names none: 6.5" iPhone, 13" iPad, the Mac. Only the handoff needs it.
 DECK_CANVAS = {"iphone": (1284, 2778), "ipad": (2064, 2752), "mac": (2880, 1800)}
 CAPTIONS = 'snakelane.yml "framing.captions"'
+PLATFORM_DECKS = {"ios": ("iphone", "ipad"), "macos": ("mac",)}
 OLD_ACCENT = re.compile(r"(?<![*\\])\*(?!\*)[^*\n]+(?<![*\\])\*(?!\*)")
 
 
@@ -165,6 +166,10 @@ def frame_command(
     if dry_run:
         raise typer.BadParameter("--dry-run is for frame: test; snakelane's own framing writes nothing outside "
                                  "the deck, so run it and look (or use --theme to write a preview)")
+    # --platform narrows the decks; without it every deck with raws is framed, as before.
+    # Why: docs/design/framing.md#frame-honours-platform
+    if platform is not None and not deck:
+        deck = list(PLATFORM_DECKS[resolve_platform(resolved.config, platform)])
     frame_deck(resolved, locale, deck, theme=theme)
     print("A preview: the deck is unchanged. Set framing.theme to keep it." if theme
           else "Upload with:  snakelane store screenshots push")

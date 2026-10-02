@@ -1,3 +1,6 @@
+// UIKit only: on a UI-test target that also builds for macOS (the Mac lane),
+// the Mac deck is framed by snakelane (`frame: snakelane`) instead.
+#if canImport(UIKit)
 import UIKit
 
 /// Builds App-Store-ready marketing screenshots inside the UI test
@@ -417,3 +420,4 @@ enum FramedScreenshot {
         CGFloat(image.cgImage?.height ?? Int(image.size.height))
     }
 }
+#endif

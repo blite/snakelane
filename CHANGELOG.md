@@ -6,6 +6,19 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **The Mac lane works from the templates.** `ScreenshotsUITests.swift.template` builds for macOS:
+  it captures the app's window, fails a shot that isn't an App Store Connect Mac size, and
+  attaches only the raw shot (frame the Mac deck with `frame: snakelane`). A new
+  `ScreenshotWindowSizer.swift.template` pins the app's window under `--ui-window-size`.
+  `FramedScreenshot.swift.template` is UIKit-only behind `#if canImport(UIKit)`.
+- **Apps must change:** the UI-test templates' launch sentinel is now `--ui-tests`, not a bare
+  `UITests`, which on a Mac AppKit opened as a file, so the app launched with no window. An app
+  that copied the templates should rename it in its tests and anywhere it reads the argument.
+- **`frame --platform macos`** frames only the Mac deck. It used to re-frame every deck with
+  raws, iOS included.
+- **The Mac lane's Automation Mode check** passes on a Mac where the mode can be switched on
+  without a password: the tool reads "disabled" at rest, and XCTest turns it on for the run.
+
 ## 0.1.0
 
 First release.

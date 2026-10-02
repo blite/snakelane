@@ -231,6 +231,14 @@ def pin_status_bar(udid: str) -> None:
          "--cellularMode", "active", "--cellularBars", "4", "--batteryState", "discharging", "--batteryLevel", "100"])
 
 
+def automation_mode_ready(status: str) -> bool:
+    """`automationmodetool`'s status (lowercased): on now, or off at rest but switchable on by the
+    test run without a password. Why: docs/design/screenshots.md#automation-mode-is-on-only-during-a-run"""
+    if "automation mode is enabled" in status:
+        return True
+    return "does not require user authentication" in status
+
+
 def require_mac_ui_testing() -> None:
     """Fail early, printing the admin commands, if developer mode or Automation Mode is off.
     Why: docs/design/screenshots.md#the-mac-lane-checks-for-developer-mode-and-automation-mode"""
@@ -240,8 +248,7 @@ def require_mac_ui_testing() -> None:
     problems = []
     if "enabled" not in output(["DevToolsSecurity", "-status"]):
         problems.append("sudo DevToolsSecurity -enable")
-    # The state line, not the password line: "DOES NOT REQUIRE user authentication" prints either way.
-    if "automation mode is enabled" not in output(["automationmodetool"]):
+    if not automation_mode_ready(output(["automationmodetool"])):
         problems.append("sudo automationmodetool enable-automationmode-without-authentication")
     if problems:
         raise SystemExit("macOS UI testing isn't set up on this machine, so the shoot would fail after building "

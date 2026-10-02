@@ -236,8 +236,36 @@ Every `simctl` call against a clone needs `--set ~/Library/Developer/XCTestDevic
 
 **Sandbox StoreKit purchases leak into later test runs.** An app that seeds entitlements from
 `Transaction.currentEntitlements` will see packs a developer bought while debugging as owned
-in every subsequent run. Guard the seed on a `UITests` launch argument; clear existing state
+in every subsequent run. Guard the seed on a `--ui-tests` launch argument; clear existing state
 with Xcode → Debug → StoreKit → Manage Transactions → Delete All.
+
+## The Mac lane
+
+**A dash-less launch argument opens no window.** AppKit reads `-name value` pairs out of the
+arguments and takes any word left over as a file to open; a SwiftUI app launched that way
+opens no `WindowGroup` window, so every shot fails with "view did not appear". A bare
+`UITests` sentinel did it (the templates now pass `--ui-tests`), and so did the `69` a
+value-less flag orphans: `-resetProgress -startLevel 69` pairs `-resetProgress` with
+`-startLevel`. Pass `-name value` pairs first and value-less flags after them. To check a
+launch by hand: `open -g <app> --args …` and look for its window; a windowless app has only a
+menu bar in the test's UI hierarchy attachment.
+
+**Capture the window, at a size the app pins.** On a Mac `app.screenshot()` is the whole
+display. The template captures the app's largest window and fails a shot that isn't 1280x800,
+1440x900, 2560x1600 or 2880x1800 pixels. XCUITest can't size a window, so the app does:
+`ScreenshotWindowSizer.swift` (from `assets/`) pins the frame under
+`--ui-window-size=1440x900`, which a 2x display captures as 2880x1800.
+
+**`FramedScreenshot` is UIKit.** A Mac deck is framed by snakelane (`frame: snakelane`); the
+template attaches only raw shots there.
+
+**Automation Mode reads "disabled" at rest.** After
+`sudo automationmodetool enable-automationmode-without-authentication` the tool still says
+"Automation Mode is disabled"; XCTest switches it on for each run without a password. The
+shoot's check accepts that.
+
+**Quit the app before a shoot.** A copy running from Xcode's debugger can't be terminated by
+the test ("Failed to terminate"), and the first shot fails.
 
 ## Xcode project
 

@@ -35,7 +35,8 @@ final class {{UI_TEST_TARGET_NAME}}VideoPreviewUITests: XCTestCase {
         // auto-advance. Nothing in this test should *drive* the UI;
         // your app's own run loop should be doing that on its own
         // once it resumes.
-        app.launchArguments.append("UITests")
+        // Not a bare "UITests": on the Mac AppKit opens a dash-less argument as a file.
+        app.launchArguments.append("--ui-tests")
         app.launchArguments.append("--ui-screenshot=video-demo")
         app.launch()
 

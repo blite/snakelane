@@ -137,3 +137,13 @@ def test_each_pass_gets_the_banner_depth_and_the_file_is_removed(app: project.Ap
     shoot.run_passes(plan)
     assert seen[0]["slots"]["1"]["position"] == "top" and seen[0]["depth"] == pytest.approx(0.10, abs=0.002)
     assert not shoot.banner_file(app).exists(), "no stale depth for the next run"
+
+
+@pytest.mark.parametrize(("status", "ready"), [
+    # At rest on a set-up Mac: XCTest switches the mode on for its run, no password.
+    ("automation mode is disabled.\nthis device does not require user authentication to enable automation mode.", True),
+    ("automation mode is enabled.\nthis device does not require user authentication to enable automation mode.", True),
+    ("automation mode is disabled.\nthis device requires user authentication to enable automation mode.", False),
+])
+def test_automation_mode_ready(status: str, ready: bool) -> None:
+    assert shoot.automation_mode_ready(status) is ready

@@ -76,6 +76,14 @@ whose captions only use single asterisks gets a note, since that is almost certa
 meaning. Italic is a real face or an error: a slanted copy of the upright face looks wrong
 next to a font's own italic.
 
+### `frame` honours `--platform`
+
+`snakelane frame --platform macos` used to frame every deck with raws, because the flag reached
+only the `frame: test` path. In Word Search (2026-10) it re-framed the committed iPhone and iPad
+decks from stale raws while framing the first Mac deck, and they had to be restored from git.
+`--platform` now limits the run to that platform's decks; with neither `--platform` nor `--deck`
+every deck with raws is framed, as before.
+
 ## Themes
 
 ### Taken over number for number

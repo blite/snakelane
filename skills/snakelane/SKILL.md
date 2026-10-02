@@ -276,6 +276,11 @@ Archive only from the app scheme; turn Archive off in helper schemes.
 3. Add the Archive post-action (`snakelane bump --post-action`) and remove any old bump build
     phase.
 
+    For a Mac deck as well: list `macos` in `platforms`, add `"mac": {}` under `screenshots`, use
+    `frame: snakelane`, and add `ScreenshotWindowSizer.swift` to the app (its header shows where
+    to attach it). The UI test template already captures the window on a Mac.
+    `references/gotchas.md` → The Mac lane has the traps.
+
 4. `snakelane store push --dry-run` should print the whole listing with no network access;
     `snakelane shoot --dry-run` shows the screenshot plan.
 

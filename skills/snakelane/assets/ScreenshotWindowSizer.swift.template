@@ -1,0 +1,115 @@
+//
+//  ScreenshotWindowSizer.swift
+//  {{PROJECT_NAME}}
+//
+//  The Mac lane's half of the screenshot deck: pins the Mac window to
+//  the frame size `--ui-window-size=WxH` asks for, so the deck captures
+//  an App Store Connect size. The UI test template passes 1440x900.
+//
+//  Why the app has to do this: XCUITest on macOS can read a window's
+//  frame but not set one, and App Store Connect takes Mac screenshots at
+//  exactly 1280x800, 1440x900, 2560x1600 or 2880x1800 pixels. A
+//  1440x900-point frame captures as 2880x1800 on a 2x display.
+//
+//  Frame, not content: a window capture returns the frame, so the frame
+//  is what has to land on the accepted size. `contentMinSize ==
+//  contentMaxSize` is the pin: SwiftUI restores a remembered frame and
+//  re-lays-out after this view lands, and equal bounds leave it nothing
+//  to resize to.
+//
+//  Attach it to the window's root view, macOS only; it is inert without
+//  the launch argument, so a player's window is never touched:
+//
+//      WindowGroup {
+//          RootView()
+//              #if os(macOS)
+//              .background {
+//                  if let size = ScreenshotWindowSizer.requestedFrameSize {
+//                      ScreenshotWindowSizer(frameSize: size)
+//                  }
+//              }
+//              #endif
+//      }
+//
+
+#if os(macOS)
+import AppKit
+import SwiftUI
+
+struct ScreenshotWindowSizer: NSViewRepresentable {
+    let frameSize: CGSize
+
+    /// The frame `--ui-window-size=WxH` asks for, in points; nil on a
+    /// normal launch.
+    static var requestedFrameSize: CGSize? {
+        let prefix = "--ui-window-size="
+        for argument in CommandLine.arguments where argument.hasPrefix(prefix) {
+            let parts = argument.dropFirst(prefix.count).split(separator: "x")
+            guard parts.count == 2,
+                  let width = Double(parts[0]), let height = Double(parts[1]),
+                  width > 0, height > 0
+            else { return nil }
+            return CGSize(width: width, height: height)
+        }
+        return nil
+    }
+
+    func makeNSView(context: Context) -> NSView {
+        let view = SizingView()
+        view.frameSize = frameSize
+        return view
+    }
+
+    func updateNSView(_ view: NSView, context: Context) {
+        (view as? SizingView)?.frameSize = frameSize
+    }
+
+    /// Centre the window on a display that holds all of it. A window
+    /// capture is clipped to its display, so a correctly sized window
+    /// hanging off an edge photographs as a smaller, unaccepted image;
+    /// and a capture on a second display came back at the wrong size in
+    /// HeartsNoAds, so the primary display is tried first.
+    @MainActor
+    static func placeWhollyOnScreen(_ window: NSWindow) {
+        let size = window.frame.size
+        func fits(_ screen: NSScreen) -> Bool {
+            screen.visibleFrame.width >= size.width && screen.visibleFrame.height >= size.height
+        }
+        let candidates = [NSScreen.screens.first, window.screen, NSScreen.main].compactMap { $0 }
+            + NSScreen.screens
+        guard let screen = candidates.first(where: fits) else {
+            window.center()
+            return
+        }
+        let visible = screen.visibleFrame
+        window.setFrameOrigin(NSPoint(x: visible.midX - size.width / 2,
+                                      y: visible.midY - size.height / 2))
+    }
+
+    /// A zero-sized view whose only job is to reach the window.
+    /// `viewDidMoveToWindow`, because `window` is nil in `makeNSView`.
+    private final class SizingView: NSView {
+        var frameSize: CGSize = .zero
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            guard let window else { return }
+            pin(window)
+            // Again next run-loop turn: SwiftUI sizes the window from its
+            // content after this, and frame restoration lands later still.
+            Task { @MainActor in self.pin(window) }
+        }
+
+        @MainActor
+        private func pin(_ window: NSWindow) {
+            window.styleMask.remove(.resizable)
+            let frame = NSRect(origin: window.frame.origin, size: frameSize)
+            let content = window.contentRect(forFrameRect: frame).size
+            window.setContentSize(content)
+            window.contentMinSize = content
+            window.contentMaxSize = content
+            ScreenshotWindowSizer.placeWhollyOnScreen(window)
+        }
+    }
+}
+#endif
