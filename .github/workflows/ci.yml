@@ -22,12 +22,12 @@ jobs:
       - run: uv run --group docs mkdocs build --strict
 
   test:
+    # macOS only: snakelane runs where Xcode does, and the framing tests draw with macOS's fonts.
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
         python: ["3.11", "3.13"]
-    runs-on: ${{ matrix.os }}
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6

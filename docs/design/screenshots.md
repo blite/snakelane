@@ -96,7 +96,7 @@ The attachment name pattern allows hyphens and digits after the first letter of 
 
 Attachments arrive as PNG and are written as JPEG at quality 90 (see [ADR 0002](../adr/0002-jpeg-only-screenshot-decks.md)). JPEG has no alpha channel, and ASC rejects screenshots that carry one, which XCUIScreen captures always do. The files are also about 5 to 10 times smaller. Quality 90 is what `snakelane frame` writes too, so a deck framed by the UI test and one framed afterwards match. JPEGs are written with no chroma subsampling, so caption text keeps sharp coloured edges.
 
-Until 2026-10-02 shots went through macOS's `sips`. Pillow makes extraction and framing one code path, and lets them run off a Mac.
+Until 2026-10-02 shots went through macOS's `sips`. Pillow makes extraction and framing one code path.
 
 ### An empty extraction stops the run
 

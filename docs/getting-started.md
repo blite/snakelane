@@ -2,8 +2,9 @@
 
 ## Install
 
-`store`, `lint`, `translations`, `gallery` and `packs` need only Python 3.11+, and run on
-Linux CI runners too. `ship`, `shoot`, `bump` and `check` drive Xcode, so they need macOS.
+snakelane is built and tested on macOS: `ship`, `shoot`, `bump` and `check` drive Xcode, and
+framing draws with macOS's fonts. `store`, `lint`, `translations` and `packs` need only Python
+3.11+ and should run elsewhere (a Linux CI runner, say), but only macOS is tested.
 
 Fork snakelane, clone your fork, and install it editable, so the installed command runs your
 checkout:
