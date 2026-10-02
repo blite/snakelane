@@ -1,0 +1,88 @@
+import XCTest
+
+/// App Preview video driver. This test class exists solely to park
+/// the app in a controlled auto-play state long enough for the
+/// host-side `scripts/record_gameplay_video.sh` orchestrator to
+/// capture a clean clip via `xcrun simctl io <udid> recordVideo`.
+///
+/// The video itself is written by the simulator's own display
+/// capture — this test is the *player*, not the recorder.
+///
+/// The handshake between this test and the host script is two files
+/// in the test runner's Documents directory:
+///
+///   hh-video-ready.marker   — "scene is up, safe to start recording"
+///   hh-video-done.marker    — "wrap up the recording before teardown"
+///
+/// The host script finds that Documents dir via
+/// `xcrun simctl get_app_container <udid> {{UI_TEST_BUNDLE_IDENTIFIER}}.xctrunner data`
+/// and polls for the marker files. That handshake is what keeps
+/// simulator springboard + app-launch + test-teardown frames out of
+/// the final clip.
+final class {{UI_TEST_TARGET_NAME}}VideoPreviewUITests: XCTestCase {
+
+    override func setUpWithError() throws {
+        continueAfterFailure = false
+    }
+
+    @MainActor
+    func test01AutoPlayDemo() throws {
+        let app = XCUIApplication()
+        // TODO (snakelane scaffold): wire up a `video-demo`
+        // scenario in `UITestScreenshotScenario` that resumes your
+        // app into a state that will play itself forward — e.g., a
+        // game with all seats driven by AI, or a slideshow set to
+        // auto-advance. Nothing in this test should *drive* the UI;
+        // your app's own run loop should be doing that on its own
+        // once it resumes.
+        app.launchArguments.append("UITests")
+        app.launchArguments.append("--ui-screenshot=video-demo")
+        app.launch()
+
+        // TODO: wait for a signal that the scene is really up. The
+        // placeholder below polls on `someIdentifier` — replace it
+        // with a selector that exists in your auto-playing view (a
+        // toolbar button, a seat badge, a scoreboard cell, etc.).
+        let sceneReady = app.otherElements["someIdentifier"]
+        XCTAssertTrue(
+            sceneReady.waitForExistence(timeout: 15),
+            "Video-demo scene never rendered"
+        )
+
+        // Signal to the host orchestrator that it's safe to start
+        // the recorder. The `sleep(2)` below gives simctl io a beat
+        // to attach before the interesting animations start.
+        writeVideoMarker(.ready)
+        sleep(2)
+
+        // TODO: sit in this state for however long you want the clip
+        // to run. If your app drives itself (e.g. AI takes turns),
+        // you can literally just sleep. If you want narrative beats,
+        // insert them here — tap a score sheet button, swipe, etc.
+        //
+        // Keep the total wall time under ~30 s so App Store Connect
+        // accepts the result as an App Preview without further
+        // trimming.
+        sleep(24)
+
+        // Tell the orchestrator to stop recording before the test
+        // tears down — keeps a trailing second or two out of the clip.
+        writeVideoMarker(.done)
+    }
+
+    // MARK: - Host handshake
+
+    private enum VideoMarker: String {
+        case ready = "hh-video-ready.marker"
+        case done  = "hh-video-done.marker"
+    }
+
+    private func writeVideoMarker(_ marker: VideoMarker) {
+        guard let dir = FileManager.default.urls(
+            for: .documentDirectory,
+            in: .userDomainMask
+        ).first else { return }
+        let url = dir.appendingPathComponent(marker.rawValue)
+        try? Data("ok".utf8).write(to: url)
+    }
+}

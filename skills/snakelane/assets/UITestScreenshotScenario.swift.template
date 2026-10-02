@@ -1,0 +1,96 @@
+import Foundation
+
+/// Deterministic pre-baked states selected via the
+/// `--ui-screenshot=<rawValue>` launch argument. Your root SwiftUI
+/// view reads `UITestScreenshotScenario.current` on first appear and
+/// either auto-presents a sheet or resumes into a fixture — that's
+/// what lets the screenshot test suite jump straight into a specific
+/// screen without tapping through menus each run.
+///
+/// Scenarios are also a developer convenience: `xcrun simctl
+/// launch com.example.App {{BUNDLE_IDENTIFIER}} --ui-screenshot=settings`
+/// drops you into a view you're iterating on without hand-navigating.
+///
+/// TODO (snakelane scaffold): fill in the cases below for
+/// your app. The `.none`, `.mainMenu`, and `.settings` cases are
+/// generic and work on first run; the fixture-backed cases need
+/// `buildRecord()` to construct the state your app resumes into.
+nonisolated enum UITestScreenshotScenario: String, Sendable {
+    /// No scenario — normal product launch.
+    case none
+    /// Root menu shot; no extra state applied.
+    case mainMenu = "main-menu"
+    /// Settings view auto-presented over the root menu.
+    case settings = "settings"
+
+    // MARK: - Add app-specific fixture scenarios here
+    //
+    // Each scenario is resumed from a pre-built state. Typical
+    // additions for a game:
+    //
+    //     case midGame    = "mid-game"
+    //     case endOfMatch = "end-of-match"
+    //     case videoDemo  = "video-demo"
+    //
+    // Each maps to a branch in `buildRecord()` that walks the engine
+    // forward to the desired snapshot, then stamps a record the
+    // caller can `GameView(resuming:)` into.
+
+    /// The scenario selected by the current process's launch
+    /// arguments. Returns `.none` when `--ui-screenshot=<value>` is
+    /// absent or carries an unknown value.
+    static var current: UITestScreenshotScenario {
+        let prefix = "--ui-screenshot="
+        for argument in CommandLine.arguments where argument.hasPrefix(prefix) {
+            let raw = String(argument.dropFirst(prefix.count))
+            if let matched = UITestScreenshotScenario(rawValue: raw) {
+                return matched
+            }
+        }
+        return .none
+    }
+
+    /// True if this scenario needs a pre-built game state to resume
+    /// into. Used by the root view to branch between "present a
+    /// sheet" and "trigger the resume cover" on first appear.
+    ///
+    /// TODO: flip this to `true` for any app-specific scenarios you
+    /// add that should resume into a fixture rather than just
+    /// adjusting sheets.
+    var requiresFixture: Bool {
+        switch self {
+        case .none, .mainMenu, .settings: return false
+        }
+    }
+
+    /// Build the fixture record for this scenario. Returns `nil` for
+    /// scenarios that only tweak sheet presentation (no game state).
+    ///
+    /// TODO (snakelane scaffold): this stub returns nil for
+    /// every case because a fixture is app-specific — you'll replace
+    /// it with something that constructs your engine/state type and
+    /// plays it forward to the desired visible state.
+    ///
+    /// Example shape (for a game with a `GameEngine` + `GameRecord`):
+    ///
+    ///     @MainActor
+    ///     func buildRecord() -> GameRecord? {
+    ///         guard requiresFixture else { return nil }
+    ///         let engine = GameEngine(seed: Self.fixtureSeed)
+    ///         switch self {
+    ///         case .midGame:
+    ///             // play forward N turns of deterministic AI moves
+    ///             playForwardDeterministically(engine: engine, turns: 5)
+    ///         case .endOfMatch:
+    ///             playUntilComplete(engine: engine)
+    ///         default:
+    ///             break
+    ///         }
+    ///         return engine.snapshotAsRecord()
+    ///     }
+    @MainActor
+    func buildRecord() -> Any? {
+        // Replace `Any?` with your app's record type.
+        return nil
+    }
+}

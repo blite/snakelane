@@ -1,0 +1,74 @@
+[project]
+name = "snakelane"
+version = "0.1.0"
+description = "An opinionated App Store Connect CLI for indie Apple developers and coding agents. Keep listings, screenshots, and purchase catalogues in your repo, review changes, and ship with a focused Python workflow."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Ben Holloway" }]
+requires-python = ">=3.11"
+keywords = ["app-store-connect", "fastlane", "ios", "macos", "testflight", "xcode", "screenshots", "agent-skill"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Build Tools",
+]
+dependencies = [
+    "pyjwt>=2.8",
+    "cryptography>=42",
+    "requests>=2.31",
+    "pillow>=10",
+    "ruamel.yaml>=0.18",
+    "typer>=0.12",
+]
+
+[project.optional-dependencies]
+# OCR a screenshot deck for developer overlays and stray English (macOS only).
+check = ["pyobjc-framework-Vision", "pyobjc-framework-Quartz"]
+
+[project.urls]
+Homepage = "https://github.com/blite/snakelane"
+Issues = "https://github.com/blite/snakelane/issues"
+Changelog = "https://github.com/blite/snakelane/blob/main/CHANGELOG.md"
+
+[project.scripts]
+snakelane = "snakelane.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6"]
+docs = [
+    "mike>=2.1",
+    "mkdocs>=1.6,<2",
+    "mkdocs-material>=9.5",
+]
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/snakelane"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "RUF"]
+ignore = [
+    "E501",   # docstrings carry long URLs and command lines; wrap by judgement
+    "RUF001", # ambiguous unicode: "…", "→" and "×" are intended in user-facing text
+    "RUF002",
+    "RUF003",
+    "E741",   # `l` for a line in short comprehensions
+    "B904",   # `raise SystemExit(msg)` inside except is the CLI's error path
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

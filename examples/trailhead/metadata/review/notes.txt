@@ -1,0 +1,3 @@
+Trailhead needs no account. To see a saved hike, open the Hikes tab: the app ships with
+two sample hikes. Offline maps download from Settings > Maps; the download works on the
+simulator's network.

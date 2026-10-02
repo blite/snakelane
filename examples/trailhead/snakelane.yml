@@ -1,0 +1,23 @@
+# snakelane config for a fictional app. Every key is documented in
+# skills/snakelane/references/config.md; for the listing commands only
+# bundle_id is required.
+
+name: Trailhead
+bundle_id: com.example.trailhead
+apple_id: ""             # the numeric App Store id; empty until the app record exists
+scheme: Trailhead
+team_id: ABCDE12345
+
+# metadata: metadata     # where the listing, screenshots and catalogues live (the default)
+
+locales: [en-US, en-AU, de-DE]
+primary_locale: en-US    # the language a locale without its own screenshots inherits
+platforms: [ios]
+
+categories:
+  primary: HEALTH_AND_FITNESS
+  secondary: NAVIGATION
+
+screenshots:
+  devices: [iPhone 14 Plus, iPad Pro 13-inch (M5)]   # 6.5" iPhone and 13" iPad
+  locales: [en-US, de-DE]                            # en-AU inherits en-US's shots

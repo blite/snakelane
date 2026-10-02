@@ -1,0 +1,25 @@
+# snakelane config — every key: skills/snakelane/references/config.md
+
+name: "{{APP_STORE_NAME}}"
+bundle_id: "{{BUNDLE_IDENTIFIER}}"
+# The numeric App Store id. Leave it empty only until the app record exists: snakelane
+# asserts it, and Apple's bundle-id filter is a PREFIX match, so without it a lookup for
+# com.example.App can resolve to com.example.AppPlus.
+apple_id: "{{APPLE_ID}}"
+scheme: "{{SCHEME_NAME}}"
+team_id: "{{TEAM_ID}}"
+
+locales: [en-US]
+platforms: [ios]
+
+# Informational: the Kids Category band and the age rating are set once in App Store
+# Connect. Drop the key for an app that is not in the Kids Category.
+kids_age_band: FIVE_AND_UNDER
+
+categories:
+  primary: GAMES
+  primary_subcategory_one: GAMES_PUZZLE
+  primary_subcategory_two: GAMES_FAMILY
+  secondary: EDUCATION
+  secondary_subcategory_one: null
+  secondary_subcategory_two: null

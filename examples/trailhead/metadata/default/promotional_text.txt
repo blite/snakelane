@@ -1,0 +1,1 @@
+New: elevation profiles for every saved hike.

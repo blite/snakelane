@@ -1,0 +1,12 @@
+Trailhead keeps a record of every hike and the map to find your way back.
+
+• Log distance, time and elevation with one tap
+• Download maps for areas with no signal
+• Mark water, campsites and viewpoints as you go
+• See every hike you have done on one map
+
+Your hikes stay on your device. No account, no tracking.
+
+Privacy and terms
+Privacy Policy: https://example.com/trailhead/privacy
+Terms of Use: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/

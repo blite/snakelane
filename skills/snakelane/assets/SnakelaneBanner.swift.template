@@ -1,0 +1,44 @@
+import Foundation
+
+/// UI test target. Reads the band depth `snakelane shoot` hands over (with
+/// `frame: snakelane`) and turns it into launch arguments for the app, so the app leaves the
+/// band's space empty and the band covers nothing. The app side is
+/// `ScreenshotBannerReserve.swift.template`.
+///
+/// snakelane writes the same JSON two ways before each pass: the file
+/// `/tmp/<slug>-screenshot-banner.json`, and `SNAKELANE_BANNER` in the runner's
+/// environment. The file is the one an iOS UI-test runner reliably sees; the environment
+/// works on the Mac. Either is enough.
+///
+///     app.launchArguments += SnakelaneBanner.launchArguments(slot: 1)
+struct SnakelaneBanner: Decodable {
+    struct Reserve: Decodable {
+        /// "top", "bottom", or "none" (a callout, a turned capture, key art, or a layout
+        /// where the caption doesn't overlap the capture).
+        let position: String
+        /// A share of the capture's height, lip and rule included.
+        let depth: Double
+    }
+
+    let position: String
+    let depth: Double
+    let slots: [String: Reserve]
+
+    static let file = URL(fileURLWithPath: "/tmp/{{APP_SLUG}}-screenshot-banner.json")
+
+    static func load() -> SnakelaneBanner? {
+        let data =
+            ProcessInfo.processInfo.environment["SNAKELANE_BANNER"].flatMap { $0.data(using: .utf8) }
+            ?? (try? Data(contentsOf: file))
+        return data.flatMap { try? JSONDecoder().decode(SnakelaneBanner.self, from: $0) }
+    }
+
+    /// `--ui-banner-position=` and `--ui-banner-depth=` for this slot's band; none when
+    /// there is nothing to reserve, or when the test runs outside `snakelane shoot`.
+    static func launchArguments(slot: Int) -> [String] {
+        guard let banner = load() else { return [] }
+        let reserve = banner.slots[String(slot)] ?? Reserve(position: banner.position, depth: banner.depth)
+        guard reserve.position != "none", reserve.depth > 0 else { return [] }
+        return ["--ui-banner-position=\(reserve.position)", "--ui-banner-depth=\(reserve.depth)"]
+    }
+}

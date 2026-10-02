@@ -1,0 +1,11 @@
+# One of two apps in this repo: pick it with `--app pro` or `--config snakelane.pro.yml`.
+name: Trailhead Pro
+bundle_id: com.example.trailhead.pro
+apple_id: ""
+scheme: TrailheadPro
+team_id: ABCDE12345
+metadata: metadata/pro            # this app's listing, screenshots and catalogues
+project: Trailhead.xcodeproj     # both apps build from one project
+build_number_scope: app          # archiving one app never moves the other's build number
+locales: [en-US]
+platforms: [ios]

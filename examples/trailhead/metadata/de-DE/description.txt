@@ -1,0 +1,12 @@
+Trailhead hält jede Wanderung fest und zeigt dir den Weg zurück.
+
+• Strecke, Zeit und Höhenmeter mit einem Tippen aufzeichnen
+• Karten für Gebiete ohne Empfang herunterladen
+• Wasserstellen, Zeltplätze und Aussichtspunkte markieren
+• Alle Wanderungen auf einer Karte sehen
+
+Deine Wanderungen bleiben auf deinem Gerät. Kein Konto, kein Tracking.
+
+Datenschutz und Nutzungsbedingungen
+Datenschutzerklärung: https://example.com/trailhead/privacy
+Nutzungsbedingungen: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/

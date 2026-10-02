@@ -1,0 +1,419 @@
+import UIKit
+
+/// Builds App-Store-ready marketing screenshots inside the UI test
+/// process. No ImageMagick, no Ruby, no font-path roulette — all
+/// compositing happens via Core Graphics, the framed result is
+/// attached to the test result as an `XCTAttachment`, and there are
+/// no external dependencies (no ImageMagick, no Ruby simctl bindings,
+/// no font path roulette) to break on every Xcode release.
+///
+/// Three composition styles, picked per-shot via the `Style` enum:
+///
+///   - `.banner` — caption strip overlaid on top of the raw screenshot.
+///     Output dimensions equal input dimensions. Best when you want
+///     full-bleed app UI with marketing copy in the status-bar area.
+///     (Used by MobilityWare, Fiogonia, and other top App Store
+///     card-game apps.)
+///
+///   - `.deviceFrame` — screenshot wrapped in a real Apple device
+///     bezel, centered on a brand-colored background. No marketing
+///     text. Best when the screenshot itself is the message.
+///
+///   - `.deviceFrameWithHeadline` — the Pool Math pattern: brand-
+///     colored canvas, bold headline + subheadline strip at top,
+///     device-bezel-framed screenshot below. Best when the screen
+///     needs verbal context to land.
+///
+/// Output dimensions always equal input dimensions — App Store Connect
+/// rejects framed screenshots that don't match the device's native
+/// resolution (e.g. 1320×2868 for 6.9" iPhone, 2048×2732 for 13"
+/// iPad). For `.deviceFrame` and `.deviceFrameWithHeadline`, the
+/// bezel + screenshot are scaled down inside the canvas to make room
+/// for the background and text strip.
+enum FramedScreenshot {
+
+    enum Style {
+        /// Solid-color caption strip overlaid on top of the raw screenshot.
+        case banner(
+            headline: String,
+            subheadline: String,
+            bannerColor: UIColor,
+            headlineColor: UIColor,
+            subheadlineColor: UIColor,
+            captionHeightRatio: CGFloat = 0.22
+        )
+
+        /// Screenshot inside an Apple device bezel, on a brand background.
+        /// `bezelImageName` looks up a PNG bundled in the UI test target
+        /// (download from https://developer.apple.com/design/resources/).
+        /// `screenCornerRadius` is in pixels at the bezel PNG's native
+        /// resolution — clipping the rectangular screenshot to a rounded
+        /// rect prevents its square corners from poking out past the
+        /// bezel's rounded screen cutout.
+        case deviceFrame(
+            bezelImageName: String,
+            screenCornerRadius: CGFloat,
+            backgroundColor: UIColor
+        )
+
+        /// Pool Math-style: brand background, headline + subheadline at
+        /// top, bezel-framed screenshot below.
+        case deviceFrameWithHeadline(
+            headline: String,
+            subheadline: String,
+            bezelImageName: String,
+            screenCornerRadius: CGFloat,
+            backgroundColor: UIColor,
+            headlineColor: UIColor = .white,
+            subheadlineColor: UIColor = UIColor(white: 1, alpha: 0.85),
+            textStripRatio: CGFloat = 0.26
+        )
+    }
+
+    static func compose(screenshot: UIImage, style: Style) -> UIImage {
+        switch style {
+        case let .banner(headline, subheadline, bannerColor, headlineColor, subheadlineColor, captionHeightRatio):
+            return composeBanner(
+                screenshot: screenshot,
+                headline: headline,
+                subheadline: subheadline,
+                bannerColor: bannerColor,
+                headlineColor: headlineColor,
+                subheadlineColor: subheadlineColor,
+                captionHeightRatio: captionHeightRatio
+            )
+        case let .deviceFrame(bezelImageName, screenCornerRadius, backgroundColor):
+            return composeDeviceFrame(
+                screenshot: screenshot,
+                bezelImageName: bezelImageName,
+                screenCornerRadius: screenCornerRadius,
+                backgroundColor: backgroundColor
+            )
+        case let .deviceFrameWithHeadline(headline, subheadline, bezelImageName, screenCornerRadius, backgroundColor, headlineColor, subheadlineColor, textStripRatio):
+            return composeDeviceFrameWithHeadline(
+                screenshot: screenshot,
+                headline: headline,
+                subheadline: subheadline,
+                bezelImageName: bezelImageName,
+                screenCornerRadius: screenCornerRadius,
+                backgroundColor: backgroundColor,
+                headlineColor: headlineColor,
+                subheadlineColor: subheadlineColor,
+                textStripRatio: textStripRatio
+            )
+        }
+    }
+
+    // MARK: - Banner overlay
+
+    private static func composeBanner(
+        screenshot: UIImage,
+        headline: String,
+        subheadline: String,
+        bannerColor: UIColor,
+        headlineColor: UIColor,
+        subheadlineColor: UIColor,
+        captionHeightRatio: CGFloat
+    ) -> UIImage {
+        let canvasW = pixelWidth(screenshot)
+        let canvasH = pixelHeight(screenshot)
+        let canvas = CGSize(width: canvasW, height: canvasH)
+        let captionHeight = round(canvasW * captionHeightRatio)
+
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        let renderer = UIGraphicsImageRenderer(size: canvas, format: format)
+        return renderer.image { _ in
+            screenshot.draw(in: CGRect(origin: .zero, size: canvas))
+            bannerColor.setFill()
+            UIRectFill(CGRect(x: 0, y: 0, width: canvasW, height: captionHeight))
+            drawCaption(
+                headline: headline,
+                subheadline: subheadline,
+                headlineColor: headlineColor,
+                subheadlineColor: subheadlineColor,
+                in: CGRect(x: 0, y: 0, width: canvasW, height: captionHeight)
+            )
+        }
+    }
+
+    // MARK: - Device frame only
+
+    private static func composeDeviceFrame(
+        screenshot: UIImage,
+        bezelImageName: String,
+        screenCornerRadius: CGFloat,
+        backgroundColor: UIColor
+    ) -> UIImage {
+        let canvasW = pixelWidth(screenshot)
+        let canvasH = pixelHeight(screenshot)
+        let canvas = CGSize(width: canvasW, height: canvasH)
+
+        let composite = compositeScreenshotInsideBezel(
+            screenshot: screenshot,
+            bezelImageName: bezelImageName,
+            screenCornerRadius: screenCornerRadius
+        )
+
+        let horizontalMargin = canvasW * 0.05
+        let verticalMargin = canvasH * 0.04
+        let maxWidth = canvasW - 2 * horizontalMargin
+        let maxHeight = canvasH - 2 * verticalMargin
+        let scale = min(maxWidth / pixelWidth(composite), maxHeight / pixelHeight(composite))
+        let scaledW = pixelWidth(composite) * scale
+        let scaledH = pixelHeight(composite) * scale
+        let drawRect = CGRect(
+            x: (canvasW - scaledW) / 2,
+            y: (canvasH - scaledH) / 2,
+            width: scaledW,
+            height: scaledH
+        )
+
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        let renderer = UIGraphicsImageRenderer(size: canvas, format: format)
+        return renderer.image { context in
+            backgroundColor.setFill()
+            UIRectFill(CGRect(origin: .zero, size: canvas))
+            drawWithSoftShadow(in: context, drawing: { composite.draw(in: drawRect) }, sizeRef: drawRect.size)
+        }
+    }
+
+    // MARK: - Device frame + headline strip
+
+    private static func composeDeviceFrameWithHeadline(
+        screenshot: UIImage,
+        headline: String,
+        subheadline: String,
+        bezelImageName: String,
+        screenCornerRadius: CGFloat,
+        backgroundColor: UIColor,
+        headlineColor: UIColor,
+        subheadlineColor: UIColor,
+        textStripRatio: CGFloat
+    ) -> UIImage {
+        let canvasW = pixelWidth(screenshot)
+        let canvasH = pixelHeight(screenshot)
+        let canvas = CGSize(width: canvasW, height: canvasH)
+
+        let textStripHeight = round(canvasH * textStripRatio)
+        let deviceAreaTop = textStripHeight
+        let deviceAreaHeight = canvasH - textStripHeight
+
+        let composite = compositeScreenshotInsideBezel(
+            screenshot: screenshot,
+            bezelImageName: bezelImageName,
+            screenCornerRadius: screenCornerRadius
+        )
+
+        let horizontalMargin = canvasW * 0.05
+        let verticalMargin = canvasH * 0.025
+        let maxWidth = canvasW - 2 * horizontalMargin
+        let maxHeight = deviceAreaHeight - 2 * verticalMargin
+        let scale = min(maxWidth / pixelWidth(composite), maxHeight / pixelHeight(composite))
+        let scaledW = pixelWidth(composite) * scale
+        let scaledH = pixelHeight(composite) * scale
+        let drawRect = CGRect(
+            x: (canvasW - scaledW) / 2,
+            y: deviceAreaTop + (deviceAreaHeight - scaledH) / 2,
+            width: scaledW,
+            height: scaledH
+        )
+
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        let renderer = UIGraphicsImageRenderer(size: canvas, format: format)
+        return renderer.image { context in
+            backgroundColor.setFill()
+            UIRectFill(CGRect(origin: .zero, size: canvas))
+            drawHeadlineStrip(
+                headline: headline,
+                subheadline: subheadline,
+                headlineColor: headlineColor,
+                subheadlineColor: subheadlineColor,
+                in: CGRect(x: 0, y: 0, width: canvasW, height: textStripHeight)
+            )
+            drawWithSoftShadow(in: context, drawing: { composite.draw(in: drawRect) }, sizeRef: drawRect.size)
+        }
+    }
+
+    // MARK: - Bezel composite
+
+    /// Place the raw screenshot at the centre of the matching bezel
+    /// PNG, clip its square corners to the device's screen radius, and
+    /// draw the bezel on top. Returns the screenshot+bezel composite at
+    /// the bezel's native pixel dimensions.
+    ///
+    /// If the bezel asset can't be loaded (missing from bundle, wrong
+    /// name), returns the raw screenshot — the caller's marketing
+    /// layout still renders, just without the device chrome.
+    private static func compositeScreenshotInsideBezel(
+        screenshot: UIImage,
+        bezelImageName: String,
+        screenCornerRadius: CGFloat
+    ) -> UIImage {
+        let bundle = Bundle(for: BundleAnchor.self)
+        guard let bezel = UIImage(named: bezelImageName, in: bundle, with: nil) else {
+            return screenshot
+        }
+        let bezelW = pixelWidth(bezel)
+        let bezelH = pixelHeight(bezel)
+        let screenshotW = pixelWidth(screenshot)
+        let screenshotH = pixelHeight(screenshot)
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        let renderer = UIGraphicsImageRenderer(
+            size: CGSize(width: bezelW, height: bezelH),
+            format: format
+        )
+        return renderer.image { context in
+            let screenRect = CGRect(
+                x: (bezelW - screenshotW) / 2,
+                y: (bezelH - screenshotH) / 2,
+                width: screenshotW,
+                height: screenshotH
+            )
+            context.cgContext.saveGState()
+            UIBezierPath(roundedRect: screenRect, cornerRadius: screenCornerRadius).addClip()
+            screenshot.draw(in: screenRect)
+            context.cgContext.restoreGState()
+            bezel.draw(in: CGRect(x: 0, y: 0, width: bezelW, height: bezelH))
+        }
+    }
+
+    /// Empty class used solely as a marker to look up the test bundle —
+    /// `Bundle(for:)` needs a concrete type that's compiled into the bundle.
+    private final class BundleAnchor {}
+
+    // MARK: - Caption / headline drawing
+
+    /// Banner-overlay caption: small uppercase eyebrow on top, large
+    /// title beneath. Proportions come from the caption rect's height
+    /// so iPhone and iPad look identical at their respective scales.
+    private static func drawCaption(
+        headline: String,
+        subheadline: String,
+        headlineColor: UIColor,
+        subheadlineColor: UIColor,
+        in rect: CGRect
+    ) {
+        let subheadlineRect = CGRect(
+            x: rect.minX,
+            y: rect.minY + rect.height * 0.18,
+            width: rect.width,
+            height: rect.height * 0.24
+        )
+        draw(
+            subheadline.uppercased(),
+            in: subheadlineRect,
+            fontSize: subheadlineRect.height * 0.55,
+            color: subheadlineColor,
+            tracking: subheadlineRect.height * 0.10,
+            weight: .semibold
+        )
+
+        let headlineRect = CGRect(
+            x: rect.minX + rect.width * 0.06,
+            y: rect.minY + rect.height * 0.46,
+            width: rect.width * 0.88,
+            height: rect.height * 0.46
+        )
+        draw(
+            headline,
+            in: headlineRect,
+            fontSize: headlineRect.height * 0.42,
+            color: headlineColor,
+            tracking: 0,
+            weight: .heavy
+        )
+    }
+
+    /// Pool Math-style: bold headline on top, supporting subheadline
+    /// beneath. Both centred. Rendered onto the brand-color canvas
+    /// above the device.
+    private static func drawHeadlineStrip(
+        headline: String,
+        subheadline: String,
+        headlineColor: UIColor,
+        subheadlineColor: UIColor,
+        in rect: CGRect
+    ) {
+        let headlineRect = CGRect(
+            x: rect.minX + rect.width * 0.04,
+            y: rect.minY + rect.height * 0.16,
+            width: rect.width * 0.92,
+            height: rect.height * 0.42
+        )
+        draw(
+            headline,
+            in: headlineRect,
+            fontSize: headlineRect.height * 0.38,
+            color: headlineColor,
+            tracking: 0,
+            weight: .heavy
+        )
+
+        let subheadlineRect = CGRect(
+            x: rect.minX + rect.width * 0.06,
+            y: rect.minY + rect.height * 0.62,
+            width: rect.width * 0.88,
+            height: rect.height * 0.34
+        )
+        draw(
+            subheadline,
+            in: subheadlineRect,
+            fontSize: subheadlineRect.height * 0.28,
+            color: subheadlineColor,
+            tracking: 0,
+            weight: .medium
+        )
+    }
+
+    private static func draw(
+        _ text: String,
+        in rect: CGRect,
+        fontSize: CGFloat,
+        color: UIColor,
+        tracking: CGFloat,
+        weight: UIFont.Weight = .bold
+    ) {
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.alignment = .center
+        paragraph.lineBreakMode = .byWordWrapping
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: UIFont.systemFont(ofSize: fontSize, weight: weight),
+            .foregroundColor: color,
+            .paragraphStyle: paragraph,
+            .kern: tracking,
+        ]
+        (text as NSString).draw(in: rect, withAttributes: attrs)
+    }
+
+    private static func drawWithSoftShadow(
+        in context: UIGraphicsImageRendererContext,
+        drawing: () -> Void,
+        sizeRef: CGSize
+    ) {
+        context.cgContext.saveGState()
+        context.cgContext.setShadow(
+            offset: CGSize(width: 0, height: sizeRef.height * 0.012),
+            blur: sizeRef.width * 0.04,
+            color: UIColor(white: 0, alpha: 0.30).cgColor
+        )
+        drawing()
+        context.cgContext.restoreGState()
+    }
+
+    // MARK: - Pixel helpers
+
+    /// UIImage.size is in *points*; XCUIScreen captures come back at
+    /// scale 3 while bezel PNGs load at scale 1. Working in pixels
+    /// keeps the math consistent across both.
+    private static func pixelWidth(_ image: UIImage) -> CGFloat {
+        CGFloat(image.cgImage?.width ?? Int(image.size.width))
+    }
+
+    private static func pixelHeight(_ image: UIImage) -> CGFloat {
+        CGFloat(image.cgImage?.height ?? Int(image.size.height))
+    }
+}

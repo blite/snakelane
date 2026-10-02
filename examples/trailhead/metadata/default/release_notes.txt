@@ -1,0 +1,2 @@
+• Elevation profiles for every saved hike
+• Faster map downloads

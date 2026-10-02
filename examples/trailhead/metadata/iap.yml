@@ -1,0 +1,42 @@
+# Everything Trailhead sells: one-time purchases under `products`, subscriptions under
+# `subscription_groups`. Product ids are permanent once created and shared by both, so
+# `store iap push` / `store subs push` only create one when given --create.
+# Name limit 30 characters, description 45.
+
+products:
+  - product_id: com.example.trailhead.maps.lifetime
+    reference_name: Offline Maps - Lifetime
+    type: NON_CONSUMABLE
+    family_sharable: true
+    price:
+      base_territory: USA
+      customer_price: 9.99        # kept as text: 9.90 stays "9.90"
+    review_note: Settings > Maps > Unlock Offline Maps opens the purchase sheet.
+    review_screenshot: iap/offline_maps.jpg   # relative to metadata/
+    localizations:
+      en-US:
+        name: Offline Maps
+        description: Download maps for any area, forever
+      de-DE:
+        name: Offline-Karten
+        description: Karten für jedes Gebiet, für immer
+
+# Auto-renewable subscriptions. `snakelane store subs pull` rewrites this section
+# from App Store Connect for an app that already sells subscriptions. No price: a
+# subscription is priced on App Store Connect's website, where one price fills in
+# every territory.
+subscription_groups:
+  - reference_name: Trailhead Plus
+    localizations:
+      en-US: {name: Trailhead Plus}
+      de-DE: {name: Trailhead Plus}
+    subscriptions:
+      - product_id: com.example.trailhead.plus.yearly
+        reference_name: Plus - Yearly
+        period: ONE_YEAR
+        group_level: 1
+        family_sharable: true
+        review_note: Settings > Trailhead Plus shows the offer.
+        localizations:
+          en-US: {name: Plus Yearly, description: Weather layers and route sharing}
+          de-DE: {name: Plus jährlich, description: Wetterkarten und Routen teilen}

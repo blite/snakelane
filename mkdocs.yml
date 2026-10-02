@@ -1,0 +1,93 @@
+site_name: snakelane
+site_description: An opinionated App Store Connect CLI for indie Apple developers and coding agents. Keep listings, screenshots, and purchase catalogues in your repo, review changes, and ship with a focused Python workflow.
+site_url: https://blite.github.io/snakelane/
+repo_url: https://github.com/blite/snakelane
+repo_name: blite/snakelane
+edit_uri: edit/main/docs/
+copyright: MIT licensed. Not affiliated with Apple or fastlane.
+
+theme:
+  name: material
+  logo: assets/logo.svg
+  favicon: assets/favicon.svg
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - navigation.instant
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle: {icon: material/weather-night, name: Dark mode}
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle: {icon: material/weather-sunny, name: Light mode}
+
+extra:
+  version:
+    provider: mike        # the version picker; versions are published with `mike deploy`
+    default: latest
+
+validation:
+  anchors: warn   # a link to a missing heading fails --strict, as a missing page does
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.snippets:
+      # Pages include the agent skill's references and the repo's own files with
+      # --8<-- "file", so the docs and the skill can never say different things.
+      base_path: [".", "skills/snakelane/references"]
+      check_paths: true
+
+nav:
+  - Guide:
+      - Home: index.md
+      - Getting started: getting-started.md
+      - The config and the metadata tree: configuration.md
+      - Framing screenshots: reference/framing.md
+      - Screenshot showcase: showcase.md
+      - Using it with a coding agent: agents.md
+  - Commands:
+      - store: commands/store.md
+      - shoot · frame · check: commands/screenshots.md
+      - gallery: commands/gallery.md
+      - lint · translations: commands/lint.md
+      - ship · bump · status: commands/release.md
+      - packs: commands/packs.md
+      - auth: commands/auth.md
+  - Reference:
+      - Config keys: reference/config.md
+      - App Store Connect traps: reference/gotchas.md
+  - Design:
+      - Project, client and listing: design/foundations.md
+      - Shooting and uploading: design/screenshots.md
+      - Framing and the gallery: design/framing.md
+      - Releasing and purchases: design/release.md
+      - "ADR 1: no pbxproj library": adr/0001-no-pbxproj-library.md
+      - "ADR 2: JPEG-only screenshots": adr/0002-jpeg-only-screenshot-decks.md
+      - "ADR 3: subscription links in lint": adr/0003-lint-subscription-legal-links.md
+  - Project:
+      - Changelog: changelog.md
+      - Contributing: contributing.md

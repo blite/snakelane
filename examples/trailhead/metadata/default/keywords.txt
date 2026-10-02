@@ -1,0 +1,1 @@
+hiking,trail,gps,tracker,walking,outdoor,camping,backpacking,route,topo

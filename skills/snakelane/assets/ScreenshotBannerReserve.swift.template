@@ -1,0 +1,65 @@
+import SwiftUI
+
+/// App target. Under a screenshot launch, push the screen away from the edge the caption
+/// band will cover, by exactly the band's depth, so the band lies over empty space instead
+/// of a title or a toolbar. Inert on a normal launch.
+///
+/// The depth arrives as launch arguments from the UI test (`SnakelaneBanner.swift.template`),
+/// which reads it from `snakelane shoot`. The number is never written down twice:
+/// snakelane draws the band and reports its depth.
+///
+/// Apply it to every root screen that reaches the edges:
+///
+///     GameView().screenshotBannerReserve()
+///
+/// Measured against the whole capture, not the safe area, because the band is drawn over
+/// the full image. Only the part of it beyond where this view already starts is reserved.
+/// From Lamplight Solitaire's and Spider Solitaire's own modifiers.
+struct ScreenshotBannerReserve: ViewModifier {
+    enum Edge: String { case top, bottom }
+
+    static let edge: Edge? = argument("--ui-banner-position=").flatMap(Edge.init(rawValue:))
+    static let depth: CGFloat = argument("--ui-banner-depth=").flatMap(Double.init).map { CGFloat($0) } ?? 0
+
+    private static func argument(_ prefix: String) -> String? {
+        ProcessInfo.processInfo.arguments.first { $0.hasPrefix(prefix) }.map { String($0.dropFirst(prefix.count)) }
+    }
+
+    func body(content: Content) -> some View {
+        if let edge = Self.edge, Self.depth > 0 {
+            GeometryReader { proxy in
+                let frame = proxy.frame(in: .global)
+                // The capture's height: this view reaches both edges, so its top, its height
+                // and the bottom inset add up to the screen.
+                let capture = frame.minY + proxy.size.height + proxy.safeAreaInsets.bottom
+                let band = capture * Self.depth
+                switch edge {
+                case .top:
+                    let reserve = max(0, band - frame.minY)
+                    content
+                        .safeAreaPadding(.top, reserve)
+                        // A list takes its insets from its navigation stack, not the padding.
+                        .contentMargins(.top, reserve, for: .scrollContent)
+                case .bottom:
+                    let reserve = max(0, band - proxy.safeAreaInsets.bottom)
+                    content
+                        .safeAreaPadding(.bottom, reserve)
+                        .contentMargins(.bottom, reserve, for: .scrollContent)
+                }
+            }
+        } else {
+            content
+        }
+    }
+}
+
+extension View {
+    /// See `ScreenshotBannerReserve`.
+    func screenshotBannerReserve() -> some View {
+        modifier(ScreenshotBannerReserve())
+    }
+}
+
+// TODO, Mac: a Mac capture includes the title bar, which this view doesn't see. Measure the
+// band against the window's frame and subtract the title bar's height (Solitaire's
+// `ScreenshotBannerReserve` does this with the size it pins the window to).

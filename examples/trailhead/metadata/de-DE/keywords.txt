@@ -1,0 +1,1 @@
+wandern,gps,tracker,spazieren,outdoor,camping,trekking,route,topo,höhenmeter

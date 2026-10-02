@@ -1,0 +1,151 @@
+import XCTest
+
+/// Screenshot suite that produces App-Store-ready marketing images.
+/// Each test launches the app with `--ui-screenshot=<scenario>` so
+/// the root view resumes into a deterministic fixture via
+/// `UITestScreenshotScenario`, then `capture(...)` attaches both a
+/// raw PNG and a framed PNG (raw screenshot + marketing banner) to
+/// the test result.
+///
+/// Extraction: after `xcodebuild test`, `snakelane shoot` (extraction)
+/// pulls the attachments out of the xcresult bundle and routes raw
+/// vs framed: framed into `metadata/ios/screenshots/<locale>/{iphone,ipad}/`, raw into `.snakelane/`. The
+/// `snakelane shoot` wires that up for you.
+///
+/// Test method ordering matters: XCTest runs methods alphabetically;
+/// the `NN-` prefix controls the App Store Connect upload order and
+/// keeps extracted filenames sortable.
+///
+/// TODO (snakelane scaffold):
+///   1. Fill in `Self.captions` below with a title + keyword for every
+///      `NN-Name` you pass to `capture(...)`.
+///   2. Wire up the scenarios you reference in `launchApp(scenario:)`
+///      inside `UITestScreenshotScenario` (in the main app target).
+///   3. Replace the stub tests with ones that capture every screen
+///      you want to ship to the App Store.
+final class {{UI_TEST_TARGET_NAME}}ScreenshotsUITests: XCTestCase {
+
+    /// Marketing copy for one shot. `headline` is the bold selling
+    /// point; `subheadline` is the supporting feature detail.
+    private struct Caption {
+        let headline: String
+        let subheadline: String
+    }
+
+    // TODO: one entry per `NN-Name` the tests capture. Headlines are
+    // the bold selling point (one short sentence); subheadlines add
+    // the supporting feature detail.
+    private static let captions: [String: Caption] = [
+        "01-Home":   Caption(headline: "TODO: bold headline",   subheadline: "TODO: supporting detail."),
+        "02-Detail": Caption(headline: "TODO: another headline", subheadline: "TODO: supporting detail."),
+    ]
+
+    // TODO: app-brand colors. Replace with values that match your
+    // in-app theme. These get passed into the `FramedScreenshot.Style`
+    // values in `capture(...)` below — keep them in one place so the
+    // whole shot deck stays consistent.
+    private static let brandColor = UIColor(red: 0.18, green: 0.43, blue: 0.93, alpha: 1) // example: pool blue
+    private static let bannerColor = UIColor(red: 0.96, green: 0.96, blue: 0.98, alpha: 1)
+    private static let headlineColor = UIColor.white
+    private static let subheadlineColor = UIColor(white: 1, alpha: 0.85)
+
+    /// Bezel asset name + screen corner radius (in pixels at the bezel
+    /// PNG's native resolution) for each device width. Bezels come from
+    /// Apple Design Resources — see SKILL.md for download instructions.
+    /// Keys are the screenshot pixel width.
+    private static func bezel(for screenshotWidth: Int) -> (name: String, radius: CGFloat) {
+        switch screenshotWidth {
+        // TODO: add an entry per device you ship screenshots for.
+        // Example values for current Apple devices:
+        //   case 1320: return ("iPhone-17-Pro-Max-Portrait", 165) // iPhone 17 Pro Max, 6.9"
+        //   case 2048: return ("iPad-Pro-13-Portrait", 36)        // iPad Pro 12.9" 6th gen / M4 13"
+        default:    return ("iPhone-17-Pro-Max-Portrait", 165)
+        }
+    }
+
+    override func setUpWithError() throws {
+        continueAfterFailure = false
+    }
+
+    /// Attach two images for each shot: the raw screenshot (suitable
+    /// for App Store Connect upload as-is) and a framed variant with
+    /// a marketing caption banner above. Attachment names carry a
+    /// `_framed` suffix on the marketing image so
+    /// `snakelane shoot` (extraction) routes them into different
+    /// output folders.
+    /// Pick the framing style for a shot. Switch on the shot name (or
+    /// pass extra context) when different shots want different styles —
+    /// e.g. a hero shot in `.deviceFrameWithHeadline` and a detail shot
+    /// in `.banner`. The default below uses `.deviceFrameWithHeadline`
+    /// for everything (Pool Math pattern: headline + bezel + brand bg).
+    @MainActor
+    private func style(for caption: Caption, screenshotWidth: Int) -> FramedScreenshot.Style {
+        let frame = Self.bezel(for: screenshotWidth)
+        return .deviceFrameWithHeadline(
+            headline: caption.headline,
+            subheadline: caption.subheadline,
+            bezelImageName: frame.name,
+            screenCornerRadius: frame.radius,
+            backgroundColor: Self.brandColor,
+            headlineColor: Self.headlineColor,
+            subheadlineColor: Self.subheadlineColor
+        )
+    }
+
+    @MainActor
+    private func capture(_ app: XCUIApplication, named name: String) {
+        let raw = app.screenshot().image
+
+        let rawAttachment = XCTAttachment(image: raw)
+        rawAttachment.name = name
+        rawAttachment.lifetime = .keepAlways
+        add(rawAttachment)
+
+        guard let caption = Self.captions[name] else {
+            XCTFail("Missing marketing caption for screenshot \(name) — add it to Self.captions")
+            return
+        }
+        let framed = FramedScreenshot.compose(
+            screenshot: raw,
+            style: style(for: caption, screenshotWidth: raw.cgImage?.width ?? 0)
+        )
+        let framedAttachment = XCTAttachment(image: framed)
+        framedAttachment.name = "\(name)_framed"
+        framedAttachment.lifetime = .keepAlways
+        add(framedAttachment)
+    }
+
+    /// Launch `XCUIApplication` with the given scenario as a launch
+    /// argument. The scenario enum lives in the main app target
+    /// (`UITestScreenshotScenario`), so `RootView` can read the flag
+    /// on first appear and route the app into the matching state.
+    @MainActor
+    private func launchApp(scenario: String) -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchArguments.append("UITests")
+        app.launchArguments.append("--ui-screenshot=\(scenario)")
+        app.launch()
+        return app
+    }
+
+    @MainActor
+    func test01Home() throws {
+        let app = launchApp(scenario: "main-menu")
+        // TODO: wait for your main screen to settle before capturing.
+        // Example:
+        //   XCTAssertTrue(app.staticTexts["Welcome"].waitForExistence(timeout: 10))
+        capture(app, named: "01-Home")
+    }
+
+    @MainActor
+    func test02Detail() throws {
+        let app = launchApp(scenario: "settings")
+        // TODO: poll for a known element of the destination screen.
+        capture(app, named: "02-Detail")
+    }
+
+    // TODO: add a `testNN_<name>` method for every screen you ship
+    // to the App Store. Remember to add a matching entry to
+    // `Self.captions` with the same NN-Name, or `capture(...)` will
+    // fail the test.
+}

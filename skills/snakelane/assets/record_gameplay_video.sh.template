@@ -1,0 +1,181 @@
+#!/usr/bin/env bash
+#
+# Record an App Preview-style gameplay video.
+#
+# `xcodebuild test` runs UI tests inside a cloned simulator whose
+# UDID isn't known until it boots, and the clone lives in Xcode's
+# private `~/Library/Developer/XCTestDevices` CoreSimulator set —
+# invisible to a bare `simctl list devices` call. This script works
+# around those two quirks by:
+#
+#   1. Running `build-for-testing` synchronously (no simulator
+#      involved) so the clone-detection poll doesn't race the slow
+#      compile step.
+#   2. Launching `test-without-building` in the background. The clone
+#      shows up within seconds of that starting.
+#   3. Polling the XCTestDevices set for a booted clone of the target
+#      device, then waiting for the test to write a "scene-ready"
+#      marker file into its Documents directory before starting
+#      `simctl io recordVideo` against the clone. That handshake
+#      keeps simulator springboard + app-launch frames out of the clip.
+#   4. Stopping the recorder with SIGINT (which simctl uses to
+#      finalize the .mov) as soon as the test writes a "done" marker
+#      or exits.
+#
+# Output lands at build/previews/<device-slug>.mov — gitignored by
+# default, treated as a build artifact.
+#
+# Usage:
+#   scripts/record_gameplay_video.sh [device]
+#
+# `device` defaults to "iPhone 17 Pro Max". Pass the full simctl
+# device name for a different target (e.g. "iPad Pro (12.9-inch) (6th generation)").
+
+set -euo pipefail
+
+DEVICE_NAME="${1:-iPhone 17 Pro Max}"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+OUTPUT_ROOT="/build/previews"
+DEVICE_SLUG="$(echo "$DEVICE_NAME" | tr ' /()' '----' | tr -s '-')"
+OUTPUT_PATH="$OUTPUT_ROOT/$DEVICE_SLUG.mov"
+
+# XCTest UI test bundle ID used for `simctl get_app_container`. The
+# ".xctrunner" suffix is appended by Xcode when it builds the runner
+# app. Update this if your UI test target's PRODUCT_BUNDLE_IDENTIFIER
+# is not `{{UI_TEST_BUNDLE_IDENTIFIER}}`.
+TEST_RUNNER_BUNDLE_ID="{{UI_TEST_BUNDLE_IDENTIFIER}}.xctrunner"
+
+# Handshake markers the UI test writes to its Documents directory.
+READY_MARKER_NAME="hh-video-ready.marker"
+DONE_MARKER_NAME="hh-video-done.marker"
+
+# UI test clones live in Xcode's private CoreSimulator set, NOT in
+# the default set that a bare `simctl list` queries. Every simctl
+# call below has to pass `--set` explicitly.
+XCTEST_SIMSET="$HOME/Library/Developer/XCTestDevices"
+
+mkdir -p "$OUTPUT_ROOT"
+rm -f "$OUTPUT_PATH"
+
+echo "→ Target device: $DEVICE_NAME"
+echo "→ Output: $OUTPUT_PATH"
+
+echo "→ Building test bundles (build-for-testing)..."
+xcodebuild \
+    -project "$REPO_ROOT/{{PROJECT_NAME}}.xcodeproj" \
+    -scheme "{{SCHEME_NAME}}" \
+    -destination "platform=iOS Simulator,name=$DEVICE_NAME" \
+    -only-testing "{{UI_TEST_TARGET_NAME}}/{{UI_TEST_TARGET_NAME}}VideoPreviewUITests" \
+    build-for-testing \
+    -quiet
+
+TEST_LOG="$(mktemp -t video-test-XXXXX).log"
+echo "→ Launching test-without-building (log: $TEST_LOG)..."
+xcodebuild \
+    -project "$REPO_ROOT/{{PROJECT_NAME}}.xcodeproj" \
+    -scheme "{{SCHEME_NAME}}" \
+    -destination "platform=iOS Simulator,name=$DEVICE_NAME" \
+    -only-testing "{{UI_TEST_TARGET_NAME}}/{{UI_TEST_TARGET_NAME}}VideoPreviewUITests/test01AutoPlayDemo" \
+    test-without-building >"$TEST_LOG" 2>&1 &
+TEST_PID=$!
+
+cleanup() {
+    local rc=$?
+    kill -INT "${RECORDER_PID:-0}" 2>/dev/null || true
+    wait "${RECORDER_PID:-0}" 2>/dev/null || true
+    if kill -0 "$TEST_PID" 2>/dev/null; then
+        kill "$TEST_PID" 2>/dev/null || true
+        wait "$TEST_PID" 2>/dev/null || true
+    fi
+    return $rc
+}
+trap cleanup EXIT
+
+# Poll for the booted clone.
+echo "→ Waiting for booted clone of '$DEVICE_NAME'..."
+CLONE_UDID=""
+for _ in $(seq 1 120); do
+    CLONE_UDID="$(
+        xcrun simctl --set "$XCTEST_SIMSET" list devices --json \
+        | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+for runtime, devices in data['devices'].items():
+    if 'iOS' not in runtime:
+        continue
+    for d in devices:
+        name = d.get('name', '')
+        if name.startswith('Clone') and name.endswith('$DEVICE_NAME') and d.get('state') == 'Booted':
+            print(d['udid'])
+            sys.exit(0)
+" 2>/dev/null || true
+    )"
+    if [[ -n "$CLONE_UDID" ]]; then
+        break
+    fi
+    if ! kill -0 "$TEST_PID" 2>/dev/null; then
+        echo "error: test exited before a clone came up — see $TEST_LOG" >&2
+        exit 1
+    fi
+    sleep 1
+done
+
+if [[ -z "$CLONE_UDID" ]]; then
+    echo "error: timed out waiting for a booted clone of '$DEVICE_NAME' — see $TEST_LOG" >&2
+    exit 1
+fi
+
+echo "→ Clone booted: $CLONE_UDID"
+echo "→ Waiting for scene-ready marker from the test..."
+TEST_CONTAINER=""
+for _ in $(seq 1 120); do
+    TEST_CONTAINER="$(
+        xcrun simctl --set "$XCTEST_SIMSET" \
+            get_app_container "$CLONE_UDID" \
+            "$TEST_RUNNER_BUNDLE_ID" data 2>/dev/null || true
+    )"
+    if [[ -n "$TEST_CONTAINER" ]] && [[ -f "$TEST_CONTAINER/Documents/$READY_MARKER_NAME" ]]; then
+        break
+    fi
+    if ! kill -0 "$TEST_PID" 2>/dev/null; then
+        echo "error: test exited before writing the ready marker — see $TEST_LOG" >&2
+        exit 1
+    fi
+    sleep 0.5
+done
+
+if [[ -z "$TEST_CONTAINER" ]] || [[ ! -f "$TEST_CONTAINER/Documents/$READY_MARKER_NAME" ]]; then
+    echo "error: never saw ready marker at $TEST_CONTAINER/Documents/$READY_MARKER_NAME — see $TEST_LOG" >&2
+    exit 1
+fi
+
+echo "→ Scene up. Starting recording..."
+xcrun simctl --set "$XCTEST_SIMSET" io "$CLONE_UDID" recordVideo --codec=h264 "$OUTPUT_PATH" &
+RECORDER_PID=$!
+
+echo "→ Waiting for test to finish (or done marker)..."
+while kill -0 "$TEST_PID" 2>/dev/null; do
+    if [[ -f "$TEST_CONTAINER/Documents/$DONE_MARKER_NAME" ]]; then
+        break
+    fi
+    sleep 0.25
+done
+
+kill -INT "$RECORDER_PID" 2>/dev/null || true
+wait "$RECORDER_PID" 2>/dev/null || true
+
+if ! wait "$TEST_PID"; then
+    echo "error: xcodebuild test failed — see $TEST_LOG" >&2
+    exit 1
+fi
+
+trap - EXIT
+
+SIZE_BYTES=$(stat -f%z "$OUTPUT_PATH" 2>/dev/null || echo 0)
+if (( SIZE_BYTES < 100000 )); then
+    echo "error: recorded file is only ${SIZE_BYTES} bytes — check $TEST_LOG for clues" >&2
+    exit 1
+fi
+
+ls -la "$OUTPUT_PATH"
+echo "✓ Video ready at: $OUTPUT_PATH"

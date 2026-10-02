@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+.pytest_cache/
+.ruff_cache/
+dist/
+build/
+site/
+.snakelane/
+.DS_Store
+
+# Private notes that never get published (per-app migration plans, scratch).
+/local/
+
+# Local editor/agent preview config.
+/.claude/
