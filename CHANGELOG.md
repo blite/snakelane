@@ -6,10 +6,13 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **The skill's templates are split by platform**: shared ones at the top of `assets/`,
+  iOS-only ones (`FramedScreenshot`, `VideoPreviewUITests`, `record_gameplay_video.sh`) in
+  `assets/ios/`, Mac-only ones in `assets/macos/`.
 - **The Mac lane works from the templates.** `ScreenshotsUITests.swift.template` builds for macOS:
   it captures the app's window, fails a shot that isn't an App Store Connect Mac size, and
   attaches only the raw shot (frame the Mac deck with `frame: snakelane`). A new
-  `ScreenshotWindowSizer.swift.template` pins the app's window under `--ui-window-size`.
+  `macos/ScreenshotWindowSizer.swift.template` pins the app's window under `--ui-window-size`.
   `FramedScreenshot.swift.template` is UIKit-only behind `#if canImport(UIKit)`.
 - **Apps must change:** the UI-test templates' launch sentinel is now `--ui-tests`, not a bare
   `UITests`, which on a Mac AppKit opened as a file, so the app launched with no window. An app

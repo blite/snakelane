@@ -253,7 +253,7 @@ menu bar in the test's UI hierarchy attachment.
 **Capture the window, at a size the app pins.** On a Mac `app.screenshot()` is the whole
 display. The template captures the app's largest window and fails a shot that isn't 1280x800,
 1440x900, 2560x1600 or 2880x1800 pixels. XCUITest can't size a window, so the app does:
-`ScreenshotWindowSizer.swift` (from `assets/`) pins the frame under
+`ScreenshotWindowSizer.swift` (from `assets/macos/`) pins the frame under
 `--ui-window-size=1440x900`, which a 2x display captures as 2880x1800.
 
 **`FramedScreenshot` is UIKit.** A Mac deck is framed by snakelane (`frame: snakelane`); the

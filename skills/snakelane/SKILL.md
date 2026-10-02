@@ -265,7 +265,8 @@ Archive only from the app scheme; turn Archive off in helper schemes.
 1. `snakelane.yml` at the repo root from `assets/snakelane.yml.template` (fill every `{{…}}`),
     and `metadata/default/*.txt` from `assets/metadata/` (or `snakelane init`, which writes both).
 
-2. UI-test templates from `assets/` into the UI-test target; substitute `{{APP_NAME}}`,
+2. UI-test templates into the UI-test target: the shared ones at the top of `assets/`, and the
+    iOS-only ones in `assets/ios/` (caption drawing, App Preview recording); substitute `{{APP_NAME}}`,
     `{{PROJECT_NAME}}`, `{{SCHEME_NAME}}`, `{{BUNDLE_IDENTIFIER}}`, `{{UI_TEST_TARGET_NAME}}`,
     `{{UI_TEST_BUNDLE_IDENTIFIER}}`, `{{APP_SLUG}}` (the config's name, lowercased and hyphenated;
     `shoot --dry-run` prints the paths built from it), then `grep -r '{{'` to prove none
@@ -277,8 +278,9 @@ Archive only from the app scheme; turn Archive off in helper schemes.
     phase.
 
     For a Mac deck as well: list `macos` in `platforms`, add `"mac": {}` under `screenshots`, use
-    `frame: snakelane`, and add `ScreenshotWindowSizer.swift` to the app (its header shows where
-    to attach it). The UI test template already captures the window on a Mac.
+    `frame: snakelane`, and add `ScreenshotWindowSizer.swift` from `assets/macos/` to the **app**
+    target (its header shows where to attach it). The shared UI test template already captures
+    the window on a Mac.
     `references/gotchas.md` → The Mac lane has the traps.
 
 4. `snakelane store push --dry-run` should print the whole listing with no network access;
