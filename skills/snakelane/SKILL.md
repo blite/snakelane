@@ -216,6 +216,10 @@ Don't mark `--reviewed` on your own translation without the user's go-ahead.
   not the accent colour. Keep the marks when translating a caption; an unclosed one stops `frame`.
   `--bundle <dir>` (outside `metadata/`) makes a copy that works off this Mac, e.g. as a CI
   artifact on a pull request that changes screenshots.
+- `framing.captions` is one `{"1": …}` map for every locale, or keyed by locale
+  (`{en-US: {"1": …}, de-DE: {"1": …}}`); a locale without an entry gets the primary's. When
+  translating captions, keep every mark and use the words the localized app itself uses for its
+  features (the app's own strings), not a fresh translation of the English.
 - 1–10 screenshots per set (locale × display type); the push refuses an 11th before deleting
   anything. A locale with no folder at all inherits the primary language's screenshots on the
   store — nothing is copied, and that is a valid way to ship a locale.

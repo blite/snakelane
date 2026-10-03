@@ -158,3 +158,21 @@ def test_a_plan_lists_each_deck_once(tmp_path: Path) -> None:
     plan = shoot.Plan(app=app, config=shoot.load_config(app), platform="ios",
                       locales={"en-US": None, "de-DE": None}, full_locales=True, passes=passes)
     assert [tree.device for tree in plan.trees] == ["ipad", "iphone"]
+
+
+def test_each_locale_gets_its_own_captions_banner(app: project.App, capsys: pytest.CaptureFixture[str]) -> None:
+    import json
+
+    app.config["scheme"] = "Example"
+    (app.root / "Example.xcodeproj").mkdir()
+    app.config["locales"] = ["en-US", "de-DE", "fr-FR"]
+    app.config["screenshots"] = {"frame": "snakelane", "framing": {
+        "layout": "full-bleed", "caption": {"size": 90},
+        "captions": {"en-US": {"1": "One"}, "de-DE": {"1": "Eins\nzwei\ndrei"}}}}
+    config = shoot.load_config(app)
+    plan = shoot.Plan(app, config, "ios", {"en-US": None, "de-DE": None, "fr-FR": None}, full_locales=True)
+    plan.add_passes(project.DeckTree(app, "ios", "iphone"), "iPhone", "iphone", None, "Example", "x", None)
+    depth = {p.locale: json.loads(p.env[shoot.BANNER])["depth"] for p in plan.passes}
+    assert depth["de-DE"] > depth["en-US"] == depth["fr-FR"], "three lines need a deeper band than one"
+    shoot.print_plan(plan)
+    assert "fr-FR has none" in capsys.readouterr().out

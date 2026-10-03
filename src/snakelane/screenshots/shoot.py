@@ -149,13 +149,13 @@ def quiet(*cmd: str) -> None:
     subprocess.run(["xcrun", "simctl", *cmd], check=False, capture_output=True)
 
 
-def banner_json(config: ShotsConfig, tree: DeckTree) -> str | None:
-    """The band depth for this deck's passes (frame "snakelane"); worked out once per deck, as it
-    lays out every caption."""
+def banner_json(config: ShotsConfig, tree: DeckTree, locale: str | None = None) -> str | None:
+    """The band depth for this deck's passes in `locale` (frame "snakelane"): it lays out that
+    locale's captions, which per-locale captions make differ."""
     if config.frame != "snakelane":
         return None
     from .frame import banner_handoff
-    return json.dumps(banner_handoff(tree.app, tree.deck), separators=(",", ":"))
+    return json.dumps(banner_handoff(tree.app, tree.deck, locale), separators=(",", ":"))
 
 
 def runner_env(config: ShotsConfig, locale: str, language: str | None, tree: DeckTree,
@@ -364,9 +364,9 @@ class Plan:
     def add_passes(self, tree: DeckTree, name: str, name_slug: str, sim: Simulator | None, scheme: str,
                    destination: str, test: str | None) -> None:
         """One pass per locale on one device; `name` is what the clear and the labels call it."""
-        banner = banner_json(self.config, tree)
         self.clear_targets.append((tree, name))
         for locale, language in self.locales.items():
+            banner = banner_json(self.config, tree, locale)
             slug = re.sub(r"[^a-z0-9]+", "-", f"{name_slug}-{locale}".lower()).strip("-")
             xcresult = Path(f"/tmp/snakelane-{self.app.slug}-shots-{slug}.xcresult")
             cmd = xcodebuild_test(self.app, scheme, destination, test=test, test_plan=self.config.test_plan,
@@ -440,8 +440,12 @@ def print_plan(plan: Plan) -> None:
         print(f"locale file {locale_file(app)}  (written before each pass, removed after)")
     if config.frame == "snakelane":
         print(f"banner     {banner_file(app)}  (written before each pass, removed after)")
-        for deck, banner in sorted({p.tree.deck: p.env.get(BANNER) for p in plan.passes}.items()):
-            print(f"  {deck:<7} {banner}")
+        for (deck, locale), banner in sorted({(p.tree.deck, p.locale): p.env.get(BANNER) for p in plan.passes}.items()):
+            print(f"  {deck:<7} {locale:<7} {banner}")
+        from .frame import fallback_note, framing
+        for locale in plan.locales:
+            if note := fallback_note(app, framing(app), locale):
+                print(f"  {note}")
     print("clear      " + "; ".join(f"{kind}/: {', '.join(g)}" for kind, g in CLEAR.items())
           + f"  (images only; {'every locale folder' if plan.full_locales else 'these locales only'})")
     for tree, device in plan.clear_targets:

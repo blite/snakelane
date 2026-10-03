@@ -73,7 +73,9 @@ screenshots:
   frame: test                    # test (UI test draws captions) | snakelane | none
   reframe_test: null             # UI test that re-frames raws on disk
   mac: {}                        # present = enable --platform macos
-  framing: {…}                   # `snakelane frame`: captions, targets (keyed iphone/ipad/mac), and three
+  framing: {…}                   # `snakelane frame`: captions ({"1": …}, or per locale
+                                 #   {en-US: {"1": …}, de-DE: {…}}; a locale without one gets the
+                                 #   primary's), targets (keyed iphone/ipad/mac), and three
                                  #   independent choices: layout (full-bleed|stacked|device, fit),
                                  #   caption {shape band|arch|callout|headline, position, depth, …},
                                  #   theme (a built-in name, or {base, fill, text, accent, font, lip, …});

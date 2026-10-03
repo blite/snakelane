@@ -5,7 +5,9 @@
 Reads .snakelane/<app>/raw/<platform>/<locale>/<device>/*, writes
 metadata/<platform>/screenshots/<locale>/<device>/ss-NN.jpg. Settings: snakelane.yml's
 `screenshots.framing` (keys: docs/reference/framing.md; reasons: docs/design/framing.md).
-A raw file's slot is its `ss-NN` name; a capture without a caption is an error.
+A raw file's slot is its `ss-NN` name; a capture without a caption is an error. `framing.captions`
+is one {slot: caption} map for every locale, or {locale: {slot: caption}}; a locale without an
+entry gets the primary locale's.
 """
 
 from __future__ import annotations
@@ -19,7 +21,7 @@ import typer
 
 from ..args import AppOption, PlatformOption, command_app, resolve_platform, run
 from ..project import IMAGE_SUFFIXES, App, DeckTree, resolve_app
-from .framing.draw import caption_band, ink_of
+from .framing.draw import caption_band, ink_of, parse_caption
 from .framing.style import DECKS, check_framing, style_for, theme_of
 from .framing.themes import THEMES
 from .media import deck_files, save_jpeg
@@ -40,24 +42,72 @@ def slots_of(cfg: dict[str, Any]) -> dict[int, dict[str, Any]]:
     return {int(k): v or {} for k, v in (cfg.get("slots") or {}).items()}
 
 
-def captions(app: App, cfg: dict[str, Any]) -> dict[int, str]:
-    """Slot -> caption from snakelane.yml's framing.captions (a list is the caption's lines)."""
+def is_slot_key(key: Any) -> bool:
+    return isinstance(key, int) or (isinstance(key, str) and key.isdigit())
+
+
+def slot_map(where: str, source: dict[Any, Any]) -> dict[int, str]:
+    if bad := [str(k) for k in source if not is_slot_key(k)]:
+        raise SystemExit(f"{where}: {', '.join(bad)} is not a shot number")
+    return {int(k): "\n".join(map(str, v)) if isinstance(v, list) else str(v) for k, v in source.items()}
+
+
+def caption_sets(cfg: dict[str, Any]) -> dict[str | None, dict[int, str]]:
+    """Every caption map in framing.captions: {None: map} for the one-map form, else by locale.
+    Slot keys are numbers, locale keys are not; that is how the two forms are told apart."""
     if not isinstance(source := cfg.get("captions"), dict):
         raise SystemExit('frame: set "framing.captions" in snakelane.yml: {"1": "Caption", …}')
-    return {int(k): "\n".join(map(str, v)) if isinstance(v, list) else str(v) for k, v in source.items()}
+    source = {k: v for k, v in source.items() if k != "_comment"}
+    slot_keys = [k for k in source if is_slot_key(k)]
+    if len(slot_keys) == len(source):
+        return {None: slot_map(CAPTIONS, source)}
+    if slot_keys:
+        raise SystemExit(f"{CAPTIONS} mixes shot numbers ({', '.join(map(str, slot_keys))}) with locales; use "
+                         'one form: {"1": "Caption", …} for every locale, or {"en-US": {"1": "Caption", …}, …}')
+    sets: dict[str | None, dict[int, str]] = {}
+    for locale, entry in source.items():
+        if not isinstance(entry, dict):
+            raise SystemExit(f'{CAPTIONS}.{locale} must map shot numbers to captions: {{"1": "Caption", …}}')
+        sets[str(locale)] = slot_map(f"{CAPTIONS}.{locale}", entry)
+    return sets
+
+
+def captions_source(app: App, cfg: dict[str, Any], locale: str | None) -> str | None:
+    """Whose captions `locale` gets: its own, else the primary locale's; None for the one-map form."""
+    sets = caption_sets(cfg)
+    if None in sets:
+        return None
+    if locale is not None and locale in sets:
+        return locale
+    if (primary := app.primary_locale) in sets:
+        return primary
+    raise SystemExit(f"{CAPTIONS} has no captions for {locale or 'the primary locale'}, nor for the primary "
+                     f"locale {primary}; add a {locale or primary} entry")
+
+
+def captions(app: App, cfg: dict[str, Any], locale: str | None = None) -> dict[int, str]:
+    """Slot -> caption for `locale` from snakelane.yml's framing.captions (a list is the caption's
+    lines): the one map, or the locale's own, falling back to the primary locale's."""
+    return caption_sets(cfg)[captions_source(app, cfg, locale)]
+
+
+def fallback_note(app: App, cfg: dict[str, Any], locale: str) -> str | None:
+    """One line when `locale` borrows another locale's captions."""
+    source = captions_source(app, cfg, locale)
+    return None if source in (None, locale) else f"captions: {locale} has none in {CAPTIONS}; using {source}'s"
 
 
 def slot_of(path: Path) -> int | None:
     return int(m.group(1)) if (m := re.fullmatch(r"ss-(\d+)", path.stem)) else None
 
 
-def banner_handoff(app: App, deck: str) -> dict[str, Any]:
+def banner_handoff(app: App, deck: str, locale: str | None = None) -> dict[str, Any]:
     """Per slot, what the app leaves empty for the caption (`depth`: share of height, lip and rule
     included); the top-level pair is the commonest. Why: docs/design/framing.md#the-banner-handoff"""
     cfg = framing(app)
     width, height = tuple((cfg.get("targets") or {}).get(deck) or DECK_CANVAS[deck])
     slots, handed = slots_of(cfg), {}
-    for n, text in sorted(captions(app, cfg).items()):
+    for n, text in sorted(captions(app, cfg, locale).items()):
         style = style_for(cfg, slots.get(n, {}), deck)
         if not style.caption_over_capture:
             handed[str(n)] = {"position": "none", "depth": 0}
@@ -78,10 +128,16 @@ def frame_deck(app: App, locale: str = "en-US", decks: list[str] | None = None, 
     if theme is not None:
         overrides = cfg.get("theme") if isinstance(cfg.get("theme"), dict) else {}
         check_framing(cfg := {**cfg, "theme": {**overrides, "base": theme}})
-    deck = captions(app, cfg)
+    deck = captions(app, cfg, locale)
+    if note := fallback_note(app, cfg, locale):
+        print(f"  {note}")
+    # Every locale's marks are checked, not just this one's: a broken translation fails the first run.
+    texts = [t for s in caption_sets(cfg).values() for t in s.values()]
+    the_theme = theme_of(cfg.get("theme"))
+    for text in texts:
+        parse_caption(the_theme, text)
     # `*word*` meant the accent until 2026-10-02 and is now italic: warn a theme that has an accent.
-    texts = list(deck.values())
-    if theme_of(cfg.get("theme")).accent and any(map(OLD_ACCENT.search, texts)) and not any("==" in t for t in texts):
+    if the_theme.accent and any(map(OLD_ACCENT.search, texts)) and not any("==" in t for t in texts):
         print(f"  note: captions in {CAPTIONS} use *word*, which is italic; the accent colour is ==word==")
     targets = {k: tuple(v) for k, v in (cfg.get("targets") or {}).items()}
     slots, produced, total = slots_of(cfg), set(), 0

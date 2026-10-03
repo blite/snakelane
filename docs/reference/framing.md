@@ -53,6 +53,23 @@ theme: {base: parchment, colors: {moss: "#4F7A3A"}}
 
 ![Inline marks in the parchment theme](../assets/framing/extra-inline-marks.jpg){ width="200" }
 
+### Captions per locale
+
+One map of shot numbers captions every locale's deck. To translate them, key the map by ASC
+locale instead, each value a map of shot numbers:
+
+```yaml
+captions:
+  en-US: {"1": "All your cameras.\n==No cloud.==", "2": "Every feed, one grid"}
+  de-DE: {"1": "Alle Kameras.\n==Keine Cloud.==", "2": "Jedes Bild, ein Raster"}
+```
+
+A locale without an entry gets the primary locale's captions (`primary_locale`, default the
+first of `locales`); `frame` and `shoot --dry-run` print a line saying so. A locale with an
+entry must caption every shot it has, as the one map must. The two forms don't mix: shot
+numbers and locales in one map is an error. Marks are checked in every locale's captions on
+every run, so a broken translation fails before it is drawn.
+
 ## Themes
 
 The built-in themes are the looks the apps snakelane grew out of drew in their own UI tests,
@@ -165,6 +182,7 @@ screenshots:
   frame: snakelane
   framing:
     captions: {"1": "Caption", "2": [line, line]}   # required; a list is the caption's lines
+    # or per locale: {en-US: {"1": …}, de-DE: {"1": …}}; a locale without one gets the primary's
     targets: {iphone: [1284, 2778], ipad: [2064, 2752], mac: [2880, 1800]}  # default: each capture's size
 
     layout: stacked                     # full-bleed | stacked | device

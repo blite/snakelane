@@ -6,6 +6,13 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **Per-locale captions.** `screenshots.framing.captions` also takes a map keyed by ASC locale,
+  each value today's `{"1": "Caption", …}` map, so `frame` and `shoot` (with `frame: snakelane`)
+  caption each locale's deck in its own language. A locale without an entry gets the primary
+  locale's captions, and `frame` / `shoot --dry-run` say so. The banner handoff is worked out
+  per locale. Mixing shot numbers and locales in one map is an error. The one-map form is
+  unchanged; nothing to do for an app that keeps it.
+
 ## 0.2.0
 
 - `gallery` labels each shot with the display App Store Connect files it under, e.g.

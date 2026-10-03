@@ -20,8 +20,8 @@ def app(tmp_path: Path) -> project.App:
                                            "framing": {"captions": {"1": "One", "2": "Two", "3": "Three"}}})
 
 
-def capture(app: project.App, deck: str, n: int) -> None:
-    path = project.DeckTree.for_deck(app, deck).raw("en-US") / f"ss-{n:02}.png"
+def capture(app: project.App, deck: str, n: int, locale: str = "en-US") -> None:
+    path = project.DeckTree.for_deck(app, deck).raw(locale) / f"ss-{n:02}.png"
     path.parent.mkdir(parents=True, exist_ok=True)
     Image.new("RGB", (1284, 2778), "white").save(path)
 
@@ -238,3 +238,68 @@ def test_platform_frames_only_that_platforms_decks(tmp_path: Path, monkeypatch: 
     frame.frame_command(platform="macos")
     assert (project.DeckTree.for_deck(app, "mac").framed("en-US") / "ss-01.jpg").exists()
     assert not project.DeckTree.for_deck(app, "iphone").framed("en-US").exists()
+
+
+def by_locale(tmp_path: Path, captions: dict, **config: object) -> project.App:
+    return make_app(tmp_path, locales=["en-US", "de-DE", "fr-FR"], **config,
+                    screenshots={"frame": "snakelane", "framing": {"captions": captions}})
+
+
+def test_one_caption_map_serves_every_locale(app: project.App, capsys: pytest.CaptureFixture[str]) -> None:
+    assert frame.captions(app, frame.framing(app), "de-DE") == {1: "One", 2: "Two", 3: "Three"}
+    assert frame.captions(app, frame.framing(app), None) == frame.captions(app, frame.framing(app), "en-US")
+    assert frame.fallback_note(app, frame.framing(app), "de-DE") is None
+    capture(app, "iphone", 1, "de-DE")
+    capture(app, "iphone", 2, "de-DE")
+    capture(app, "iphone", 3, "de-DE")
+    assert frame.frame_deck(app, "de-DE") == 3
+    assert "“One”" in capsys.readouterr().out
+
+
+def test_per_locale_captions_pick_the_locale(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    app = by_locale(tmp_path, {"en-US": {"1": "One", 2: ["Two", "lines"]}, "de-DE": {"1": "Eins", "2": "Zwei"}})
+    cfg = frame.framing(app)
+    assert frame.captions(app, cfg, "de-DE") == {1: "Eins", 2: "Zwei"}
+    assert frame.captions(app, cfg, "en-US") == {1: "One", 2: "Two\nlines"}
+    for n in (1, 2):
+        capture(app, "iphone", n, "de-DE")
+    frame.frame_deck(app, "de-DE")
+    out = capsys.readouterr().out
+    assert "“Eins”" in out and "“One”" not in out and "using" not in out
+    assert frame.banner_handoff(app, "iphone", "de-DE")["slots"].keys() == {"1", "2"}
+
+
+def test_a_locale_without_captions_gets_the_primarys(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    app = by_locale(tmp_path, {"de-DE": {"1": "Eins"}, "fr-FR": {"1": "Un"}}, primary_locale="fr-FR")
+    assert frame.captions(app, frame.framing(app), "en-US") == {1: "Un"}
+    capture(app, "iphone", 1, "en-US")
+    frame.frame_deck(app, "en-US")
+    out = capsys.readouterr().out
+    assert "en-US has none" in out and "using fr-FR's" in out and "“Un”" in out
+
+
+def test_a_locale_map_must_caption_every_capture(tmp_path: Path) -> None:
+    app = by_locale(tmp_path, {"en-US": {"1": "One", "2": "Two"}, "de-DE": {"1": "Eins"}})
+    capture(app, "iphone", 1, "de-DE")
+    capture(app, "iphone", 2, "de-DE")
+    with pytest.raises(SystemExit, match="no caption for shot 2"):
+        frame.frame_deck(app, "de-DE")
+
+
+def test_mixing_the_two_caption_forms_is_an_error(tmp_path: Path) -> None:
+    app = by_locale(tmp_path, {"1": "One", "de-DE": {"1": "Eins"}})
+    with pytest.raises(SystemExit, match="mixes shot numbers"):
+        frame.captions(app, frame.framing(app), "en-US")
+
+
+def test_no_captions_for_the_locale_or_the_primary_is_an_error(tmp_path: Path) -> None:
+    app = by_locale(tmp_path, {"de-DE": {"1": "Eins"}})
+    with pytest.raises(SystemExit, match="no captions for fr-FR, nor for the primary locale en-US"):
+        frame.captions(app, frame.framing(app), "fr-FR")
+
+
+def test_every_locales_marks_are_checked(tmp_path: Path) -> None:
+    app = by_locale(tmp_path, {"en-US": {"1": "One"}, "de-DE": {"1": "==Eins"}})
+    capture(app, "iphone", 1, "en-US")
+    with pytest.raises(SystemExit, match="== unclosed"):
+        frame.frame_deck(app, "en-US")
