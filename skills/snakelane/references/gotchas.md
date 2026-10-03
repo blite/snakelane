@@ -292,6 +292,20 @@ line from every run, even one that bails.
 script runs with `ARCHIVE_PATH` and `PROJECT_DIR` empty. Log unconditionally at the top of
 the script, so a post-action that never ran and one that ran and bailed look different.
 
+**Set the export-compliance key on the binary.** Without `ITSAppUsesNonExemptEncryption` in
+the Info.plist, every build uploads, processes, and then sits at "Missing Compliance" in App
+Store Connect: TestFlight won't hand it to testers and `ship release` can't submit it until the
+encryption question is answered by hand, again for each new build. Answer it in the binary
+instead. With a generated Info.plist that's a build setting on the app target,
+`INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO`, in both Debug and Release, and set
+unconditionally rather than under `[sdk=iphoneos*]` so the Mac build carries it too; otherwise
+the `<key>` in the target's Info.plist. `NO` is right when the only encryption is what the OS
+provides (HTTPS/URLSession, CloudKit, Keychain, CryptoKit used for those). An app with its own
+or third-party cryptography sets `YES` plus `ITSEncryptionExportComplianceCode`, and the
+documentation goes to App Store Connect first. Read it back from a built product
+(`PlistBuddy -c 'Print :ITSAppUsesNonExemptEncryption' <App>.app/Info.plist`, or
+`Contents/Info.plist` on the Mac) before trusting the setting.
+
 **Multi-platform schemes need an explicit destination.** Without one, `xcodebuild` can pick
 the Mac target in a scheme that supports iOS and macOS. Pass
 `-destination 'generic/platform=iOS'` when archiving for iOS.

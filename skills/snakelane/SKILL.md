@@ -145,6 +145,10 @@ match what now exists. Only GETs are retried — a timed-out POST may have lande
   `com.x.SolitairePlus`. Set `apple_id` in `snakelane.yml` as soon as the record exists; snakelane
   matches the bundle id exactly *and* asserts the numeric id.
 - Sub-categories must be fully qualified: `GAMES_PUZZLE`, not `PUZZLE`.
+- A binary without `ITSAppUsesNonExemptEncryption` in its Info.plist uploads and processes,
+  then waits at "Missing Compliance": no TestFlight tester gets it and `ship release` can't
+  submit it until someone answers the question in the web UI, build by build. Set the key once
+  on the app target. `references/gotchas.md` → Xcode project.
 - Field limits are enforced locally before any call: name 30, subtitle 30, keywords 100,
   promotional text 170, description 4000; IAP name 30, IAP description 45.
 - Dingbats (✓ ✗ ✦) and emoji in listing text are a 409; • × — « » ° are fine.
@@ -283,10 +287,19 @@ Archive only from the app scheme; turn Archive off in helper schemes.
     the window on a Mac.
     `references/gotchas.md` → The Mac lane has the traps.
 
-4. `snakelane store push --dry-run` should print the whole listing with no network access;
+4. **Ask the user** which export-compliance answer the app needs, then set it on the app target
+    for every platform it builds. Don't pick one yourself: it's a legal declaration the developer
+    makes to Apple. Put it as a choice: `NO`, the app's only encryption is what the OS provides
+    (HTTPS, CloudKit, Keychain; most apps), or `YES`, it has its own or third-party
+    cryptography (which also needs `ITSEncryptionExportComplianceCode` from App Store Connect).
+    Skip the question if the target already sets `ITSAppUsesNonExemptEncryption`. Check
+    `/usr/libexec/PlistBuddy -c 'Print :ITSAppUsesNonExemptEncryption'` on a built app.
+    `references/gotchas.md` → Xcode project has the details.
+
+5. `snakelane store push --dry-run` should print the whole listing with no network access;
     `snakelane shoot --dry-run` shows the screenshot plan.
 
-5. Record in the app's `AGENTS.md` anything deliberately different about it.
+6. Record in the app's `AGENTS.md` anything deliberately different about it.
 
 
 ## Credentials
