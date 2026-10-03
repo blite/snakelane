@@ -1,0 +1,2487 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="An opinionated App Store Connect CLI for indie Apple developers and coding agents. Keep listings, screenshots, and purchase catalogues in your repo, review changes, and ship with a focused Python workflow.">
+      
+      
+      
+        <link rel="canonical" href="https://blite.github.io/snakelane/0.2/design/release/">
+      
+      
+        <link rel="prev" href="../framing/">
+      
+      
+        <link rel="next" href="../../adr/0001-no-pbxproj-library/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Releasing and purchases - snakelane</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#design-notes-releasing-build-numbers-and-purchases" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="snakelane" class="md-header__button md-logo" aria-label="snakelane" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            snakelane
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Releasing and purchases
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/blite/snakelane" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    blite/snakelane
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../.." class="md-tabs__link">
+          
+  
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../commands/store/" class="md-tabs__link">
+          
+  
+  
+  Commands
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/config/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../foundations/" class="md-tabs__link">
+          
+  
+  
+  Design
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../changelog/" class="md-tabs__link">
+          
+  
+  
+  Project
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="snakelane" class="md-nav__button md-logo" aria-label="snakelane" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    snakelane
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/blite/snakelane" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    blite/snakelane
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The config and the metadata tree
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/framing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Framing screenshots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../showcase/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screenshot showcase
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using it with a coding agent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Commands
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/screenshots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    shoot · frame · check
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/gallery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    gallery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/lint/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    lint · translations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/release/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ship · bump · status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/packs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    packs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    auth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config keys
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/gotchas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    App Store Connect traps
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../foundations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project, client and listing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../screenshots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Shooting and uploading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../framing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Framing and the gallery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Releasing and purchases
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Releasing and purchases
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#shipping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shipping
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Shipping">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#no-build-number-bump-in-ship" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        No build-number bump in ship
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#explicit-archive-destination-and-pinned-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Explicit archive destination and pinned project
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-marketing-version-gate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The marketing-version gate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-release-test-gate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The release test gate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testflight-polling-filtered-by-platform" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TestFlight polling filtered by platform
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#xcode-does-not-manage-the-build-number-at-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Xcode does not manage the build number at export
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usrbin-first-on-path-for-the-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /usr/bin first on PATH for the export
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-new-apps-first-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A new app's first export
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-release-lint-reads-app-store-connect-not-the-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The release lint reads App Store Connect, not the files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#marketing_version-is-scoped-by-bundle-id" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MARKETING_VERSION is scoped by bundle id
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build-numbers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build numbers
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Build numbers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-the-number-is-picked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the number is picked
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-record-the-pbxproj" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One record: the pbxproj
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-an-archive-post-action" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why an Archive post-action
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stamping-a-signed-archive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stamping a signed archive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#text-edits-not-agvtool-or-a-library" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Text edits, not agvtool or a library
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-testflight-check-degrades-never-fails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The TestFlight check degrades, never fails
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-action-logging-and-repo-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Post-action logging and repo discovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#background-assets-packs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Background Assets packs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Background Assets packs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#path-equivalence-and-the-staging-tree" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Path equivalence and the staging tree
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manifest-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manifest rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#platforms-are-a-ratchet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Platforms are a ratchet
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#upload-needs-a-person-at-a-terminal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upload needs a person at a terminal
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#only-unsent-packs-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Only unsent packs by default
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#contentversion-is-apples-asset-pack-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        contentVersion is Apple's asset pack version
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#in-app-purchases-and-subscriptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In-app purchases and subscriptions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="In-app purchases and subscriptions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#creation-behind-create" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creation behind --create
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-catalogue-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One catalogue file
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set-once-price-availability-and-review-screenshot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Set-once price, availability and review screenshot
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subscriptions-are-priced-on-the-website" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Subscriptions are priced on the website
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dry-runs-without-credentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dry runs without credentials
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../adr/0001-no-pbxproj-library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR 1: no pbxproj library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../adr/0002-jpeg-only-screenshot-decks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR 2: JPEG-only screenshots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../adr/0003-lint-subscription-legal-links/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR 3: subscription links in lint
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#shipping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shipping
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Shipping">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#no-build-number-bump-in-ship" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        No build-number bump in ship
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#explicit-archive-destination-and-pinned-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Explicit archive destination and pinned project
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-marketing-version-gate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The marketing-version gate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-release-test-gate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The release test gate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testflight-polling-filtered-by-platform" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TestFlight polling filtered by platform
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#xcode-does-not-manage-the-build-number-at-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Xcode does not manage the build number at export
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usrbin-first-on-path-for-the-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /usr/bin first on PATH for the export
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-new-apps-first-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A new app's first export
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-release-lint-reads-app-store-connect-not-the-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The release lint reads App Store Connect, not the files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#marketing_version-is-scoped-by-bundle-id" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MARKETING_VERSION is scoped by bundle id
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build-numbers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build numbers
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Build numbers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-the-number-is-picked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the number is picked
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-record-the-pbxproj" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One record: the pbxproj
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-an-archive-post-action" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why an Archive post-action
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stamping-a-signed-archive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stamping a signed archive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#text-edits-not-agvtool-or-a-library" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Text edits, not agvtool or a library
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-testflight-check-degrades-never-fails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The TestFlight check degrades, never fails
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-action-logging-and-repo-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Post-action logging and repo discovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#background-assets-packs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Background Assets packs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Background Assets packs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#path-equivalence-and-the-staging-tree" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Path equivalence and the staging tree
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manifest-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manifest rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#platforms-are-a-ratchet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Platforms are a ratchet
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#upload-needs-a-person-at-a-terminal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upload needs a person at a terminal
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#only-unsent-packs-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Only unsent packs by default
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#contentversion-is-apples-asset-pack-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        contentVersion is Apple's asset pack version
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#in-app-purchases-and-subscriptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In-app purchases and subscriptions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="In-app purchases and subscriptions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#creation-behind-create" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creation behind --create
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-catalogue-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One catalogue file
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set-once-price-availability-and-review-screenshot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Set-once price, availability and review screenshot
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subscriptions-are-priced-on-the-website" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Subscriptions are priced on the website
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dry-runs-without-credentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dry runs without credentials
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/blite/snakelane/edit/main/docs/design/release.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="design-notes-releasing-build-numbers-and-purchases">Design notes: releasing, build numbers and purchases<a class="headerlink" href="#design-notes-releasing-build-numbers-and-purchases" title="Permanent link">&para;</a></h1>
+<p>These are the reasons behind decisions in the <code>release/</code> and <code>purchases/</code> code, moved out of
+comments so the code stays short.</p>
+<h2 id="shipping">Shipping<a class="headerlink" href="#shipping" title="Permanent link">&para;</a></h2>
+<h3 id="no-build-number-bump-in-ship">No build-number bump in ship<a class="headerlink" href="#no-build-number-bump-in-ship" title="Permanent link">&para;</a></h3>
+<p><code>snakelane ship</code> never bumps the build number. The archive runs the scheme's Archive
+post-action (<code>snakelane bump --archive</code>), which picks the number, writes it to the pbxproj and
+stamps the archive, so a bump in <code>ship</code> would double-increment. What <code>ship</code> does is check the
+number landed before uploading: the pbxproj must have moved during the archive, and the app and
+every extension must carry it. Comparing the archive with the pbxproj alone is not enough,
+because an unstamped archive was built from that same pbxproj and agrees with it. PuzzleReef
+shipped the app at 13 and its extension at 4 over three builds; App Store Connect rejects that.</p>
+<h3 id="explicit-archive-destination-and-pinned-project">Explicit archive destination and pinned project<a class="headerlink" href="#explicit-archive-destination-and-pinned-project" title="Permanent link">&para;</a></h3>
+<p>The archive always passes <code>-destination generic/platform=…</code>. Without it, a multi-platform
+scheme sometimes archives the Mac product for an iOS run: the archive succeeds and the upload
+fails later. <code>-project</code> is pinned because a workspace beside the project (Jigsaw's holds a dev
+tool) must not be what xcodebuild resolves.</p>
+<h3 id="the-marketing-version-gate">The marketing-version gate<a class="headerlink" href="#the-marketing-version-gate" title="Permanent link">&para;</a></h3>
+<p>Apple closes a version's train once it is approved, so a build that reuses the live
+MARKETING_VERSION is rejected at upload (90062 / 90186), after a full test and archive. Jigsaw
+and then PoolLog hit this. <code>ship beta</code> and <code>ship release</code> refuse before building, and
+<code>ship bump-version</code> is the way out.</p>
+<h3 id="the-release-test-gate">The release test gate<a class="headerlink" href="#the-release-test-gate" title="Permanent link">&para;</a></h3>
+<p>A red suite stops the upload; that is what makes a one-command release safe. The gate always
+runs on one iOS simulator by default: the suites exercise shared logic, so the iOS run gates the
+Mac build too, and some UI test targets do not build for macOS at all (Jigsaw, PoolLog). An app
+whose tests do build for the Mac can set <code>test.mac</code> so a macos build is gated on this Mac: the
+binary going out is then the one tested, and AppKit-only paths get covered. Tests run
+serially because parallel test clones leak into <code>~/Library/Developer/XCTestDevices</code> whenever a
+run is killed. Serial keeps it to one clone, and any failure sweeps the set anyway.</p>
+<h3 id="testflight-polling-filtered-by-platform">TestFlight polling filtered by platform<a class="headerlink" href="#testflight-polling-filtered-by-platform" title="Permanent link">&para;</a></h3>
+<p>iOS and macOS share one build counter, and a build number is unique only per platform at Apple,
+so <code>wait_for_build</code> filters by platform. On a timeout <code>beta</code> carries on (the changelog can be
+added by hand) and <code>release</code> stops, because it needs the processed build.</p>
+<h3 id="xcode-does-not-manage-the-build-number-at-export">Xcode does not manage the build number at export<a class="headerlink" href="#xcode-does-not-manage-the-build-number-at-export" title="Permanent link">&para;</a></h3>
+<p>The export options set <code>manageAppVersionAndBuildNumber: false</code>. Otherwise Xcode rewrites
+CFBundleVersion to the App Store Connect maximum plus one at export: a second opinion on the job
+the post-action already did, and how two machines end up disagreeing about what number shipped.</p>
+<h3 id="usrbin-first-on-path-for-the-export">/usr/bin first on PATH for the export<a class="headerlink" href="#usrbin-first-on-path-for-the-export" title="Permanent link">&para;</a></h3>
+<p><code>xcodebuild -exportArchive</code> runs <code>/usr/bin/rsync</code>, which finds its server half by PATH lookup.
+A Homebrew rsync 3.4 or later ahead of it rejects the flags, and the export fails with "Copy
+failed" after a good archive (Jigsaw). The key path passed to the export is absolute because
+xcodebuild rejects a relative or tilde'd path with an unhelpful auth error.</p>
+<h3 id="a-new-apps-first-export">A new app's first export<a class="headerlink" href="#a-new-apps-first-export" title="Permanent link">&para;</a></h3>
+<p>A brand-new bundle id has no App Store provisioning profile. With no Apple Distribution
+certificate in the keychain (the normal state with Xcode-managed signing), <code>-exportArchive</code>
+has to make one with Apple's cloud-managed certificate, and an App Manager API key may not:
+the export fails with "Cloud signing permission error" and "No profiles for '<bundle id>'
+were found", after a good archive (FreeCell, 2026-10). The family's older apps never showed
+it because each already had an Xcode-made "iOS Team Store Provisioning Profile" from an
+upload through Organizer.</p>
+<p><code>ship</code> recognises those two lines (<code>FIRST_EXPORT_SIGNS</code>) and replaces xcodebuild's traceback
+with the two ways past it: upload that archive from Organizer once, or give the key the Admin
+role. It does not try either itself: one is a person signing in as their Apple ID, the other
+a change to what the key may do.</p>
+<h3 id="the-release-lint-reads-app-store-connect-not-the-files">The release lint reads App Store Connect, not the files<a class="headerlink" href="#the-release-lint-reads-app-store-connect-not-the-files" title="Permanent link">&para;</a></h3>
+<p><code>ship release</code> submits the listing App Store Connect holds and never pushes text itself, so the
+lint gate checks the live listing. It also warns when the local files differ: a fix not yet
+pushed would not go to review. It runs before the tests and the archive, as does the check of
+the <code>release</code> block, so a listing problem or a typo costs seconds rather than an archive and an
+upload.</p>
+<h3 id="marketing_version-is-scoped-by-bundle-id">MARKETING_VERSION is scoped by bundle id<a class="headerlink" href="#marketing_version-is-scoped-by-bundle-id" title="Permanent link">&para;</a></h3>
+<p><code>ship bump-version</code> changes only the configurations of the app and its extensions, not every
+MARKETING_VERSION in the file. Test targets carry their own (Jigsaw's sit at 1.0 under an app at
+1.6), and a project may hold other apps entirely (SwiftNVR holds six).</p>
+<h2 id="build-numbers">Build numbers<a class="headerlink" href="#build-numbers" title="Permanent link">&para;</a></h2>
+<h3 id="how-the-number-is-picked">How the number is picked<a class="headerlink" href="#how-the-number-is-picked" title="Permanent link">&para;</a></h3>
+<p>The next build is max(the pbxproj's CURRENT_PROJECT_VERSION + 1, the latest TestFlight build +
+1). The committed pbxproj is the durable record and travels with the repo, so clones and rebases
+cannot regress it; TestFlight is the cross-machine backstop. The git commit count that
+fastlane's lane mixed in is gone: it added nothing the pbxproj already guaranteed and caused
+meaningless jumps (a project at build 2 leaping to 86 because history had 86 commits). App Store
+Connect tracks builds per platform, so archiving iOS then macOS from one commit consumes two
+numbers, which nothing objects to. Per-platform counters were built and reverted in Solitaire on
+2026-08-27: bookkeeping without correctness.</p>
+<h3 id="one-record-the-pbxproj">One record: the pbxproj<a class="headerlink" href="#one-record-the-pbxproj" title="Permanent link">&para;</a></h3>
+<p><code>Metadata/build_number.txt</code> existed from 2026-09-09 to 2026-09-15, because a build phase that
+writes the project file makes Xcode cancel the archive ("Build stopped", no error, no archive in
+the Organizer). Two records drift apart, and that shipped a broken build in PuzzleReef: the
+stamp silently failed, the archive fell back to the other record, and the app went out at 13
+with its extension at 4. snakelane no longer reads a leftover <code>build_number.txt</code>; the TestFlight check keeps a number
+from being reissued.</p>
+<h3 id="why-an-archive-post-action">Why an Archive post-action<a class="headerlink" href="#why-an-archive-post-action" title="Permanent link">&para;</a></h3>
+<p>Writing the pbxproj is safe only because nothing writes it during a build. The post-action runs
+once the archive is finished, under <code>xcodebuild archive</code> as well as Cmd-Archive, so <code>ship</code> and
+the IDE share one mechanism. The alternatives were measured. A scheme pre-action is off by one:
+xcodebuild snapshots build settings before pre-actions run, so the archive carries the old
+number. A build phase with <code>--stamp-product</code> (the 2026-09 Spades, Hearts, Euchre, Solitaire and
+WordSearch design) works only without an extension: embedding one orders the app's
+ProcessInfoPlistFile after every build phase, forcing the order is a dependency cycle, and the
+phase also needs ENABLE_USER_SCRIPT_SANDBOXING = NO (SwiftNVR, 2026-09-18).</p>
+<h3 id="stamping-a-signed-archive">Stamping a signed archive<a class="headerlink" href="#stamping-a-signed-archive" title="Permanent link">&para;</a></h3>
+<p>The post-action cannot influence the build it follows, so it stamps the finished archive: the
+app, every nested <code>.appex</code> (an extension whose CFBundleVersion differs from its container is
+rejected at submission), and the archive's <code>ApplicationProperties</code>, which the Organizer lists.
+This breaks the archive's signature. That is what Xcode's own <code>manageAppVersionAndBuildNumber</code>
+does too: <code>xcodebuild -exportArchive</code> re-signs every bundle on the way out, and export is the
+only way an archive is consumed. Do not hand an unexported <code>.xcarchive</code> to a device.</p>
+<h3 id="text-edits-not-agvtool-or-a-library">Text edits, not agvtool or a library<a class="headerlink" href="#text-edits-not-agvtool-or-a-library" title="Permanent link">&para;</a></h3>
+<p>The projects configure no VERSIONING_SYSTEM, so agvtool would no-op or demand a setting nothing
+else needs. Why the pbxproj is edited by targeted text rather than a parsing library is in
+<a href="../../adr/0001-no-pbxproj-library/">ADR 0001</a>.</p>
+<h3 id="the-testflight-check-degrades-never-fails">The TestFlight check degrades, never fails<a class="headerlink" href="#the-testflight-check-degrades-never-fails" title="Permanent link">&para;</a></h3>
+<p>The key lives in files under <code>$HOME</code>, not environment variables, because an Xcode launched from
+the Dock has no shell variables: before snakelane the check quietly stepped aside on exactly those
+archives. Requests time out at 10 seconds with no retries, and use <code>get</code> rather than <code>get_all</code>
+(with limit 1, <code>get_all</code> follows <code>next</code> through every build the app ever uploaded). Any failure
+falls back to local arithmetic: a number higher than necessary is harmless, an archive whose
+post-action died is not.</p>
+<h3 id="post-action-logging-and-repo-discovery">Post-action logging and repo discovery<a class="headerlink" href="#post-action-logging-and-repo-discovery" title="Permanent link">&para;</a></h3>
+<p>Xcode shows nothing from a post-action unless it fails, and then only in the Report navigator.
+So everything <code>bump</code> prints is also appended, timestamped, to
+<code>/tmp/snakelane-&lt;app&gt;-bump-build.log</code>, and a failure before the app is known goes to
+<code>/tmp/snakelane-bump-build.log</code>. Xcode does not run post-actions from the project folder, so the
+repo is found from the working directory, then <code>$PROJECT_DIR</code> and <code>$SRCROOT</code>, which Xcode sets.</p>
+<h2 id="background-assets-packs">Background Assets packs<a class="headerlink" href="#background-assets-packs" title="Permanent link">&para;</a></h2>
+<h3 id="path-equivalence-and-the-staging-tree">Path equivalence and the staging tree<a class="headerlink" href="#path-equivalence-and-the-staging-tree" title="Permanent link">&para;</a></h3>
+<p>A file's path inside the archive must equal the path it would have if the pack were bundled.
+That lets the app resolve a file the same way whether it shipped in the binary or was
+downloaded, and no manifest is rewritten when a pack moves between the two. <code>ba-package</code>
+resolves selectors against its working directory, and the source folder rarely matches the
+in-app path (PuzzleReef: <code>Content/approved/animals/</code> on disk, <code>packs/pictures/animals/</code> in the
+app). So <code>package</code> hardlinks the files into a staging tree that mirrors the bundle and runs
+<code>ba-package</code> from there.</p>
+<h3 id="manifest-rules">Manifest rules<a class="headerlink" href="#manifest-rules" title="Permanent link">&para;</a></h3>
+<p>Selectors are explicit <code>file</code> entries, never a <code>directory</code>: pack contents are immutable once
+uploaded, so a directory selector makes a stray <code>.DS_Store</code> permanent, and listing what
+<code>pack.json</code> names catches a manifest that has drifted from disk. Packs are <code>onDemand</code>, because
+an <code>essential</code> or <code>prefetch</code> pack counts toward the product page's download size and takes the
+timing away from the user. Apple-hosted packs reject <code>userInfo</code>. The archive carries no version;
+App Store Connect assigns one at upload.</p>
+<h3 id="platforms-are-a-ratchet">Platforms are a ratchet<a class="headerlink" href="#platforms-are-a-ratchet" title="Permanent link">&para;</a></h3>
+<p>A pack's platforms come from the record and may be added, never removed. Declaring a platform
+the app record does not list is ITMS-91139, which is cosmetic. Dropping one an earlier version
+declared is ITMS-91148, and that stops the pack appearing on that platform (PuzzleReef's
+<code>animals</code>, v1 then v2, 2026-09-11/12). snakelane.yml's <code>platforms</code> is not used, because a pack
+should not stop reaching a platform just because no listing has been written for it.</p>
+<h3 id="upload-needs-a-person-at-a-terminal">Upload needs a person at a terminal<a class="headerlink" href="#upload-needs-a-person-at-a-terminal" title="Permanent link">&para;</a></h3>
+<p><code>packs upload</code> exists so the <code>altool</code> command is not retyped from a doc, and it does what a
+retyped command skips: passes the API key the way altool resolves it, refuses a pack no release
+enables, enforces ten packs per submission, and records the upload. The confirmation is read
+from a terminal and there is no <code>--yes</code>, so an agent or CI job cannot run it. An upload starts a
+review that replaces live content for every user with no TestFlight-style hold. altool will not
+take a path to the <code>.p8</code>; it scans fixed directories for <code>AuthKey_&lt;key_id&gt;.p8</code>, which is why
+<code>auth setup</code> installs the key where it does and <code>API_PRIVATE_KEYS_DIR</code> is set explicitly.</p>
+<h3 id="only-unsent-packs-by-default">Only unsent packs by default<a class="headerlink" href="#only-unsent-packs-by-default" title="Permanent link">&para;</a></h3>
+<p>With no themes named, <code>upload</code> sends only archives not yet marked <code>uploaded</code>. It used to send
+every archive in the build folder. On the first real run (PuzzleReef, 2026-09-11) that put a
+pack delivered an hour earlier first in line; altool answered "already delivered" (-19247), the
+loop stopped, and the pack that needed sending never was.</p>
+<h3 id="contentversion-is-apples-asset-pack-version">contentVersion is Apple's asset pack version<a class="headerlink" href="#contentversion-is-apples-asset-pack-version" title="Permanent link">&para;</a></h3>
+<p>Since PuzzleReef on 2026-09-12, the version Apple assigns at upload is written back as the
+pack's <code>contentVersion</code>, so there is one number for one thing. This works because <code>pack.json</code>
+ships in the binary, not the archive: the next build carries the new number, and the app can
+invalidate caches exactly when the content was replaced. <code>archive_bytes</code> is also recorded at
+upload rather than at package time, so it names the size of what is live.</p>
+<h2 id="in-app-purchases-and-subscriptions">In-app purchases and subscriptions<a class="headerlink" href="#in-app-purchases-and-subscriptions" title="Permanent link">&para;</a></h2>
+<h3 id="creation-behind-create">Creation behind --create<a class="headerlink" href="#creation-behind-create" title="Permanent link">&para;</a></h3>
+<p>Product ids, like Game Center ids, can never be reused once they have existed, even after
+deletion. The IAP sync began as a localization-only script that stopped short of creation
+because a new product also needs a price, availability and a review screenshot. snakelane does
+all of that, but only with <code>--create</code>, and checks the id's character set (letters, digits,
+underscores and periods) only at creation, the one moment a wrong id becomes permanent.
+<code>--product</code> takes full ids only, and an unknown one stops the run so a typo cannot look like a
+successful push of nothing.</p>
+<h3 id="one-catalogue-file">One catalogue file<a class="headerlink" href="#one-catalogue-file" title="Permanent link">&para;</a></h3>
+<p>One-time purchases and subscriptions shared two files until 2026-10-02 and now live in one
+<code>iap.yml</code>. To whoever sells them they are one list, App Store Connect files both under In-App
+Purchases, and they share one id space, so a duplicate id is caught before <code>--create</code> could
+spend it. Unknown keys warn, because a misspelt optional key is otherwise silently ignored: one
+app's catalogue said <code>review_notes</code> and its review note never reached App Review.</p>
+<h3 id="set-once-price-availability-and-review-screenshot">Set-once price, availability and review screenshot<a class="headerlink" href="#set-once-price-availability-and-review-screenshot" title="Permanent link">&para;</a></h3>
+<p>Localizations are additive: missing ones are created, changed ones patched, identical ones left
+alone, because touching an approved localization re-opens the product for review. Price,
+availability and the review screenshot are set only when none exists. Repricing a live product
+has customer-facing timing and belongs in the App Store Connect website, and replacing a review
+screenshot re-opens review, so a rejected screenshot is reported rather than retried. A
+subscription's period and family sharing are terms of a live subscription, so a mismatch is
+reported and never changed by a sync.</p>
+<h3 id="subscriptions-are-priced-on-the-website">Subscriptions are priced on the website<a class="headerlink" href="#subscriptions-are-priced-on-the-website" title="Permanent link">&para;</a></h3>
+<p>Since 2026-10-02 <code>subs push</code> never sets a price. Through the API a subscription is priced one
+territory at a time (about 175 POSTs), and a run that failed partway left the rest unpriced with
+no safe way to resume. The website prices every territory from one price. <code>subs show</code> reads the
+price back, and a failed read stops the push rather than reading as "unpriced".</p>
+<h3 id="dry-runs-without-credentials">Dry runs without credentials<a class="headerlink" href="#dry-runs-without-credentials" title="Permanent link">&para;</a></h3>
+<p><code>iap push --dry-run</code> is a diff against App Store Connect, so without credentials the per-repo
+copies died before printing anything. snakelane still validates the catalogue locally (limits,
+keys, ids), lists it, and says that nothing was compared.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../framing/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Framing and the gallery">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Framing and the gallery
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../../adr/0001-no-pbxproj-library/" class="md-footer__link md-footer__link--next" aria-label="Next: ADR 1: no pbxproj library">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                ADR 1: no pbxproj library
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      MIT licensed. Not affiliated with Apple or fastlane.
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.footer", "navigation.instant", "search.highlight", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
