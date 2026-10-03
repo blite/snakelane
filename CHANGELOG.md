@@ -6,6 +6,13 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **`ship beta|release` explains a new app's first export.** When the export fails because the
+  bundle id has no App Store provisioning profile and the API key can't make one (cloud
+  signing), `ship` stops with the two ways past it, uploading the built archive from Xcode's
+  Organizer once or giving the key the Admin role, instead of xcodebuild's error and a
+  traceback. The skill gains `references/first-release.md`, a walkthrough of everything a first
+  submission needs that later releases don't.
+
 - **The skill covers export compliance**: setting `ITSAppUsesNonExemptEncryption` on the app
   target is a setup step (the agent asks the user which answer applies), so builds don't wait at
   "Missing Compliance".

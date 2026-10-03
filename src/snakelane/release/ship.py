@@ -37,6 +37,7 @@ import datetime as dt
 import os
 import plistlib
 import re
+import shlex
 import shutil
 import subprocess
 import time
@@ -61,7 +62,7 @@ from ..connect.resources import (
 from ..listing import lint
 from ..listing.push import build_push_plan, diff_plan_against_live, fetch_live_state
 from ..project import App
-from ..xcode import run, sweep_test_devices
+from ..xcode import run, run_logged, sweep_test_devices
 from . import bump
 
 DEFAULT_TEST_DEVICE = "iPhone 17 Pro Max"
@@ -129,11 +130,42 @@ def upload(app: App, archive_path: Path) -> None:
     }))
     # Why: docs/design/release.md#usrbin-first-on-path-for-the-export
     env = {"PATH": f"/usr/bin:{os.environ.get('PATH', '')}"}
-    run(["xcodebuild", "-exportArchive", "-archivePath", str(archive_path),
-         "-exportOptionsPlist", str(export_options), "-allowProvisioningUpdates",
-         # Absolute: xcodebuild rejects a relative or tilde'd key path.
-         "-authenticationKeyPath", str(credentials.key_path.resolve()),
-         "-authenticationKeyID", credentials.key_id, "-authenticationKeyIssuerID", credentials.issuer_id], env)
+    try:
+        run_logged(["xcodebuild", "-exportArchive", "-archivePath", str(archive_path),
+                    "-exportOptionsPlist", str(export_options), "-allowProvisioningUpdates",
+                    # Absolute: xcodebuild rejects a relative or tilde'd key path.
+                    "-authenticationKeyPath", str(credentials.key_path.resolve()),
+                    "-authenticationKeyID", credentials.key_id, "-authenticationKeyIssuerID", credentials.issuer_id],
+                   env)
+    except subprocess.CalledProcessError as error:
+        if needs_first_store_profile(error.output or ""):
+            raise SystemExit(first_upload_message(app, archive_path)) from None
+        raise
+
+
+# What `-exportArchive` prints when the bundle id has no App Store provisioning profile and the
+# API key may not make one. Why: docs/design/release.md#a-new-apps-first-export
+FIRST_EXPORT_SIGNS = ("Cloud signing permission error", "No profiles for")
+
+
+def needs_first_store_profile(output: str) -> bool:
+    """Whether an export failed because this is a new app's first upload (no store profile yet)."""
+    return any(sign in output for sign in FIRST_EXPORT_SIGNS)
+
+
+def first_upload_message(app: App, archive_path: Path) -> str:
+    """The way past a first export that can't sign: upload this archive from Xcode once."""
+    return (
+        f"the archive is built, but it can't be signed for the App Store yet: {app.config['bundle_id']} has no App "
+        "Store provisioning profile, and this API key isn't allowed to make one with Apple's cloud signing.\n"
+        "That happens once, on a new app's first upload. Either:\n"
+        f"  1. upload this archive from Xcode:  open {shlex.quote(str(archive_path))}\n"
+        "     then Distribute App → App Store Connect → Upload. Xcode signs as your Apple ID and creates "
+        "the profile; every later `snakelane ship beta` uses it. The build number is already stamped.\n"
+        "  2. or give the key cloud signing (Admin role) in App Store Connect → Users and Access → "
+        "Integrations, then run `snakelane ship beta` again.\n"
+        "skills/snakelane/references/first-release.md §5 has the details."
+    )
 
 
 def wait_for_build(client: asc.Client, app_id: str, build_number: str, platform: str) -> dict[str, Any] | None:

@@ -58,6 +58,21 @@ A Homebrew rsync 3.4 or later ahead of it rejects the flags, and the export fail
 failed" after a good archive (Jigsaw). The key path passed to the export is absolute because
 xcodebuild rejects a relative or tilde'd path with an unhelpful auth error.
 
+### A new app's first export
+
+A brand-new bundle id has no App Store provisioning profile. With no Apple Distribution
+certificate in the keychain (the normal state with Xcode-managed signing), `-exportArchive`
+has to make one with Apple's cloud-managed certificate, and an App Manager API key may not:
+the export fails with "Cloud signing permission error" and "No profiles for '<bundle id>'
+were found", after a good archive (FreeCell, 2026-10). The family's older apps never showed
+it because each already had an Xcode-made "iOS Team Store Provisioning Profile" from an
+upload through Organizer.
+
+`ship` recognises those two lines (`FIRST_EXPORT_SIGNS`) and replaces xcodebuild's traceback
+with the two ways past it: upload that archive from Organizer once, or give the key the Admin
+role. It does not try either itself: one is a person signing in as their Apple ID, the other
+a change to what the key may do.
+
 ### The release lint reads App Store Connect, not the files
 
 `ship release` submits the listing App Store Connect holds and never pushes text itself, so the

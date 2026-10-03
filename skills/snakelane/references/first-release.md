@@ -129,12 +129,12 @@ Xcode-made "iOS Team Store Provisioning Profile" — check
 Either, and it's the user's account so the user does it:
 
 1. **Upload the first build from Xcode.** `ship beta` leaves the archive at
-   `build/<App>-ios.xcarchive`: `open` it, then Organizer → Distribute App → App Store Connect
-   → Upload. Xcode signs as the user's Apple ID and creates the store profile; every later
-   `ship beta` exports against it. Simplest, and it's what the family's older apps did.
+    `build/<App>-ios.xcarchive`: `open` it, then Organizer → Distribute App → App Store Connect
+    → Upload. Xcode signs as the user's Apple ID and creates the store profile; every later
+    `ship beta` exports against it. Simplest, and it's what the family's older apps did.
 2. **Give the key cloud signing.** In App Store Connect → Users and Access → Integrations,
-   an Admin-role team key can use the cloud-managed certificate. That changes what a leaked
-   key could do; let the user weigh it.
+    an Admin-role team key can use the cloud-managed certificate. That changes what a leaked
+    key could do; let the user weigh it.
 
 The archive's build number was already bumped and stamped; uploading it from Organizer uses
 that number, and the next `ship beta` picks the following one from TestFlight.

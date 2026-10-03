@@ -22,6 +22,26 @@ def run(cmd: list[str], env: dict[str, str] | None = None) -> None:
     subprocess.run(cmd, check=True, env={**os.environ, **env} if env else None)
 
 
+def run_logged(cmd: list[str], env: dict[str, str] | None = None) -> str:
+    """`run`, but also returning the combined output, for a caller that explains known failures.
+
+    Streams as it goes, so a long export still shows progress. A non-zero exit raises
+    `CalledProcessError` with the output attached.
+    """
+    print(f"$ {show(cmd, env)}")
+    lines: list[str] = []
+    with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                          env={**os.environ, **env} if env else None) as process:
+        assert process.stdout is not None
+        for line in process.stdout:
+            print(line, end="")
+            lines.append(line)
+    output = "".join(lines)
+    if process.returncode:
+        raise subprocess.CalledProcessError(process.returncode, cmd, output=output)
+    return output
+
+
 def sweep_test_devices() -> None:
     """Delete the simulator clones `xcodebuild test` leaks when it is killed or crashes."""
     for entry in XCTEST_DEVICES.glob("*"):

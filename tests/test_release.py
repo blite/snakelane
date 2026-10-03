@@ -111,3 +111,55 @@ def test_the_gate_runs_on_the_simulator_unless_mac_opts_in() -> None:
     assert destination({"mac": {"destination": "platform=macOS,arch=x86_64"}}, "macos") == "platform=macOS,arch=x86_64"
     with pytest.raises(SystemExit, match=r"test\.mac is an object"):
         destination({"mac": True}, "macos")
+
+
+FIRST_EXPORT_OUTPUT = """\
+2026-10-03 07:50:35.228 xcodebuild[19059:3379153] [MT] IDEDistribution: Created bundle at path "/tmp/x"
+error: exportArchive Cloud signing permission error
+error: exportArchive No profiles for 'com.example.app' were found
+  Xcode couldn't find any iOS App Store provisioning profiles matching 'com.example.app'.
+** EXPORT FAILED **
+"""
+
+
+def test_a_first_export_that_cannot_sign_says_how_to_get_past_it(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import subprocess
+
+    from snakelane.connect import asc
+    from snakelane.release import ship
+
+    app = make_app(tmp_path, scheme="Example", team_id="TEAM", bundle_id="com.example.app")
+    monkeypatch.setattr(asc.Credentials, "load", staticmethod(lambda: asc.Credentials(
+        key_id="K", issuer_id="I")))
+
+    def failing_export(cmd: list[str], env: dict[str, str]) -> str:
+        raise subprocess.CalledProcessError(70, cmd, output=FIRST_EXPORT_OUTPUT)
+
+    monkeypatch.setattr(ship, "run_logged", failing_export)
+    archive = tmp_path / "build" / "Example-ios.xcarchive"
+    with pytest.raises(SystemExit) as stopped:
+        ship.upload(app, archive)
+    message = str(stopped.value)
+    assert "com.example.app has no App Store provisioning profile" in message
+    assert f"open {archive}" in message
+    assert "Admin role" in message
+
+
+def test_any_other_export_failure_still_raises_as_it_was(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import subprocess
+
+    from snakelane.connect import asc
+    from snakelane.release import ship
+
+    app = make_app(tmp_path, scheme="Example", team_id="TEAM", bundle_id="com.example.app")
+    monkeypatch.setattr(asc.Credentials, "load", staticmethod(lambda: asc.Credentials(
+        key_id="K", issuer_id="I")))
+
+    def failing_export(cmd: list[str], env: dict[str, str]) -> str:
+        raise subprocess.CalledProcessError(70, cmd, output="error: Copy failed\n")
+
+    monkeypatch.setattr(ship, "run_logged", failing_export)
+    with pytest.raises(subprocess.CalledProcessError):
+        ship.upload(app, tmp_path / "Example-ios.xcarchive")
+    assert not ship.needs_first_store_profile("error: Copy failed")
