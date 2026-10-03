@@ -220,6 +220,9 @@ Don't mark `--reviewed` on your own translation without the user's go-ahead.
   (`{en-US: {"1": …}, de-DE: {"1": …}}`); a locale without an entry gets the primary's. When
   translating captions, keep every mark and use the words the localized app itself uses for its
   features (the app's own strings), not a fresh translation of the English.
+- Art only one app uses (badge cards, stickers) is that app's code, not a snakelane option:
+  `framing.decorate: path/to/file.py` with `decorate(image, shot)`, called per framed shot with
+  the slot, locale, deck and the capture's box on the canvas. Keep it in the app repo.
 - 1–10 screenshots per set (locale × display type); the push refuses an 11th before deleting
   anything. A locale with no folder at all inherits the primary language's screenshots on the
   store — nothing is copied, and that is a valid way to ship a locale.

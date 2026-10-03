@@ -6,6 +6,12 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **`framing.decorate`: app-only art over framed shots.** Name a repo-relative Python file whose
+  `decorate(image, shot)` snakelane calls for every framed shot, after the caption, with the
+  slot, locale, deck, the capture's box on the canvas and the theme's colours. It returns the
+  image to save (same size) or `None`. For art one app wants and no other (badge cards), so it
+  lives in that app's repo. Without the key nothing changes.
+
 - **Per-locale captions.** `screenshots.framing.captions` also takes a map keyed by ASC locale,
   each value today's `{"1": "Caption", …}` map, so `frame` and `shoot` (with `frame: snakelane`)
   caption each locale's deck in its own language. A locale without an entry gets the primary

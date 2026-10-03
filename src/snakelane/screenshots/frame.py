@@ -21,6 +21,7 @@ import typer
 
 from ..args import AppOption, PlatformOption, command_app, resolve_platform, run
 from ..project import IMAGE_SUFFIXES, App, DeckTree, resolve_app
+from .framing import decorate
 from .framing.draw import caption_band, ink_of, parse_caption
 from .framing.style import DECKS, check_framing, style_for, theme_of
 from .framing.themes import THEMES
@@ -141,6 +142,7 @@ def frame_deck(app: App, locale: str = "en-US", decks: list[str] | None = None, 
         print(f"  note: captions in {CAPTIONS} use *word*, which is italic; the accent colour is ==word==")
     targets = {k: tuple(v) for k, v in (cfg.get("targets") or {}).items()}
     slots, produced, total = slots_of(cfg), set(), 0
+    hook = decorate.load(app, cfg)
     for platform in decks or DECKS:
         tree = DeckTree.for_deck(app, platform)
         raw = tree.raw(locale)
@@ -158,7 +160,12 @@ def frame_deck(app: App, locale: str = "en-US", decks: list[str] | None = None, 
             if (n := slot_of(src)) not in deck:
                 raise SystemExit(f"{src.name}: no caption for shot {n} in {CAPTIONS}")
             style = style_for(cfg, slots.get(n, {}), platform)
-            image, note = compose(app, style, src, deck[n], target)
+            image, note, box = compose(app, style, src, deck[n], target)
+            if hook:
+                image = decorate.apply(hook, image, decorate.shot_for(
+                    app, style.theme, slot=n, locale=locale, deck=platform, size=image.size,
+                    capture=box, caption=deck[n]), str(cfg["decorate"]))
+                note += "  decorated"
             dst = framed / f"ss-{n:02d}.jpg"
             save_jpeg(image, dst)  # the extraction's writer, so the two decks match
             print(f"          {dst.name:<34s} {note:<48s} “{deck[n]}”")

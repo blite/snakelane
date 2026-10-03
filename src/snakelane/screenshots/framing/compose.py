@@ -49,6 +49,8 @@ def open_capture(src: Path, style: Style):
 
 
 def compose(app: App, style: Style, src: Path, caption: str, target: tuple[int, int] | None):
+    """The framed shot, a note for the log, and the capture's box on the canvas as (x, y, width,
+    height); with a bleeding device card the box runs past the canvas edge."""
     shot = open_capture(src, style)
     tw, th = target = target or (shot.width, shot.height)
     if (shot.width > shot.height) != (tw > th) and shot.width != shot.height:
@@ -68,9 +70,11 @@ def compose(app: App, style: Style, src: Path, caption: str, target: tuple[int, 
         top, left = round((resized.height - th) * style.bias), (resized.width - tw) // 2
         canvas = resized.crop((left, top, left + tw, top + th)).convert("RGBA")
         note = f"cover from {shot.width}x{shot.height}"
+        box = (-left, -top, resized.width, resized.height)
     elif style.layout == "full-bleed":
         resized, note = resize_to(shot, target, style.fit == "scale", ink)
         canvas = resized.convert("RGBA")
+        box = (0, 0, tw, th)
     elif style.layout == "stacked" and style.fit == "crop":
         # Fill the width and crop the end away from the caption.
         # Why: docs/design/framing.md#fill-width-crops-the-far-end
@@ -79,12 +83,14 @@ def compose(app: App, style: Style, src: Path, caption: str, target: tuple[int, 
         canvas = paint(app, theme.background, target, ink).convert("RGBA")
         canvas.alpha_composite(board.convert("RGBA"), (0, start))
         note = f"fill-width from {shot.width}x{shot.height}"
+        box = (0, start, board.width, board.height)
     elif style.layout == "stacked":  # scaled into the rest, so the caption covers no content
         resized, note = resize_to(shot, (tw, th - depth), True, ink)
         canvas = paint(app, theme.background, target, ink).convert("RGBA")
         canvas.alpha_composite(resized.convert("RGBA"), ((tw - resized.width) // 2, start))
+        box = ((tw - resized.width) // 2, start, resized.width, resized.height)
     else:
-        canvas, note = device(app, style, shot, target, depth, ink)
+        canvas, note, box = device(app, style, shot, target, depth, ink)
     if callout:
         with_shadow(app, style.caption.callout.get("shadow", theme.shadow), canvas,
                     callout_layer(app, style, caption, target, ink))
@@ -96,7 +102,7 @@ def compose(app: App, style: Style, src: Path, caption: str, target: tuple[int, 
                     (0, th - band.height) if bottom else (0, 0))
     out = canvas.convert("RGB")
     assert out.size == target, (out.size, target)
-    return out, note
+    return out, note, box
 
 
 def device(app: App, style: Style, shot, target: tuple[int, int], depth: int, ink):
@@ -118,7 +124,8 @@ def device(app: App, style: Style, shot, target: tuple[int, int], depth: int, in
         y = (0 if style.bottom else depth) + gap + (area - height) // 2
     canvas = paint(app, style.theme.background, target, ink).convert("RGBA")
     layer = card(app, style, scaled, th)
+    box = (x, y, width, height)
     if y < 0:  # bleeding off the top: only the visible part, so its cut edge stays straight
         layer, y = layer.crop((0, -y, width, height)), 0
     with_shadow(app, style.theme.shadow, canvas, layer, (x, y))
-    return canvas, f"device {width}x{height} from {shot.width}x{shot.height}"
+    return canvas, f"device {width}x{height} from {shot.width}x{shot.height}", box

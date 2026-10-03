@@ -79,7 +79,9 @@ screenshots:
                                  #   independent choices: layout (full-bleed|stacked|device, fit),
                                  #   caption {shape band|arch|callout|headline, position, depth, …},
                                  #   theme (a built-in name, or {base, fill, text, accent, font, lip, …});
-                                 #   slots.N: layout, fit, caption, rotate, bias.
+                                 #   slots.N: layout, fit, caption, rotate, bias;
+                                 #   decorate: a repo-relative .py whose decorate(image, shot) draws
+                                 #   app-only art (badges) over each framed shot.
                                  #   Every key: docs/reference/framing.md
   check: {patterns: […], corner: [0.45, 0.06], upscale: 3, advice: "…"}
 ```

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -302,4 +303,54 @@ def test_every_locales_marks_are_checked(tmp_path: Path) -> None:
     app = by_locale(tmp_path, {"en-US": {"1": "One"}, "de-DE": {"1": "==Eins"}})
     capture(app, "iphone", 1, "en-US")
     with pytest.raises(SystemExit, match="== unclosed"):
+        frame.frame_deck(app, "en-US")
+
+
+DECORATE = '''
+import json
+from PIL import ImageDraw
+
+def decorate(image, shot):
+    with open(shot.root / "seen.jsonl", "a") as log:
+        log.write(json.dumps([shot.slot, shot.locale, shot.deck, shot.capture, shot.size, shot.caption]) + "\\n")
+    if shot.slot != 2:
+        return None  # leave the shot as framed
+    x, y, w, h = shot.capture
+    ImageDraw.Draw(image).rectangle((x, y, x + 40, y + 40), fill=shot.colors["accent"])
+    return image
+'''
+
+
+def test_decorate_runs_the_apps_own_code_on_each_framed_shot(app: project.App) -> None:
+    (app.root / "tools").mkdir()
+    (app.root / "tools" / "badges.py").write_text(DECORATE)
+    styled(app, decorate="tools/badges.py", layout="device",
+           theme={"base": "dusk", "accent": "#FF0000"})
+    for n in (1, 2, 3):
+        capture(app, "iphone", n)
+    frame.frame_deck(app, "en-US")
+    framed = project.DeckTree.for_deck(app, "iphone").framed("en-US")
+    # The hook drew the accent at the capture's top-left corner of slot 2 only.
+    two, one = Image.open(framed / "ss-02.jpg"), Image.open(framed / "ss-01.jpg")
+    seen = [json.loads(line) for line in (app.root / "seen.jsonl").read_text().splitlines()]
+    assert [s[:3] for s in seen] == [[1, "en-US", "iphone"], [2, "en-US", "iphone"], [3, "en-US", "iphone"]]
+    _, _, _, capture_box, size, caption = seen[1]
+    assert size == [1284, 2778] and caption == "Two"
+    x, y = capture_box[0] + 20, capture_box[1] + 20
+    assert two.getpixel((x, y))[0] > 200 and two.getpixel((x, y))[1] < 60
+    assert one.getpixel((x, y)) != two.getpixel((x, y))
+
+
+@pytest.mark.parametrize(("source", "message"), [
+    (None, "does not exist"),
+    ("x = 1\n", r"define decorate\(image, shot\)"),
+    ("def decorate(image, shot):\n    return image.resize((10, 10))\n", r"returned \(10, 10\) for ss-01"),
+])
+def test_a_broken_decorate_hook_stops_the_run(app: project.App, source: str | None, message: str) -> None:
+    if source is not None:
+        (app.root / "hook.py").write_text(source)
+    styled(app, decorate="hook.py")
+    for n in (1, 2, 3):
+        capture(app, "iphone", n)
+    with pytest.raises(SystemExit, match=message):
         frame.frame_deck(app, "en-US")

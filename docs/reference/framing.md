@@ -70,6 +70,51 @@ entry must caption every shot it has, as the one map must. The two forms don't m
 numbers and locales in one map is an error. Marks are checked in every locale's captions on
 every run, so a broken translation fails before it is drawn.
 
+## Decorating shots in the app's own code
+
+Art that belongs to one app and no other, such as badge cards, a sticker, or an arrow pointing
+at a control, stays in that app's repo. Name a Python file with `decorate`:
+
+```yaml
+framing:
+  decorate: tools/screenshot_decorate.py     # repo-relative
+```
+
+The file defines `decorate(image, shot)`. snakelane calls it once per framed shot, after the
+caption is drawn and before the JPEG is written. `image` is the RGB canvas (a Pillow image).
+Return it, or a new image of the same size, or `None` to leave the shot as it was. A different
+size stops the run.
+
+`shot` carries what placement needs:
+
+| Field | What it is |
+|---|---|
+| `slot` | The shot's number (`ss-NN`) |
+| `locale` | The ASC locale being framed, e.g. `de-DE`; translate the art from it |
+| `deck` | `iphone`, `ipad` or `mac` |
+| `size` | The canvas, `(width, height)` |
+| `capture` | `(x, y, width, height)` of the capture on the canvas. A bleeding device card's box runs past the bottom edge; for `full-bleed` it is the whole canvas |
+| `caption` | The caption as written, marks and all |
+| `colors` | `text`, `accent` and the theme's named `colors`, as `(r, g, b)` |
+| `font` | The theme's font file, when it sets one |
+| `root` | The app repo, for the hook's own fonts and images |
+
+The hook runs inside snakelane's Python, so it can use the standard library and Pillow and
+nothing else. It runs on every `frame` and every `shoot` with `frame: snakelane`, including
+`frame --theme` previews.
+
+```python
+from PIL import ImageDraw
+
+def decorate(image, shot):
+    if shot.slot != 4 or shot.deck != "iphone":
+        return None
+    x, y, w, h = shot.capture
+    ImageDraw.Draw(image).rounded_rectangle((x + w - 400, y + 900, x + w - 40, y + 1040),
+                                            radius=28, fill="white")
+    return image
+```
+
 ## Themes
 
 The built-in themes are the looks the apps snakelane grew out of drew in their own UI tests,
@@ -184,6 +229,7 @@ screenshots:
     captions: {"1": "Caption", "2": [line, line]}   # required; a list is the caption's lines
     # or per locale: {en-US: {"1": …}, de-DE: {"1": …}}; a locale without one gets the primary's
     targets: {iphone: [1284, 2778], ipad: [2064, 2752], mac: [2880, 1800]}  # default: each capture's size
+    decorate: null                      # a repo-relative .py with decorate(image, shot); see above
 
     layout: stacked                     # full-bleed | stacked | device
     fit: scale                          # scale | crop (default crop for full-bleed)

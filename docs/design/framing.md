@@ -108,6 +108,17 @@ app's own asset catalog, so the band is the colour the app draws rather than a c
 drift. A `.ttc` font is searched by face name because a collection's face order is not
 documented.
 
+### App art is the app's code
+
+Cloudless Cam's hand-made deck (2026-10) had three badge cards on its Add Camera shot ("Works
+with ONVIF", "RTSP", "H.265"), drawn by the app's own caption script. Moving the app onto
+snakelane dropped them, because framing had no way to draw them. A badge option in the theme
+would have been one app's art in shared code, with a schema to keep growing for the next app's
+idea. `framing.decorate` instead hands each framed shot, and where its capture landed, to a Python
+file in the app's repo. The art, the placement and the translations stay with the one app that
+wants them. The hook gets the capture's box rather than fixed coordinates, so art pinned to the
+screen stays put when the layout or theme moves the card.
+
 ## The banner handoff
 
 ### Why snakelane tells the app the band's depth
