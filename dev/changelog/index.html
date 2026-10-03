@@ -1509,6 +1509,23 @@
 major version is 0, a change that needs new <code>snakelane.yml</code> keys or changes a command's
 behaviour bumps the minor version. Each release is tagged <code>vX.Y.Z</code>.</p>
 <h2 id="unreleased">Unreleased<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<p><strong><code>framing.decorate</code>: app-only art over framed shots.</strong> Name a repo-relative Python file whose
+  <code>decorate(image, shot)</code> snakelane calls for every framed shot, after the caption, with the
+  slot, locale, deck, the capture's box on the canvas and the theme's colours. It returns the
+  image to save (same size) or <code>None</code>. For art one app wants and no other (badge cards), so it
+  lives in that app's repo. Without the key nothing changes.</p>
+</li>
+<li>
+<p><strong>Per-locale captions.</strong> <code>screenshots.framing.captions</code> also takes a map keyed by ASC locale,
+  each value today's <code>{"1": "Caption", …}</code> map, so <code>frame</code> and <code>shoot</code> (with <code>frame: snakelane</code>)
+  caption each locale's deck in its own language. A locale without an entry gets the primary
+  locale's captions, and <code>frame</code> / <code>shoot --dry-run</code> say so. The banner handoff is worked out
+  per locale. Mixing shot numbers and locales in one map is an error. The one-map form is
+  unchanged; nothing to do for an app that keeps it.</p>
+</li>
+</ul>
 <h2 id="020">0.2.0<a class="headerlink" href="#020" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>gallery</code> labels each shot with the display App Store Connect files it under, e.g.

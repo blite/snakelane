@@ -1327,6 +1327,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#app-art-is-the-apps-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        App art is the app's code
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1917,6 +1928,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#app-art-is-the-apps-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        App art is the app's code
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2157,6 +2179,15 @@ wants another sets <code>font</code> to a file in its repo. A <code>{"colorset":
 app's own asset catalog, so the band is the colour the app draws rather than a copy that can
 drift. A <code>.ttc</code> font is searched by face name because a collection's face order is not
 documented.</p>
+<h3 id="app-art-is-the-apps-code">App art is the app's code<a class="headerlink" href="#app-art-is-the-apps-code" title="Permanent link">&para;</a></h3>
+<p>Cloudless Cam's hand-made deck (2026-10) had three badge cards on its Add Camera shot ("Works
+with ONVIF", "RTSP", "H.265"), drawn by the app's own caption script. Moving the app onto
+snakelane dropped them, because framing had no way to draw them. A badge option in the theme
+would have been one app's art in shared code, with a schema to keep growing for the next app's
+idea. <code>framing.decorate</code> instead hands each framed shot, and where its capture landed, to a Python
+file in the app's repo. The art, the placement and the translations stay with the one app that
+wants them. The hook gets the capture's box rather than fixed coordinates, so art pinned to the
+screen stays put when the layout or theme moves the card.</p>
 <h2 id="the-banner-handoff">The banner handoff<a class="headerlink" href="#the-banner-handoff" title="Permanent link">&para;</a></h2>
 <h3 id="why-snakelane-tells-the-app-the-bands-depth">Why snakelane tells the app the band's depth<a class="headerlink" href="#why-snakelane-tells-the-app-the-bands-depth" title="Permanent link">&para;</a></h3>
 <p>With <code>layout: full-bleed</code> the caption lies over the capture, so the app has to leave that strip

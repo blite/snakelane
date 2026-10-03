@@ -595,6 +595,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Caption text">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#captions-per-locale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Captions per locale
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decorating-shots-in-the-apps-own-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decorating shots in the app's own code
+      
+    </span>
+  </a>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1494,6 +1522,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Caption text">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#captions-per-locale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Captions per locale
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decorating-shots-in-the-apps-own-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decorating shots in the app's own code
+      
+    </span>
+  </a>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1685,6 +1741,88 @@ never the marks or colour names.</p>
 <span class="nt">theme</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">base</span><span class="p">:</span><span class="w"> </span><span class="nv">parchment</span><span class="p p-Indicator">,</span><span class="nt"> colors</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">moss</span><span class="p">:</span><span class="w"> </span><span class="s">"#4F7A3A"</span><span class="p p-Indicator">}}</span>
 </code></pre></div>
 <p><img alt="Inline marks in the parchment theme" src="../../assets/framing/extra-inline-marks.jpg" width="200" /></p>
+<h3 id="captions-per-locale">Captions per locale<a class="headerlink" href="#captions-per-locale" title="Permanent link">&para;</a></h3>
+<p>One map of shot numbers captions every locale's deck. To translate them, key the map by ASC
+locale instead, each value a map of shot numbers:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">captions</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">en-US</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="s">"1"</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">"All</span><span class="nv"> </span><span class="s">your</span><span class="nv"> </span><span class="s">cameras.\n==No</span><span class="nv"> </span><span class="s">cloud.=="</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"2"</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">"Every</span><span class="nv"> </span><span class="s">feed,</span><span class="nv"> </span><span class="s">one</span><span class="nv"> </span><span class="s">grid"</span><span class="p p-Indicator">}</span>
+<span class="w">  </span><span class="nt">de-DE</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="s">"1"</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">"Alle</span><span class="nv"> </span><span class="s">Kameras.\n==Keine</span><span class="nv"> </span><span class="s">Cloud.=="</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"2"</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">"Jedes</span><span class="nv"> </span><span class="s">Bild,</span><span class="nv"> </span><span class="s">ein</span><span class="nv"> </span><span class="s">Raster"</span><span class="p p-Indicator">}</span>
+</code></pre></div>
+<p>A locale without an entry gets the primary locale's captions (<code>primary_locale</code>, default the
+first of <code>locales</code>); <code>frame</code> and <code>shoot --dry-run</code> print a line saying so. A locale with an
+entry must caption every shot it has, as the one map must. The two forms don't mix: shot
+numbers and locales in one map is an error. Marks are checked in every locale's captions on
+every run, so a broken translation fails before it is drawn.</p>
+<h2 id="decorating-shots-in-the-apps-own-code">Decorating shots in the app's own code<a class="headerlink" href="#decorating-shots-in-the-apps-own-code" title="Permanent link">&para;</a></h2>
+<p>Art that belongs to one app and no other, such as badge cards, a sticker, or an arrow pointing
+at a control, stays in that app's repo. Name a Python file with <code>decorate</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">framing</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">decorate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tools/screenshot_decorate.py</span><span class="w">     </span><span class="c1"># repo-relative</span>
+</code></pre></div>
+<p>The file defines <code>decorate(image, shot)</code>. snakelane calls it once per framed shot, after the
+caption is drawn and before the JPEG is written. <code>image</code> is the RGB canvas (a Pillow image).
+Return it, or a new image of the same size, or <code>None</code> to leave the shot as it was. A different
+size stops the run.</p>
+<p><code>shot</code> carries what placement needs:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>slot</code></td>
+<td>The shot's number (<code>ss-NN</code>)</td>
+</tr>
+<tr>
+<td><code>locale</code></td>
+<td>The ASC locale being framed, e.g. <code>de-DE</code>; translate the art from it</td>
+</tr>
+<tr>
+<td><code>deck</code></td>
+<td><code>iphone</code>, <code>ipad</code> or <code>mac</code></td>
+</tr>
+<tr>
+<td><code>size</code></td>
+<td>The canvas, <code>(width, height)</code></td>
+</tr>
+<tr>
+<td><code>capture</code></td>
+<td><code>(x, y, width, height)</code> of the capture on the canvas. A bleeding device card's box runs past the bottom edge; for <code>full-bleed</code> it is the whole canvas</td>
+</tr>
+<tr>
+<td><code>caption</code></td>
+<td>The caption as written, marks and all</td>
+</tr>
+<tr>
+<td><code>colors</code></td>
+<td><code>text</code>, <code>accent</code> and the theme's named <code>colors</code>, as <code>(r, g, b)</code></td>
+</tr>
+<tr>
+<td><code>font</code></td>
+<td>The theme's font file, when it sets one</td>
+</tr>
+<tr>
+<td><code>root</code></td>
+<td>The app repo, for the hook's own fonts and images</td>
+</tr>
+</tbody>
+</table>
+<p>The hook runs inside snakelane's Python, so it can use the standard library and Pillow and
+nothing else. It runs on every <code>frame</code> and every <code>shoot</code> with <code>frame: snakelane</code>, including
+<code>frame --theme</code> previews.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">ImageDraw</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">decorate</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">shot</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">shot</span><span class="o">.</span><span class="n">slot</span> <span class="o">!=</span> <span class="mi">4</span> <span class="ow">or</span> <span class="n">shot</span><span class="o">.</span><span class="n">deck</span> <span class="o">!=</span> <span class="s2">"iphone"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">shot</span><span class="o">.</span><span class="n">capture</span>
+    <span class="n">ImageDraw</span><span class="o">.</span><span class="n">Draw</span><span class="p">(</span><span class="n">image</span><span class="p">)</span><span class="o">.</span><span class="n">rounded_rectangle</span><span class="p">((</span><span class="n">x</span> <span class="o">+</span> <span class="n">w</span> <span class="o">-</span> <span class="mi">400</span><span class="p">,</span> <span class="n">y</span> <span class="o">+</span> <span class="mi">900</span><span class="p">,</span> <span class="n">x</span> <span class="o">+</span> <span class="n">w</span> <span class="o">-</span> <span class="mi">40</span><span class="p">,</span> <span class="n">y</span> <span class="o">+</span> <span class="mi">1040</span><span class="p">),</span>
+                                            <span class="n">radius</span><span class="o">=</span><span class="mi">28</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="s2">"white"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">image</span>
+</code></pre></div>
 <h2 id="themes">Themes<a class="headerlink" href="#themes" title="Permanent link">&para;</a></h2>
 <p>The built-in themes are the looks the apps snakelane grew out of drew in their own UI tests,
 taken over number for number. Each is shown in the layout and caption its app used; any theme
@@ -1771,7 +1909,9 @@ theme. These three are the other apps' looks, written as overrides:</p>
 <span class="w">  </span><span class="nt">frame</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">snakelane</span>
 <span class="w">  </span><span class="nt">framing</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">captions</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="s">"1"</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">"Caption"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"2"</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">line</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">line</span><span class="p p-Indicator">]}</span><span class="w">   </span><span class="c1"># required; a list is the caption's lines</span>
+<span class="w">    </span><span class="c1"># or per locale: {en-US: {"1": …}, de-DE: {"1": …}}; a locale without one gets the primary's</span>
 <span class="w">    </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">iphone</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1284</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2778</span><span class="p p-Indicator">],</span><span class="nt"> ipad</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">2064</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2752</span><span class="p p-Indicator">],</span><span class="nt"> mac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">2880</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1800</span><span class="p p-Indicator">]}</span><span class="w">  </span><span class="c1"># default: each capture's size</span>
+<span class="w">    </span><span class="nt">decorate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">                      </span><span class="c1"># a repo-relative .py with decorate(image, shot); see above</span>
 
 <span class="w">    </span><span class="nt">layout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">stacked</span><span class="w">                     </span><span class="c1"># full-bleed | stacked | device</span>
 <span class="w">    </span><span class="nt">fit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">scale</span><span class="w">                          </span><span class="c1"># scale | crop (default crop for full-bleed)</span>
