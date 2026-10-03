@@ -358,7 +358,8 @@ class Plan:
 
     @property
     def trees(self) -> list[DeckTree]:
-        return sorted({p.tree for p in self.passes}, key=lambda t: t.label())
+        # Keyed by label: a DeckTree holds the App, which isn't hashable.
+        return sorted({p.tree.label(): p.tree for p in self.passes}.values(), key=lambda t: t.label())
 
     def add_passes(self, tree: DeckTree, name: str, name_slug: str, sim: Simulator | None, scheme: str,
                    destination: str, test: str | None) -> None:

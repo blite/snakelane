@@ -147,3 +147,14 @@ def test_each_pass_gets_the_banner_depth_and_the_file_is_removed(app: project.Ap
 ])
 def test_automation_mode_ready(status: str, ready: bool) -> None:
     assert shoot.automation_mode_ready(status) is ready
+
+
+def test_a_plan_lists_each_deck_once(tmp_path: Path) -> None:
+    app = make_app(tmp_path, scheme="Example")
+    iphone, ipad = project.DeckTree(app, "ios", "iphone"), project.DeckTree(app, "ios", "ipad")
+    passes = [shoot.Pass(label=f"{tree.device} {locale}", tree=tree, locale=locale, language=None,
+                         xcresult=Path("x.xcresult"), cmd=[], env={})
+              for tree in (iphone, ipad) for locale in ("en-US", "de-DE")]
+    plan = shoot.Plan(app=app, config=shoot.load_config(app), platform="ios",
+                      locales={"en-US": None, "de-DE": None}, full_locales=True, passes=passes)
+    assert [tree.device for tree in plan.trees] == ["ipad", "iphone"]
