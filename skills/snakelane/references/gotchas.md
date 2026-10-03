@@ -226,13 +226,19 @@ after every previews push, even one that reported success.
 
 ## Simulators and UI tests
 
-**UI-test clones are invisible to a bare `simctl`.** `xcodebuild test` clones simulators into
-`~/Library/Developer/XCTestDevices`, a CoreSimulator set separate from the default one.
-Every `simctl` call against a clone needs `--set ~/Library/Developer/XCTestDevices`.
+**Run UI tests serially: `-parallel-testing-enabled NO`.** With parallel testing on (a
+scheme or test plan's "Execute in parallel"), `xcodebuild test` runs each worker on a cold clone
+in `~/Library/Developer/XCTestDevices`, a CoreSimulator set a bare `simctl` can't see. Cold
+clone boots race SpringBoard, a status-bar override pinned on the named simulator doesn't
+reach them, a crash or kill leaks them, and on a Mac parallel workers are copies of the app on
+one desktop, capturing each other's windows. `shoot` and `ship` pass the flag (it overrides the
+scheme and test plan); pass it in any script that runs UI tests, and leave "Execute in
+parallel" off in the screenshot scheme so a run from Xcode behaves the same.
 
-**Record against the clone, not the parent.** Starting `recordVideo` on the parent device
-(the one named "iPhone 17 Pro Max") while tests run on a clone captures a black screen or a
-0-byte file. Poll the XCTestDevices set for a booted clone and record against its UDID.
+**Record the simulator the test runs on.** Run serially, that is the named simulator itself:
+resolve its UDID, boot it, test with `-destination id=<UDID>`, and `recordVideo` that UDID.
+Recording the named device while tests run on a clone captures a black screen or a 0-byte
+file. `assets/ios/record_gameplay_video.sh.template` does this.
 
 **Sandbox StoreKit purchases leak into later test runs.** An app that seeds entitlements from
 `Transaction.currentEntitlements` will see packs a developer bought while debugging as owned

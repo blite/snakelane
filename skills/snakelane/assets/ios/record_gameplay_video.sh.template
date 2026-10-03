@@ -2,69 +2,74 @@
 #
 # Record an App Preview-style gameplay video.
 #
-# `xcodebuild test` runs UI tests inside a cloned simulator whose
-# UDID isn't known until it boots, and the clone lives in Xcode's
-# private `~/Library/Developer/XCTestDevices` CoreSimulator set —
-# invisible to a bare `simctl list devices` call. This script works
-# around those two quirks by:
+# The UI test runs serially (`-parallel-testing-enabled NO`) on the named simulator itself, so
+# that is the device to record. With parallel testing on, xcodebuild would run it on a cold
+# clone instead: a UDID nobody knows in advance, in a CoreSimulator set a bare `simctl` can't
+# see, whose boot races SpringBoard. The script:
 #
-#   1. Running `build-for-testing` synchronously (no simulator
-#      involved) so the clone-detection poll doesn't race the slow
-#      compile step.
-#   2. Launching `test-without-building` in the background. The clone
-#      shows up within seconds of that starting.
-#   3. Polling the XCTestDevices set for a booted clone of the target
-#      device, then waiting for the test to write a "scene-ready"
-#      marker file into its Documents directory before starting
-#      `simctl io recordVideo` against the clone. That handshake
-#      keeps simulator springboard + app-launch frames out of the clip.
-#   4. Stopping the recorder with SIGINT (which simctl uses to
-#      finalize the .mov) as soon as the test writes a "done" marker
-#      or exits.
+#   1. Resolves and boots the named simulator.
+#   2. Runs `build-for-testing` first, so the slow compile isn't inside the recording wait.
+#   3. Launches `test-without-building` in the background, serially, on that simulator.
+#   4. Waits for the test to write a "scene-ready" marker into its Documents directory before
+#      starting `simctl io recordVideo`. That handshake keeps SpringBoard and app-launch
+#      frames out of the clip.
+#   5. Stops the recorder with SIGINT (which finalizes the .mov) as soon as the test writes a
+#      "done" marker or exits.
 #
-# Output lands at build/previews/<device-slug>.mov — gitignored by
-# default, treated as a build artifact.
+# Output lands at build/previews/<device-slug>.mov, a gitignored build artifact.
 #
 # Usage:
 #   scripts/record_gameplay_video.sh [device]
 #
-# `device` defaults to "iPhone 17 Pro Max". Pass the full simctl
-# device name for a different target (e.g. "iPad Pro (12.9-inch) (6th generation)").
+# `device` defaults to "iPhone 17 Pro Max". Pass the full simctl device name for a different
+# target (e.g. "iPad Pro 13-inch (M5)").
 
 set -euo pipefail
 
 DEVICE_NAME="${1:-iPhone 17 Pro Max}"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-OUTPUT_ROOT="/build/previews"
+OUTPUT_ROOT="$REPO_ROOT/build/previews"
 DEVICE_SLUG="$(echo "$DEVICE_NAME" | tr ' /()' '----' | tr -s '-')"
 OUTPUT_PATH="$OUTPUT_ROOT/$DEVICE_SLUG.mov"
 
-# XCTest UI test bundle ID used for `simctl get_app_container`. The
-# ".xctrunner" suffix is appended by Xcode when it builds the runner
-# app. Update this if your UI test target's PRODUCT_BUNDLE_IDENTIFIER
-# is not `{{UI_TEST_BUNDLE_IDENTIFIER}}`.
+# XCTest UI test bundle ID used for `simctl get_app_container`. Xcode appends ".xctrunner"
+# when it builds the runner app. Update this if your UI test target's
+# PRODUCT_BUNDLE_IDENTIFIER is not `{{UI_TEST_BUNDLE_IDENTIFIER}}`.
 TEST_RUNNER_BUNDLE_ID="{{UI_TEST_BUNDLE_IDENTIFIER}}.xctrunner"
 
 # Handshake markers the UI test writes to its Documents directory.
 READY_MARKER_NAME="hh-video-ready.marker"
 DONE_MARKER_NAME="hh-video-done.marker"
 
-# UI test clones live in Xcode's private CoreSimulator set, NOT in
-# the default set that a bare `simctl list` queries. Every simctl
-# call below has to pass `--set` explicitly.
-XCTEST_SIMSET="$HOME/Library/Developer/XCTestDevices"
-
 mkdir -p "$OUTPUT_ROOT"
 rm -f "$OUTPUT_PATH"
 
-echo "→ Target device: $DEVICE_NAME"
+# The newest available iOS runtime's simulator with this exact name.
+UDID="$(
+    xcrun simctl list devices available --json | python3 -c "
+import json, re, sys
+found = [(tuple(map(int, re.findall(r'\d+', runtime))), d['udid'])
+         for runtime, devices in json.load(sys.stdin)['devices'].items()
+         if 'iOS' in runtime for d in devices if d['name'] == sys.argv[1]]
+print(max(found)[1] if found else '')
+" "$DEVICE_NAME"
+)"
+if [[ -z "$UDID" ]]; then
+    echo "error: no available simulator named '$DEVICE_NAME' (xcrun simctl list devices available)" >&2
+    exit 1
+fi
+DESTINATION="platform=iOS Simulator,id=$UDID"
+
+echo "→ Target device: $DEVICE_NAME ($UDID)"
 echo "→ Output: $OUTPUT_PATH"
+xcrun simctl boot "$UDID" 2>/dev/null || true   # already booted is fine
+xcrun simctl bootstatus "$UDID" -b >/dev/null
 
 echo "→ Building test bundles (build-for-testing)..."
 xcodebuild \
     -project "$REPO_ROOT/{{PROJECT_NAME}}.xcodeproj" \
     -scheme "{{SCHEME_NAME}}" \
-    -destination "platform=iOS Simulator,name=$DEVICE_NAME" \
+    -destination "$DESTINATION" \
     -only-testing "{{UI_TEST_TARGET_NAME}}/{{UI_TEST_TARGET_NAME}}VideoPreviewUITests" \
     build-for-testing \
     -quiet
@@ -74,7 +79,8 @@ echo "→ Launching test-without-building (log: $TEST_LOG)..."
 xcodebuild \
     -project "$REPO_ROOT/{{PROJECT_NAME}}.xcodeproj" \
     -scheme "{{SCHEME_NAME}}" \
-    -destination "platform=iOS Simulator,name=$DEVICE_NAME" \
+    -destination "$DESTINATION" \
+    -parallel-testing-enabled NO \
     -only-testing "{{UI_TEST_TARGET_NAME}}/{{UI_TEST_TARGET_NAME}}VideoPreviewUITests/test01AutoPlayDemo" \
     test-without-building >"$TEST_LOG" 2>&1 &
 TEST_PID=$!
@@ -91,49 +97,10 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Poll for the booted clone.
-echo "→ Waiting for booted clone of '$DEVICE_NAME'..."
-CLONE_UDID=""
-for _ in $(seq 1 120); do
-    CLONE_UDID="$(
-        xcrun simctl --set "$XCTEST_SIMSET" list devices --json \
-        | python3 -c "
-import json, sys
-data = json.load(sys.stdin)
-for runtime, devices in data['devices'].items():
-    if 'iOS' not in runtime:
-        continue
-    for d in devices:
-        name = d.get('name', '')
-        if name.startswith('Clone') and name.endswith('$DEVICE_NAME') and d.get('state') == 'Booted':
-            print(d['udid'])
-            sys.exit(0)
-" 2>/dev/null || true
-    )"
-    if [[ -n "$CLONE_UDID" ]]; then
-        break
-    fi
-    if ! kill -0 "$TEST_PID" 2>/dev/null; then
-        echo "error: test exited before a clone came up — see $TEST_LOG" >&2
-        exit 1
-    fi
-    sleep 1
-done
-
-if [[ -z "$CLONE_UDID" ]]; then
-    echo "error: timed out waiting for a booted clone of '$DEVICE_NAME' — see $TEST_LOG" >&2
-    exit 1
-fi
-
-echo "→ Clone booted: $CLONE_UDID"
 echo "→ Waiting for scene-ready marker from the test..."
 TEST_CONTAINER=""
-for _ in $(seq 1 120); do
-    TEST_CONTAINER="$(
-        xcrun simctl --set "$XCTEST_SIMSET" \
-            get_app_container "$CLONE_UDID" \
-            "$TEST_RUNNER_BUNDLE_ID" data 2>/dev/null || true
-    )"
+for _ in $(seq 1 240); do
+    TEST_CONTAINER="$(xcrun simctl get_app_container "$UDID" "$TEST_RUNNER_BUNDLE_ID" data 2>/dev/null || true)"
     if [[ -n "$TEST_CONTAINER" ]] && [[ -f "$TEST_CONTAINER/Documents/$READY_MARKER_NAME" ]]; then
         break
     fi
@@ -150,7 +117,7 @@ if [[ -z "$TEST_CONTAINER" ]] || [[ ! -f "$TEST_CONTAINER/Documents/$READY_MARKE
 fi
 
 echo "→ Scene up. Starting recording..."
-xcrun simctl --set "$XCTEST_SIMSET" io "$CLONE_UDID" recordVideo --codec=h264 "$OUTPUT_PATH" &
+xcrun simctl io "$UDID" recordVideo --codec=h264 "$OUTPUT_PATH" &
 RECORDER_PID=$!
 
 echo "→ Waiting for test to finish (or done marker)..."

@@ -235,6 +235,10 @@ Don't mark `--reviewed` on your own translation without the user's go-ahead.
 - Shoot from a Release/Screenshots scheme. A DEBUG build's SpriteKit `nodes/fps` HUD once
   shipped in a whole deck; `snakelane check` OCRs for it and `screenshots push` runs it when
   `"developer_chrome_check"` is set.
+- UI tests run serially. `shoot` and `ship` pass `-parallel-testing-enabled NO`; never turn on
+  "Execute in parallel" in a screenshot scheme or test plan, and pass the flag in any script that
+  runs UI tests. Parallel workers run on cold simulator clones that race SpringBoard, miss the
+  status-bar pin and leak when killed.
 - Screenshots are JPEG only: decks (`ss-NN.jpg`) and IAP `review_screenshot`s. ASC rejects alpha
   channels and HEIC. Captions must **overlay** or be
   **inset** into the final size — stacking changes the dimensions and every shot rejects.
