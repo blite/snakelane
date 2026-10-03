@@ -1355,6 +1355,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#020" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.2.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#010" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1447,6 +1458,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#020" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.2.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#010" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1487,20 +1509,19 @@
 major version is 0, a change that needs new <code>snakelane.yml</code> keys or changes a command's
 behaviour bumps the minor version. Each release is tagged <code>vX.Y.Z</code>.</p>
 <h2 id="unreleased">Unreleased<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
+<h2 id="020">0.2.0<a class="headerlink" href="#020" title="Permanent link">&para;</a></h2>
 <ul>
-<li>
-<p><strong><code>ship beta|release</code> explains a new app's first export.</strong> When the export fails because the
+<li><code>gallery</code> labels each shot with the display App Store Connect files it under, e.g.
+  <code>1284×2778 (6.5")</code>, <code>2064×2752 (13")</code>.</li>
+<li><strong><code>ship beta|release</code> explains a new app's first export.</strong> When the export fails because the
   bundle id has no App Store provisioning profile and the API key can't make one (cloud
   signing), <code>ship</code> stops with the two ways past it, uploading the built archive from Xcode's
   Organizer once or giving the key the Admin role, instead of xcodebuild's error and a
   traceback. The skill gains <code>references/first-release.md</code>, a walkthrough of everything a first
-  submission needs that later releases don't.</p>
-</li>
-<li>
-<p><strong>The skill covers export compliance</strong>: setting <code>ITSAppUsesNonExemptEncryption</code> on the app
+  submission needs that later releases don't.</li>
+<li><strong>The skill covers export compliance</strong>: setting <code>ITSAppUsesNonExemptEncryption</code> on the app
   target is a setup step (the agent asks the user which answer applies), so builds don't wait at
-  "Missing Compliance".</p>
-</li>
+  "Missing Compliance".</li>
 <li><strong><code>test.mac</code></strong> gates a Mac release on this Mac: with it set, <code>ship beta|release --platform
   macos</code> and <code>ship test --platform macos</code> run the tests with <code>platform=macOS,arch=arm64</code> (or
   <code>test.mac.destination</code>) instead of the iOS simulator. Absent, nothing changes.</li>
@@ -1517,6 +1538,10 @@ behaviour bumps the minor version. Each release is tagged <code>vX.Y.Z</code>.</
   that copied the templates should rename it in its tests and anywhere it reads the argument.</li>
 <li><strong><code>frame --platform macos</code></strong> frames only the Mac deck. It used to re-frame every deck with
   raws, iOS included.</li>
+<li><strong>UI tests stay serial in the templates too.</strong> <code>ios/record_gameplay_video.sh</code> runs its test with
+  <code>-parallel-testing-enabled NO</code> on the named simulator and records that one, instead of waiting
+  for a parallel-testing clone; it writes to the repo's <code>build/previews/</code>, not <code>/build/previews</code>.
+  The skill says to keep "Execute in parallel" off.</li>
 <li><strong>The Mac lane's Automation Mode check</strong> passes on a Mac where the mode can be switched on
   without a password: the tool reads "disabled" at rest, and XCTest turns it on for the run.</li>
 </ul>
