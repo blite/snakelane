@@ -2192,8 +2192,10 @@ and then PoolLog hit this. <code>ship beta</code> and <code>ship release</code> 
 <code>ship bump-version</code> is the way out.</p>
 <h3 id="the-release-test-gate">The release test gate<a class="headerlink" href="#the-release-test-gate" title="Permanent link">&para;</a></h3>
 <p>A red suite stops the upload; that is what makes a one-command release safe. The gate always
-runs on one iOS simulator: the suites exercise shared logic, so the iOS run gates the Mac build
-too, and some UI test targets do not build for macOS at all (Jigsaw, PoolLog). Tests run
+runs on one iOS simulator by default: the suites exercise shared logic, so the iOS run gates the
+Mac build too, and some UI test targets do not build for macOS at all (Jigsaw, PoolLog). An app
+whose tests do build for the Mac can set <code>test.mac</code> so a macos build is gated on this Mac: the
+binary going out is then the one tested, and AppKit-only paths get covered. Tests run
 serially because parallel test clones leak into <code>~/Library/Developer/XCTestDevices</code> whenever a
 run is killed. Serial keeps it to one clone, and any failure sweeps the set anyway.</p>
 <h3 id="testflight-polling-filtered-by-platform">TestFlight polling filtered by platform<a class="headerlink" href="#testflight-polling-filtered-by-platform" title="Permanent link">&para;</a></h3>

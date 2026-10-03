@@ -1890,6 +1890,19 @@ line from every run, even one that bails.</p>
 <p><strong>A post-action needs an Environment Buildable.</strong> Without one set to the app target, the
 script runs with <code>ARCHIVE_PATH</code> and <code>PROJECT_DIR</code> empty. Log unconditionally at the top of
 the script, so a post-action that never ran and one that ran and bailed look different.</p>
+<p><strong>Set the export-compliance key on the binary.</strong> Without <code>ITSAppUsesNonExemptEncryption</code> in
+the Info.plist, every build uploads, processes, and then sits at "Missing Compliance" in App
+Store Connect: TestFlight won't hand it to testers and <code>ship release</code> can't submit it until the
+encryption question is answered by hand, again for each new build. Answer it in the binary
+instead. With a generated Info.plist that's a build setting on the app target,
+<code>INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO</code>, in both Debug and Release, and set
+unconditionally rather than under <code>[sdk=iphoneos*]</code> so the Mac build carries it too; otherwise
+the <code>&lt;key&gt;</code> in the target's Info.plist. <code>NO</code> is right when the only encryption is what the OS
+provides (HTTPS/URLSession, CloudKit, Keychain, CryptoKit used for those). An app with its own
+or third-party cryptography sets <code>YES</code> plus <code>ITSEncryptionExportComplianceCode</code>, and the
+documentation goes to App Store Connect first. Read it back from a built product
+(<code>PlistBuddy -c 'Print :ITSAppUsesNonExemptEncryption' &lt;App&gt;.app/Info.plist</code>, or
+<code>Contents/Info.plist</code> on the Mac) before trusting the setting.</p>
 <p><strong>Multi-platform schemes need an explicit destination.</strong> Without one, <code>xcodebuild</code> can pick
 the Mac target in a scheme that supports iOS and macOS. Pass
 <code>-destination 'generic/platform=iOS'</code> when archiving for iOS.</p>

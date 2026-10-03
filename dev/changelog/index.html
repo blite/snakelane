@@ -1488,6 +1488,12 @@ major version is 0, a change that needs new <code>snakelane.yml</code> keys or c
 behaviour bumps the minor version. Each release is tagged <code>vX.Y.Z</code>.</p>
 <h2 id="unreleased">Unreleased<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
 <ul>
+<li><strong>The skill covers export compliance</strong>: setting <code>ITSAppUsesNonExemptEncryption</code> on the app
+  target is a setup step (the agent asks the user which answer applies), so builds don't wait at
+  "Missing Compliance".</li>
+<li><strong><code>test.mac</code></strong> gates a Mac release on this Mac: with it set, <code>ship beta|release --platform
+  macos</code> and <code>ship test --platform macos</code> run the tests with <code>platform=macOS,arch=arm64</code> (or
+  <code>test.mac.destination</code>) instead of the iOS simulator. Absent, nothing changes.</li>
 <li><strong>The skill's templates are split by platform</strong>: shared ones at the top of <code>assets/</code>,
   iOS-only ones (<code>FramedScreenshot</code>, <code>VideoPreviewUITests</code>, <code>record_gameplay_video.sh</code>) in
   <code>assets/ios/</code>, Mac-only ones in <code>assets/macos/</code>.</li>
