@@ -6,6 +6,12 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **The skill covers export compliance**: setting `ITSAppUsesNonExemptEncryption` on the app
+  target is a setup step (the agent asks the user which answer applies), so builds don't wait at
+  "Missing Compliance".
+- **`test.mac`** gates a Mac release on this Mac: with it set, `ship beta|release --platform
+  macos` and `ship test --platform macos` run the tests with `platform=macOS,arch=arm64` (or
+  `test.mac.destination`) instead of the iOS simulator. Absent, nothing changes.
 - **The skill's templates are split by platform**: shared ones at the top of `assets/`,
   iOS-only ones (`FramedScreenshot`, `VideoPreviewUITests`, `record_gameplay_video.sh`) in
   `assets/ios/`, Mac-only ones in `assets/macos/`.

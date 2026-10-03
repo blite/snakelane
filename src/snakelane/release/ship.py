@@ -1,6 +1,7 @@
 """Test, archive, upload and submit, with no fastlane underneath.
 
-    snakelane ship test | beta [--platform macos] [--skip-tests]
+    snakelane ship test [--platform macos]
+    snakelane ship beta [--platform macos] [--skip-tests]
     snakelane ship release [--platform macos] [--skip-tests] [--no-submit]
     snakelane ship bump-version [--bump minor|patch|major | --version 1.6]
 
@@ -21,6 +22,8 @@ snakelane.yml keys:
         "skip_testing"      -skip-testing: identifiers, usually the slow screenshot UI tests.
         "device"            simulator name (default "iPhone 17 Pro Max").
         "destination"       a full -destination, overriding "device".
+        "mac"               present = a macos build is gated on this Mac, not the simulator:
+                            {} or {"destination"} (default "platform=macOS,arch=arm64").
         "env"               test-process variables, e.g. {"RUN_CONTENT_TESTS": "1"}; TEST_RUNNER_ is added.
     "release"               how `ship release` lets it go out (absent: whatever ASC has); checked before tests:
         "type"              after_approval | manual | scheduled
@@ -62,6 +65,7 @@ from ..xcode import run, sweep_test_devices
 from . import bump
 
 DEFAULT_TEST_DEVICE = "iPhone 17 Pro Max"
+MAC_TEST_DESTINATION = "platform=macOS,arch=arm64"
 ARCHIVE_DESTINATIONS = {"ios": "generic/platform=iOS", "macos": "generic/platform=macOS"}
 PROCESSING_TIMEOUT = 45 * 60  # usually 5–15 minutes; on a timeout the caller says how to finish by hand
 PROCESSING_POLL_INTERVAL = 30
@@ -82,10 +86,20 @@ def load_app(app_arg: str | None) -> App:
     return app
 
 
-def test_command(app: App) -> list[str]:
-    """The gate's xcodebuild: one iOS simulator, serially. Why: docs/design/release.md#the-release-test-gate"""
+def test_destination(test: dict[str, Any], platform: str) -> str:
+    """One iOS simulator, or this Mac for a macos build when `test.mac` opts in.
+    Why: docs/design/release.md#the-release-test-gate"""
+    if platform == "macos" and (mac := test.get("mac")) is not None:
+        if not isinstance(mac, dict):
+            raise SystemExit("test.mac is an object ({} for all defaults)")
+        return mac.get("destination") or MAC_TEST_DESTINATION
+    return test.get("destination") or f"platform=iOS Simulator,name={test.get('device', DEFAULT_TEST_DEVICE)}"
+
+
+def test_command(app: App, platform: str = "ios") -> list[str]:
+    """The gate's xcodebuild, run serially."""
     test = app.config.get("test", {})
-    destination = test.get("destination") or f"platform=iOS Simulator,name={test.get('device', DEFAULT_TEST_DEVICE)}"
+    destination = test_destination(test, platform)
     return [
         "xcodebuild", "-project", str(app.project), "-scheme", test.get("scheme") or app.scheme,
         *(["-testPlan", test["test_plan"]] if test.get("test_plan") else []),
@@ -95,9 +109,9 @@ def test_command(app: App) -> list[str]:
     ]
 
 
-def run_tests(app: App) -> None:
+def run_tests(app: App, platform: str = "ios") -> None:
     try:  # xcodebuild hands TEST_RUNNER_-prefixed variables to the tests
-        run(test_command(app), project.runner_vars((app.config.get("test") or {}).get("env") or {}))
+        run(test_command(app, platform), project.runner_vars((app.config.get("test") or {}).get("env") or {}))
     except subprocess.CalledProcessError:
         sweep_test_devices()
         raise SystemExit("tests failed, nothing was archived or uploaded")
@@ -295,7 +309,7 @@ def release_findings(app: App, platform: str) -> list[lint.Finding]:
 def ship_build(app: App, platform: str, skip_tests: bool) -> tuple[asc.Client, str, dict[str, Any] | None, str]:
     """Test, archive Release, upload, wait: (client, ASC app id, processed build or None, marketing version)."""
     if not skip_tests:
-        run_tests(app)
+        run_tests(app, platform)
     archive_path = build_dir(app) / f"{app.scheme}-{platform}.xcarchive"
     if archive_path.exists():
         shutil.rmtree(archive_path)
@@ -319,9 +333,9 @@ cli = command_app("Test, archive, upload to TestFlight, and submit for review.")
 
 
 @cli.command()
-def test(app: AppOption = None) -> None:
+def test(app: AppOption = None, platform: PLATFORM = "ios") -> None:
     """Run the release test gate on its own."""
-    run_tests(load_app(app))
+    run_tests(load_app(app), platform)
 
 
 @cli.command()

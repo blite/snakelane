@@ -95,3 +95,19 @@ def test_the_test_gate_passes_env_to_the_tests(tmp_path: Path, monkeypatch: pyte
     monkeypatch.setattr(ship, "run", lambda cmd, env: seen.append(env))
     ship.run_tests(app)
     assert seen == [{"TEST_RUNNER_RUN_CONTENT_TESTS": "1", "TEST_RUNNER_X": "y"}]
+
+
+def test_the_gate_runs_on_the_simulator_unless_mac_opts_in() -> None:
+    from snakelane.release import ship
+
+    def destination(test: dict, platform: str) -> str:
+        return ship.test_destination(test, platform)
+
+    assert destination({}, "macos") == "platform=iOS Simulator,name=iPhone 17 Pro Max"
+    assert destination({"device": "iPhone Air"}, "ios") == "platform=iOS Simulator,name=iPhone Air"
+    assert destination({"mac": {}, "device": "iPhone Air"}, "ios") == "platform=iOS Simulator,name=iPhone Air"
+    assert destination({"mac": {}}, "macos") == "platform=macOS,arch=arm64"
+    assert destination({"mac": None}, "macos") == "platform=iOS Simulator,name=iPhone 17 Pro Max"
+    assert destination({"mac": {"destination": "platform=macOS,arch=x86_64"}}, "macos") == "platform=macOS,arch=x86_64"
+    with pytest.raises(SystemExit, match=r"test\.mac is an object"):
+        destination({"mac": True}, "macos")

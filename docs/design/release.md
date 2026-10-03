@@ -32,8 +32,10 @@ and then PoolLog hit this. `ship beta` and `ship release` refuse before building
 ### The release test gate
 
 A red suite stops the upload; that is what makes a one-command release safe. The gate always
-runs on one iOS simulator: the suites exercise shared logic, so the iOS run gates the Mac build
-too, and some UI test targets do not build for macOS at all (Jigsaw, PoolLog). Tests run
+runs on one iOS simulator by default: the suites exercise shared logic, so the iOS run gates the
+Mac build too, and some UI test targets do not build for macOS at all (Jigsaw, PoolLog). An app
+whose tests do build for the Mac can set `test.mac` so a macos build is gated on this Mac: the
+binary going out is then the one tested, and AppKit-only paths get covered. Tests run
 serially because parallel test clones leak into `~/Library/Developer/XCTestDevices` whenever a
 run is killed. Serial keeps it to one clone, and any failure sweeps the set anyway.
 

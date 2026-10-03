@@ -43,6 +43,8 @@ test:
   env: {RUN_CONTENT_TESTS: "1"}  # for the tests; TEST_RUNNER_ is added (opt-in test suites)
   device: iPhone 17 Pro Max      # default
   destination: "…"               # full -destination, overrides device
+  mac: {}                        # present = `--platform macos` tests on this Mac, not the
+                                 #   simulator; {destination: …} overrides platform=macOS,arch=arm64
 build_number_scope: project      # or app: only configs whose bundle id is this app's or an
                                  # extension's; for projects holding several apps
 extension_bundle_ids: [com.example.app.downloader]
