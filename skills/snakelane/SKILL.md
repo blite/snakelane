@@ -1,6 +1,6 @@
 ---
 name: snakelane
-description: Operate and set up snakelane, a fastlane-free App Store Connect CLI (`snakelane auth|store|ship|shots|bump|packs|check|frame`) that pushes listing text, screenshots, App Previews, in-app purchases and subscriptions from a plain-text `metadata/` tree, ships test → archive → TestFlight → review, and sets CFBundleVersion from an Archive post-action. Use when a user asks to push metadata, update the App Store listing, sync or create IAPs, shoot or upload screenshots, push an App Preview, submit for review, upload to TestFlight, bump the build number or set up App Store automation; or names `snakelane`, `snakelane.yml`, `iap.yml`, or the old per-app `Metadata/scripts/*.py` it replaces. Also use when naming an IAP or asset pack (ids are permanent) and when an ASC push fails with a 409, an invalid field, a rejected screenshot size or a bounced preview. Never use fastlane.
+description: Operate and set up snakelane, a fastlane-free App Store Connect CLI (`snakelane auth|store|ship|shots|bump|packs|check|frame`) that pushes listing text, screenshots, App Previews, in-app purchases and subscriptions from a plain-text `metadata/` tree, ships test → archive → TestFlight → review, and sets CFBundleVersion from an Archive post-action. Use when a user asks to push metadata, update the App Store listing, sync or create IAPs, shoot or upload screenshots, push an App Preview, submit for review, upload to TestFlight, bump the build number, set up App Store automation or do a new app's first upload and submission; or names `snakelane`, `snakelane.yml`, `iap.yml`, or the old per-app `Metadata/scripts/*.py` it replaces. Also use when naming an IAP or asset pack (ids are permanent) and when an ASC push fails with a 409, an invalid field, a rejected screenshot size or a bounced preview. Never use fastlane.
 ---
 
 # snakelane: App Store Connect without fastlane
@@ -305,10 +305,17 @@ Archive only from the app scheme; turn Archive off in helper schemes.
 
 6. Record in the app's `AGENTS.md` anything deliberately different about it.
 
+**Then read `references/first-release.md` before the app's first submission.** A new app's
+first upload, age rating, purchase and review each have a once-only step that later releases
+never show: the first `ship beta` fails to sign with a standard key, the age-rating
+questionnaire must be answered in full, a first IAP goes to review attached to a version, and
+the version settings must sit on the app target.
+
 
 ## Credentials
 
-One method, one place: a [team API key](https://developer.apple.com/documentation/appstoreconnectapi/creating-api-keys-for-app-store-connect-api) (App Manager role, generated at
+One method, one place: a [team API key](https://developer.apple.com/documentation/appstoreconnectapi/creating-api-keys-for-app-store-connect-api) (App Manager role — enough for everything except a brand-new
+app's first export, which needs cloud signing: `references/first-release.md` §5 — generated at
 <https://appstoreconnect.apple.com/access/integrations/api>), installed once per machine:
 
 ```bash
