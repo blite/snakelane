@@ -1838,12 +1838,18 @@ appear only in the ASC web UI, never in the push log. Check App Information → 
 after every previews push, even one that reported success.</p>
 <p><strong>Three previews per locale per device type.</strong> A fourth displaces the oldest.</p>
 <h2 id="simulators-and-ui-tests">Simulators and UI tests<a class="headerlink" href="#simulators-and-ui-tests" title="Permanent link">&para;</a></h2>
-<p><strong>UI-test clones are invisible to a bare <code>simctl</code>.</strong> <code>xcodebuild test</code> clones simulators into
-<code>~/Library/Developer/XCTestDevices</code>, a CoreSimulator set separate from the default one.
-Every <code>simctl</code> call against a clone needs <code>--set ~/Library/Developer/XCTestDevices</code>.</p>
-<p><strong>Record against the clone, not the parent.</strong> Starting <code>recordVideo</code> on the parent device
-(the one named "iPhone 17 Pro Max") while tests run on a clone captures a black screen or a
-0-byte file. Poll the XCTestDevices set for a booted clone and record against its UDID.</p>
+<p><strong>Run UI tests serially: <code>-parallel-testing-enabled NO</code>.</strong> With parallel testing on (a
+scheme or test plan's "Execute in parallel"), <code>xcodebuild test</code> runs each worker on a cold clone
+in <code>~/Library/Developer/XCTestDevices</code>, a CoreSimulator set a bare <code>simctl</code> can't see. Cold
+clone boots race SpringBoard, a status-bar override pinned on the named simulator doesn't
+reach them, a crash or kill leaks them, and on a Mac parallel workers are copies of the app on
+one desktop, capturing each other's windows. <code>shoot</code> and <code>ship</code> pass the flag (it overrides the
+scheme and test plan); pass it in any script that runs UI tests, and leave "Execute in
+parallel" off in the screenshot scheme so a run from Xcode behaves the same.</p>
+<p><strong>Record the simulator the test runs on.</strong> Run serially, that is the named simulator itself:
+resolve its UDID, boot it, test with <code>-destination id=&lt;UDID&gt;</code>, and <code>recordVideo</code> that UDID.
+Recording the named device while tests run on a clone captures a black screen or a 0-byte
+file. <code>assets/ios/record_gameplay_video.sh.template</code> does this.</p>
 <p><strong>Sandbox StoreKit purchases leak into later test runs.</strong> An app that seeds entitlements from
 <code>Transaction.currentEntitlements</code> will see packs a developer bought while debugging as owned
 in every subsequent run. Guard the seed on a <code>--ui-tests</code> launch argument; clear existing state
