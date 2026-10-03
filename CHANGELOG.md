@@ -6,13 +6,16 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+## 0.2.0
+
+- `gallery` labels each shot with the display App Store Connect files it under, e.g.
+  `1284×2778 (6.5")`, `2064×2752 (13")`.
 - **`ship beta|release` explains a new app's first export.** When the export fails because the
   bundle id has no App Store provisioning profile and the API key can't make one (cloud
   signing), `ship` stops with the two ways past it, uploading the built archive from Xcode's
   Organizer once or giving the key the Admin role, instead of xcodebuild's error and a
   traceback. The skill gains `references/first-release.md`, a walkthrough of everything a first
   submission needs that later releases don't.
-
 - **The skill covers export compliance**: setting `ITSAppUsesNonExemptEncryption` on the app
   target is a setup step (the agent asks the user which answer applies), so builds don't wait at
   "Missing Compliance".
@@ -32,6 +35,10 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
   that copied the templates should rename it in its tests and anywhere it reads the argument.
 - **`frame --platform macos`** frames only the Mac deck. It used to re-frame every deck with
   raws, iOS included.
+- **UI tests stay serial in the templates too.** `ios/record_gameplay_video.sh` runs its test with
+  `-parallel-testing-enabled NO` on the named simulator and records that one, instead of waiting
+  for a parallel-testing clone; it writes to the repo's `build/previews/`, not `/build/previews`.
+  The skill says to keep "Execute in parallel" off.
 - **The Mac lane's Automation Mode check** passes on a Mac where the mode can be switched on
   without a password: the tool reads "disabled" at rest, and XCTest turns it on for the run.
 

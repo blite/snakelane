@@ -1,5 +1,5 @@
 $ snakelane --help
-snakelane 0.1.0 — App Store Connect from plain-text metadata/, without fastlane
+snakelane 0.2.0 — App Store Connect from plain-text metadata/, without fastlane
 
 usage: snakelane [-C <repo>] [--config <file>] <command> [args…]
 

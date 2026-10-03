@@ -1,6 +1,6 @@
 [project]
 name = "snakelane"
-version = "0.1.0"
+version = "0.2.0"
 description = "An opinionated App Store Connect CLI for indie Apple developers and coding agents. Keep listings, screenshots, and purchase catalogues in your repo, review changes, and ship with a focused Python workflow."
 readme = "README.md"
 license = "MIT"
