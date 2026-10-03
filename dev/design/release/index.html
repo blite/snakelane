@@ -1262,6 +1262,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#a-new-apps-first-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A new app's first export
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-release-lint-reads-app-store-connect-not-the-files" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1868,6 +1879,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#a-new-apps-first-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A new app's first export
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-release-lint-reads-app-store-connect-not-the-files" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2211,6 +2233,18 @@ the post-action already did, and how two machines end up disagreeing about what 
 A Homebrew rsync 3.4 or later ahead of it rejects the flags, and the export fails with "Copy
 failed" after a good archive (Jigsaw). The key path passed to the export is absolute because
 xcodebuild rejects a relative or tilde'd path with an unhelpful auth error.</p>
+<h3 id="a-new-apps-first-export">A new app's first export<a class="headerlink" href="#a-new-apps-first-export" title="Permanent link">&para;</a></h3>
+<p>A brand-new bundle id has no App Store provisioning profile. With no Apple Distribution
+certificate in the keychain (the normal state with Xcode-managed signing), <code>-exportArchive</code>
+has to make one with Apple's cloud-managed certificate, and an App Manager API key may not:
+the export fails with "Cloud signing permission error" and "No profiles for '<bundle id>'
+were found", after a good archive (FreeCell, 2026-10). The family's older apps never showed
+it because each already had an Xcode-made "iOS Team Store Provisioning Profile" from an
+upload through Organizer.</p>
+<p><code>ship</code> recognises those two lines (<code>FIRST_EXPORT_SIGNS</code>) and replaces xcodebuild's traceback
+with the two ways past it: upload that archive from Organizer once, or give the key the Admin
+role. It does not try either itself: one is a person signing in as their Apple ID, the other
+a change to what the key may do.</p>
 <h3 id="the-release-lint-reads-app-store-connect-not-the-files">The release lint reads App Store Connect, not the files<a class="headerlink" href="#the-release-lint-reads-app-store-connect-not-the-files" title="Permanent link">&para;</a></h3>
 <p><code>ship release</code> submits the listing App Store Connect holds and never pushes text itself, so the
 lint gate checks the live listing. It also warns when the local files differ: a fix not yet

@@ -1488,9 +1488,19 @@ major version is 0, a change that needs new <code>snakelane.yml</code> keys or c
 behaviour bumps the minor version. Each release is tagged <code>vX.Y.Z</code>.</p>
 <h2 id="unreleased">Unreleased<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>The skill covers export compliance</strong>: setting <code>ITSAppUsesNonExemptEncryption</code> on the app
+<li>
+<p><strong><code>ship beta|release</code> explains a new app's first export.</strong> When the export fails because the
+  bundle id has no App Store provisioning profile and the API key can't make one (cloud
+  signing), <code>ship</code> stops with the two ways past it, uploading the built archive from Xcode's
+  Organizer once or giving the key the Admin role, instead of xcodebuild's error and a
+  traceback. The skill gains <code>references/first-release.md</code>, a walkthrough of everything a first
+  submission needs that later releases don't.</p>
+</li>
+<li>
+<p><strong>The skill covers export compliance</strong>: setting <code>ITSAppUsesNonExemptEncryption</code> on the app
   target is a setup step (the agent asks the user which answer applies), so builds don't wait at
-  "Missing Compliance".</li>
+  "Missing Compliance".</p>
+</li>
 <li><strong><code>test.mac</code></strong> gates a Mac release on this Mac: with it set, <code>ship beta|release --platform
   macos</code> and <code>ship test --platform macos</code> run the tests with <code>platform=macOS,arch=arm64</code> (or
   <code>test.mac.destination</code>) instead of the iOS simulator. Absent, nothing changes.</li>
