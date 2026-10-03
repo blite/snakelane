@@ -19,17 +19,24 @@ JPEG_QUALITY = 90
 MAX_SCREENSHOTS_PER_SET = 10
 
 
-def _both_ways(sizes: list[tuple[int, int]], display_type: str) -> dict[tuple[int, int], str]:
-    return {size: display_type for w, h in sizes for size in ((w, h), (h, w))}
+def _both_ways(sizes: list[tuple[int, int]]) -> list[tuple[int, int]]:
+    """Portrait and landscape."""
+    return [size for w, h in sizes for size in ((w, h), (h, w))]
 
 
 # The pixels alone decide the slot, never a config key; ASC's media page is the arbiter.
 # Why: docs/design/screenshots.md#the-display-type-table
+# Each iOS slot, the display App Store Connect names it by (the gallery's label), and its sizes.
+IOS_SLOTS = [
+    ("APP_IPHONE_65", '6.5"', [(1242, 2688), (1284, 2778)]),  # 11 Pro Max / XS Max, 14 Plus / 13 Pro Max
+    # Plus the physically 6.5" iPhone Air (1260x2736), which files here.
+    ("APP_IPHONE_67", '6.9"', [(1260, 2736), (1290, 2796), (1320, 2868)]),
+    ("APP_IPAD_PRO_3GEN_129", '13"', [(2064, 2752)]),  # required
+    ("APP_IPAD_PRO_3GEN_129", '12.9"', [(2048, 2732)]),  # legacy, same slot
+]
+SCREEN_SIZES = {size: inches for _, inches, sizes in IOS_SLOTS for size in _both_ways(sizes)}
 SCREENSHOT_DISPLAY_TYPES = {
-    **_both_ways([(1242, 2688), (1284, 2778)], "APP_IPHONE_65"),  # 11 Pro Max / XS Max, 14 Plus / 13 Pro Max
-    # 6.9", plus the physically 6.5" iPhone Air (1260x2736), which files here.
-    **_both_ways([(1260, 2736), (1290, 2796), (1320, 2868)], "APP_IPHONE_67"),
-    **_both_ways([(2064, 2752), (2048, 2732)], "APP_IPAD_PRO_3GEN_129"),  # 13" (required), legacy 12.9"
+    **{size: slot for slot, _, sizes in IOS_SLOTS for size in _both_ways(sizes)},
     **{size: "APP_DESKTOP" for size in [(1280, 800), (1440, 900), (2560, 1600), (2880, 1800)]},  # 16:10 only
 }
 

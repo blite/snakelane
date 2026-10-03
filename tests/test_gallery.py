@@ -112,3 +112,10 @@ def test_empty_deck_folder_is_shown_as_a_deletion(app: project.App) -> None:
     (app.folder / "ios" / "screenshots" / "en-AU").mkdir()
     page = gallery.build(app)
     assert "empty folder: the push deletes this locale's live screenshots" in page
+
+
+def test_each_shot_names_its_screen_size() -> None:
+    from .test_examples import TRAILHEAD
+
+    page = gallery.build(project.resolve_app(None, root=TRAILHEAD))
+    assert "1284×2778 (6.5&quot;)" in page and "2064×2752 (13&quot;)" in page

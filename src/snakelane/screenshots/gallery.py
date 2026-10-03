@@ -283,7 +283,8 @@ def deck_html(deck: Deck, assets: Assets, comparing: str | None) -> str:
         if shot.dimensions is None:
             size, warning = "unreadable", "the push cannot read this image's size"
         else:
-            size = "{}×{}".format(*shot.dimensions)
+            size = "{}×{}".format(*shot.dimensions) + (f" ({inches})" if (inches := media.SCREEN_SIZES.get(
+                shot.dimensions)) else "")
             warning = (media.size_advice(shot.dimensions) if shot.dimensions in media.SCREENSHOT_DISPLAY_TYPES
                        else "no App Store slot takes this size; the push refuses it")
         before = (f'<div class="before"><img loading="lazy" src="{esc(shot.before)}" alt=""><span>{esc(comparing)}</span></div>'
