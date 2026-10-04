@@ -1511,6 +1511,12 @@ behaviour bumps the minor version. Each release is tagged <code>vX.Y.Z</code>.</
 <h2 id="unreleased">Unreleased<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
 <ul>
 <li>
+<p><strong><code>store push --dry-run</code> shows the diff.</strong> With an API key set up it reads App Store Connect and
+  prints the same coloured word diff the real push asks about, then stops; it used to list every
+  local field without reading anything. With no draft version it diffs against the live one.
+  Without a key it still prints the local plan.</p>
+</li>
+<li>
 <p><strong><code>framing.decorate</code>: app-only art over framed shots.</strong> Name a repo-relative Python file whose
   <code>decorate(image, shot)</code> snakelane calls for every framed shot, after the caption, with the
   slot, locale, deck, the capture's box on the canvas and the theme's colours. It returns the

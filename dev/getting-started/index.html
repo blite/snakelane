@@ -1594,13 +1594,14 @@ metadata/default/description.txt
 <p><a href="../configuration/">The config and the metadata tree</a> covers the full layout, and
 <code>snakelane store pull</code> writes the files from what is live today.</p>
 <h2 id="first-run">First run<a class="headerlink" href="#first-run" title="Permanent link">&para;</a></h2>
-<p>Nothing talks to App Store Connect until you drop <code>--dry-run</code>:</p>
+<p>Nothing is written to App Store Connect until you drop <code>--dry-run</code>:</p>
 <div class="highlight"><pre><span></span><code>snakelane<span class="w"> </span>lint
 snakelane<span class="w"> </span>store<span class="w"> </span>push<span class="w"> </span>--dry-run
 snakelane<span class="w"> </span>store<span class="w"> </span>push<span class="w">          </span><span class="c1"># shows the diff, asks, writes, re-reads to verify</span>
 </code></pre></div>
-<p>The dry run prints every field it would send. Here it is for the paid edition in
-<code>examples/two-apps</code>:</p>
+<p>With your API key set up, the dry run reads what is live and prints the diff the real push would
+ask about. Before the key is set up it prints every field it would send. Here it is for the paid
+edition in <code>examples/two-apps</code>:</p>
 <div class="highlight"><pre><span></span><code>$ snakelane store push --app pro --dry-run
 → Trailhead Pro (com.example.trailhead.pro), platform=ios, locales=['en-US']
 lint: clean

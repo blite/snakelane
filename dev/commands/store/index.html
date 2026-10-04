@@ -1506,7 +1506,7 @@
 
 <h1 id="store-listing-screenshots-purchases">store: listing, screenshots, purchases<a class="headerlink" href="#store-listing-screenshots-purchases" title="Permanent link">&para;</a></h1>
 <p>Everything on the App Store page, pushed from <code>metadata/</code> and checked afterwards.</p>
-<div class="highlight"><pre><span></span><code>snakelane<span class="w"> </span>store<span class="w"> </span>push<span class="w"> </span>--dry-run<span class="w">          </span><span class="c1"># offline: the whole plan, no key needed</span>
+<div class="highlight"><pre><span></span><code>snakelane<span class="w"> </span>store<span class="w"> </span>push<span class="w"> </span>--dry-run<span class="w">          </span><span class="c1"># the diff against live; without a key, the local plan</span>
 snakelane<span class="w"> </span>store<span class="w"> </span>push<span class="w">                    </span><span class="c1"># diff, confirm, write, re-read</span>
 snakelane<span class="w"> </span>store<span class="w"> </span>pull<span class="w">                    </span><span class="c1"># write the local tree from what is live</span>
 snakelane<span class="w"> </span>store<span class="w"> </span>show<span class="w">                    </span><span class="c1"># print what is live</span>
@@ -1517,7 +1517,10 @@ snakelane<span class="w"> </span>store<span class="w"> </span>show<span class="w
 <code>metadata/default/</code>. If none has any, the field is skipped: a missing or blank file leaves the
 live value alone, and snakelane never pushes an empty string. Before writing, it prints a word-level diff of
 every field that would change and asks (<code>--yes</code> skips the question, for CI). After writing, it
-reads App Store Connect back and reports anything that didn't land.</p>
+reads App Store Connect back and reports anything that didn't land. <code>--dry-run</code> prints the same
+diff and stops before the question. Without an API key it can't read what is live, so it prints
+every local field instead. With no draft version yet, it diffs against the live version and says
+the real push needs a draft first.</p>
 <p><a href="../lint/"><code>lint</code></a> runs first and stops the push on errors such as an over-long field
 or another platform named in the description. <code>--skip-lint</code> overrides it for one run.</p>
 <p>Categories and the <a href="https://developer.apple.com/help/app-store-connect/reference/app-information/age-ratings-values-and-definitions">age-rating questionnaire</a> come from the config (<code>categories</code>, <code>age_rating</code>).

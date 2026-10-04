@@ -1516,7 +1516,7 @@ written in Python, so a failure in CI is a readable traceback in a file you can 
 with an agent skill, so a coding agent can run it, and fix it when it's wrong.</p>
 <p>Once per machine, install an App Store Connect API key with <code>snakelane auth setup</code>. Then:</p>
 <div class="highlight"><pre><span></span><code>snakelane<span class="w"> </span>lint<span class="w">                     </span><span class="c1"># what App Review would reject</span>
-snakelane<span class="w"> </span>store<span class="w"> </span>push<span class="w"> </span>--dry-run<span class="w">     </span><span class="c1"># everything that would change, offline</span>
+snakelane<span class="w"> </span>store<span class="w"> </span>push<span class="w"> </span>--dry-run<span class="w">     </span><span class="c1"># the diff against live, nothing written</span>
 snakelane<span class="w"> </span>store<span class="w"> </span>push<span class="w">               </span><span class="c1"># diff against live, confirm, write, verify</span>
 snakelane<span class="w"> </span>shoot<span class="w">                    </span><span class="c1"># the screenshot deck, from your UI test</span>
 snakelane<span class="w"> </span>gallery<span class="w"> </span>--live<span class="w"> </span>--open<span class="w">    </span><span class="c1"># every deck beside what's live</span>
