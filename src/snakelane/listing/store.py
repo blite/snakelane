@@ -13,8 +13,8 @@ skipped, never pushed blank. Why: docs/design/foundations.md#blank-local-text-me
     <platform>/copyright.txt, <platform>/review/   platform overrides, per file / per field
     <platform>/screenshots/<locale>/      ss-NN.jpg/png and ap-NN.m4v; in iphone/ and ipad/ for iOS
 
-Every command takes `--app` and, except `subs show`, `--platform`. `push --dry-run` needs no key; other
-dry runs diff against live when a key is set up.
+Every command takes `--app` and, except `subs show`, `--platform`. Every `--dry-run` reads App Store
+Connect and shows what would change when a key is set up, and the local plan when none is.
 
 ## snakelane.yml keys this module reads
 
@@ -76,7 +76,7 @@ def call(command: Callable[[SimpleNamespace], None], options: dict[str, Any], sh
 
 @cli.command()
 def push(app: AppOption = None, platform: PlatformOption = None,
-         dry_run: Annotated[bool, typer.Option("--dry-run", help="print the field plan; no network, no key")] = False,
+         dry_run: Annotated[bool, typer.Option("--dry-run", help="diff against App Store Connect and stop; without a key, print the local plan")] = False,
          skip_lint: Annotated[bool, typer.Option("--skip-lint", help="push even when `snakelane lint` finds "
                                                                     "errors (prefer the config's lint.ignore)")] = False,
          yes: Annotated[bool, typer.Option("--yes", help="skip the confirmation after the diff (non-tty runs)")] = False,

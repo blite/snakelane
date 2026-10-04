@@ -15,7 +15,7 @@ from snakelane.connect import asc
 
 from .test_examples import TRAILHEAD
 
-LIVE: dict[str, list[dict[str, Any]]] = {  # path -> `data`; anything else is an empty list
+LIVE: dict[str, Any] = {  # path -> `data`; anything else is an empty list
     "/v1/apps": [{"id": "1", "attributes": {"bundleId": "com.example.trailhead"}}],
     "/v1/apps/1/appStoreVersions": [{"id": "v", "attributes": {"appStoreState": "PREPARE_FOR_SUBMISSION"}}],
     "/v1/appStoreVersions/v/appStoreVersionLocalizations": [
@@ -23,6 +23,10 @@ LIVE: dict[str, list[dict[str, Any]]] = {  # path -> `data`; anything else is an
     "/v1/appStoreVersionLocalizations/L-en-US/appScreenshotSets": [
         {"id": "S", "attributes": {"screenshotDisplayType": "APP_IPHONE_65"}}],
     "/v1/appScreenshotSets/S/appScreenshots": [{"id": "old", "attributes": {"fileName": "ss-01.jpg"}}],
+    "/v1/apps/1/appInfos": [{"id": "i", "attributes": {"appStoreState": "PREPARE_FOR_SUBMISSION"}}],
+    "/v1/appInfos/i": {"id": "i", "relationships": {}},
+    "/v1/appStoreVersions/v": {"id": "v", "attributes": {}},
+    "/v1/appCategories": [{"id": "HEALTH_AND_FITNESS"}, {"id": "NAVIGATION"}],
 }
 
 
@@ -80,6 +84,7 @@ def test_the_client_plans_writes_and_reads_nothing_under_a_planned_id(live: list
 
 
 @pytest.mark.parametrize("module, command, options", [
+    ("listing.push", "cmd_push", {"platform": None, "skip_lint": False, "yes": False}),
     ("purchases.iap", "cmd_iap_push", {"platform": None, "create": True, "product": None}),
     ("purchases.subscriptions", "cmd_subs_push", {"platform": None, "create": True}),
     ("screenshots.upload", "cmd_screenshots_push", {"platform": None, "allow_developer_chrome": False}),
@@ -96,5 +101,5 @@ def test_every_push_dry_run_reads_but_never_writes(live: list[str], monkeypatch:
     run(SimpleNamespace(app=None, dry_run=True, **options))
     assert live and set(live) == {"GET"}, f"only reads reached App Store Connect: {live}"
     out = capsys.readouterr().out
-    assert "[dry-run] would POST" in out
+    assert "[dry-run] would POST" in out or "change(s) to push" in out
     assert "✓" not in out, "no line claims a write happened"

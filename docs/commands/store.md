@@ -3,7 +3,7 @@
 Everything on the App Store page, pushed from `metadata/` and checked afterwards.
 
 ```bash
-snakelane store push --dry-run          # offline: the whole plan, no key needed
+snakelane store push --dry-run          # the diff against live; without a key, the local plan
 snakelane store push                    # diff, confirm, write, re-read
 snakelane store pull                    # write the local tree from what is live
 snakelane store show                    # print what is live
@@ -16,7 +16,10 @@ snakelane store show                    # print what is live
 `metadata/default/`. If none has any, the field is skipped: a missing or blank file leaves the
 live value alone, and snakelane never pushes an empty string. Before writing, it prints a word-level diff of
 every field that would change and asks (`--yes` skips the question, for CI). After writing, it
-reads App Store Connect back and reports anything that didn't land.
+reads App Store Connect back and reports anything that didn't land. `--dry-run` prints the same
+diff and stops before the question. Without an API key it can't read what is live, so it prints
+every local field instead. With no draft version yet, it diffs against the live version and says
+the real push needs a draft first.
 
 [`lint`](lint.md) runs first and stops the push on errors such as an over-long field
 or another platform named in the description. `--skip-lint` overrides it for one run.

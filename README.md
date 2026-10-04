@@ -29,7 +29,7 @@ Once per machine, install an App Store Connect API key with `snakelane auth setu
 
 ```bash
 snakelane lint                     # what App Review would reject
-snakelane store push --dry-run     # everything that would change, offline
+snakelane store push --dry-run     # the diff against live, nothing written
 snakelane store push               # diff against live, confirm, write, verify
 snakelane shoot                    # the screenshot deck, from your UI test
 snakelane gallery --live --open    # every deck beside what's live
@@ -253,7 +253,8 @@ snakelane auth check
 the key id and issuer id to `~/.config/snakelane/credentials.json`. Every command reads those
 two files and nothing else, whether it runs in a terminal, in Xcode's Archive post-action or
 in CI.
-There are no environment variables to set, and no Apple ID sign-in. `--dry-run` needs no key.
+There are no environment variables to set, and no Apple ID sign-in. Without a key, `--dry-run`
+still prints the local plan.
 
 In CI, install the key from secrets before running snakelane:
 

@@ -15,6 +15,7 @@ from .. import project
 from ..args import load_app, resolve_platform
 from ..connect import asc
 from ..connect.resources import (
+    NoEditableVersion,
     find_app,
     find_editable_app_info,
     find_editable_version,
@@ -226,16 +227,23 @@ def cmd_push(args: SimpleNamespace) -> None:
         lint.gate(app, platform)
     plan = build_push_plan(folder / platform, locales, app_config)
     translations.warn_stale(folder, locales)
-    if args.dry_run:
+    if args.dry_run and not asc.Credentials.available():
         print_push_plan(plan)
-        print("\n[dry-run] no network calls made — nothing above was written to App Store Connect.")
+        print("\n[dry-run] no API key set up (`snakelane auth setup`), so this is the local plan, not a diff "
+              "against App Store Connect. Nothing was written.")
         return
 
-    client = asc.Client()  # the first credential check
+    client = asc.Client(dry_run=args.dry_run)  # the first credential check
     app_id = find_app(client, app_config)["id"]
     print(f"→ found app {app_config['bundle_id']} (id={app_id})")
     app_info = find_editable_app_info(client, app_id)
-    version = find_editable_version(client, app_id, platform)
+    try:
+        version = find_editable_version(client, app_id, platform)
+    except NoEditableVersion as error:
+        if not client.dry_run or (version := find_listing_version(client, app_id, platform)) is None:
+            raise
+        # The diff is still worth seeing; the real push needs the draft first.
+        print(red(f"  ! {error}\n  (dry run: diffing against the live version instead)"))
     version_string = asc.attributes(version).get("versionString")
     if live_version(client, app_id, platform) is None:  # ASC rejects whatsNew on an app's first version
         for locale, fields in plan["per_locale"].items():
@@ -255,6 +263,9 @@ def cmd_push(args: SimpleNamespace) -> None:
         return
     print(f"\n{total} change(s) to push:")
     print_diff(changes, live)
+    if client.dry_run:
+        print("\n[dry-run] nothing was written to App Store Connect.")
+        return
     if not args.yes:
         if not sys.stdin.isatty():
             raise SystemExit("stdin is not a terminal — pass --yes to push without the prompt")

@@ -69,7 +69,7 @@ metadata/default/description.txt
 
 ## First run
 
-Nothing talks to App Store Connect until you drop `--dry-run`:
+Nothing is written to App Store Connect until you drop `--dry-run`:
 
 ```bash
 snakelane lint
@@ -77,8 +77,9 @@ snakelane store push --dry-run
 snakelane store push          # shows the diff, asks, writes, re-reads to verify
 ```
 
-The dry run prints every field it would send. Here it is for the paid edition in
-`examples/two-apps`:
+With your API key set up, the dry run reads what is live and prints the diff the real push would
+ask about. Before the key is set up it prints every field it would send. Here it is for the paid
+edition in `examples/two-apps`:
 
 ```text
 --8<-- "docs/assets/terminal/store-push-dry-run.txt"

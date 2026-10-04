@@ -6,6 +6,11 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **`store push --dry-run` shows the diff.** With an API key set up it reads App Store Connect and
+  prints the same coloured word diff the real push asks about, then stops; it used to list every
+  local field without reading anything. With no draft version it diffs against the live one.
+  Without a key it still prints the local plan.
+
 - **`framing.decorate`: app-only art over framed shots.** Name a repo-relative Python file whose
   `decorate(image, shot)` snakelane calls for every framed shot, after the caption, with the
   slot, locale, deck, the capture's box on the canvas and the theme's colours. It returns the

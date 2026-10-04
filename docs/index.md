@@ -20,7 +20,7 @@ Once per machine, install an App Store Connect API key with `snakelane auth setu
 
 ```bash
 snakelane lint                     # what App Review would reject
-snakelane store push --dry-run     # everything that would change, offline
+snakelane store push --dry-run     # the diff against live, nothing written
 snakelane store push               # diff against live, confirm, write, verify
 snakelane shoot                    # the screenshot deck, from your UI test
 snakelane gallery --live --open    # every deck beside what's live

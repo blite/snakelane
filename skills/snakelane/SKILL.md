@@ -76,7 +76,7 @@ folders exist.
 snakelane init [--pull]                   # snakelane.yml + metadata/ from the Xcode project
 snakelane status [--json]                 # what ASC holds now: versions, review, latest build
 snakelane lint [--check-urls]         # lint the listing for App Review rejections, offline
-snakelane store push --dry-run            # offline, no credentials: the whole plan
+snakelane store push --dry-run            # the diff vs live, nothing written (no key: the local plan)
 snakelane store push                      # diff vs live, confirm (--yes), write, re-read
 snakelane store show | pull
 snakelane store screenshots push [--dry-run]
