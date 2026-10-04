@@ -41,6 +41,23 @@ def test_a_shot_one_platform_leaves_out_is_fine(app: project.App) -> None:
     assert frame.frame_deck(app, "en-US") == 4
 
 
+def test_framing_one_deck_counts_the_other_decks_raws(app: project.App) -> None:
+    # `shoot --platform macos` frames only the Mac deck; shot 3 is phone-only (Euchre's landscape).
+    for n in (1, 2, 3):
+        capture(app, "iphone", n)
+    for n in (1, 2):
+        capture(app, "mac", n)
+    assert frame.frame_deck(app, "en-US", decks=["mac"]) == 2
+
+
+def test_framing_one_deck_still_fails_a_shot_no_deck_has(app: project.App) -> None:
+    for n in (1, 2):
+        capture(app, "iphone", n)
+        capture(app, "mac", n)
+    with pytest.raises(SystemExit, match=r"captioned shot\(s\) 3 .* have no capture"):
+        frame.frame_deck(app, "en-US", decks=["mac"])
+
+
 def test_framing_writes_jpeg(app: project.App) -> None:
     for n in (1, 2, 3):
         capture(app, "iphone", n)

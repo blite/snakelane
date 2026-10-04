@@ -174,8 +174,17 @@ def frame_deck(app: App, locale: str = "en-US", decks: list[str] | None = None, 
         print(f"          written to {framed}")
     if not total:
         raise SystemExit(f"nothing framed — put captures in raw/{locale}/ as ss-01.png .. or run `snakelane shoot`")
-    # Across platforms: an iPad deck may omit a phone-only shot.
+    # Across platforms: an iPad deck may omit a phone-only shot. A run framing only some decks
+    # (`shoot --platform macos`) counts the others' raws as they stand, or a phone-only shot reads
+    # as missing from a Mac shoot that was never going to take it.
     # Why: docs/design/framing.md#a-missing-captioned-shot-fails-the-run
+    for other in DECKS:
+        if decks is not None and other in decks:
+            continue
+        raw = DeckTree.for_deck(app, other).raw(locale)
+        if raw.is_dir():
+            produced |= {n for p in deck_files([raw], IMAGE_SUFFIXES, "raw", quiet=True)
+                         if (n := slot_of(p)) is not None}
     if missing := sorted(set(deck) - produced):
         raise SystemExit(f"captioned shot(s) {', '.join(map(str, missing))} in {CAPTIONS} have no capture "
                          f"in any deck for {locale}; shoot them, or drop their captions")
