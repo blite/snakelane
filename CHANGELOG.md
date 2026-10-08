@@ -6,6 +6,12 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **`lint` rejects price references (Guideline 2.3.7).** New `price-reference` rule, an error:
+  "buy", "purchase", "sale", "one-time", "subscription", a currency amount and similar, in the
+  name, subtitle, keywords or any `framing.captions` caption. `store push` stops on it. "free"
+  is deliberately not flagged. A phrase that only looks like a price goes in `snakelane.yml`'s
+  new `"lint": {"allow": [...]}`; `lint.ignore` still turns the rule off entirely.
+
 - **`store push --dry-run` shows the diff.** With an API key set up it reads App Store Connect and
   prints the same coloured word diff the real push asks about, then stops; it used to list every
   local field without reading anything. With no draft version it diffs against the live one.

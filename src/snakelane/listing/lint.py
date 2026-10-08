@@ -19,13 +19,17 @@ Rules (error = blocks the push; warning = printed):
     test-word             warning  "beta", "trial version", "pre-release" framing
     apple-sentiment       warning  disparaging Apple or its platforms (guideline 3.2.2)
     keyword-format        warning  spaces after commas, duplicates, empty entries, words in the name/subtitle
+    price-reference       error    "buy", "sale", "one-time", "$4.99", … in the name, subtitle, keywords or a
+                                   screenshot caption (framing.captions) — guideline 2.3.7
 
 Phrases are bounded by Latin letters rather than `\\b`; placeholders are case-sensitive.
 Why: docs/design/foundations.md#lint-matching-rules
+Why price-reference: docs/design/foundations.md#price-references-in-the-name-keywords-and-screenshots
 
 ## snakelane.yml
 
     "lint": {"ignore": ["test-word", …]}   rules to skip for this app; default none
+    "lint": {"allow": ["half price books", …]}    phrases price-reference passes over (a name that only looks like a price); default none
     "terms_url": "https://…/terms/"         Terms of Use subscription-links looks for; default Apple's EULA
 Why subscription-links: docs/adr/0003-lint-subscription-legal-links.md
 """
@@ -71,6 +75,13 @@ PHRASE_RULES = [
     (["beta", "trial version", "pre-release", "prerelease", "test version", "demo version"], "test-word", "warning",
      '"{}" reads as unfinished software (2.2)', False),
 ]
+# Guideline 2.3.7: price belongs in the description, never where a shopper sees it first. "free" is left out
+# on purpose: too common in honest feature copy to block a push on.
+PRICE_FIELDS = ("name", "subtitle", "keywords")
+PRICE_PHRASES = ["price", "prices", "pricing", "buy", "purchase", "discount", "sale", "% off", "half price",
+                 "one-time", "subscription", "cheap"]
+CURRENCY = re.compile(r"[$€£¥]\s?\d|\d\s?[$€£¥]")
+PRICE_MESSAGE = '"{}" reads as a price reference, which App Review rejects here (2.3.7); say it in the description'
 APPLE_TERMS = r"(?:apple|ios|ipados|iphone|ipad|app store|macos|mac)"
 APPLE_NEGATIVE = re.compile(
     rf"(?i)(?<![a-z])(?:{APPLE_TERMS}\s+(?:\w+\s+){{0,2}}(?:sucks?|is terrible|is awful|is broken|"
@@ -132,6 +143,31 @@ def text_findings(text: str, where: str, english: bool = True) -> list[Finding]:
     return found
 
 
+def price_findings(text: str, where: str, allow: tuple[str, ...] = ()) -> list[Finding]:
+    for phrase in allow:
+        text = phrase_pattern(phrase).sub(" ", text)
+    matches = [m for phrase in PRICE_PHRASES if (m := phrase_pattern(phrase).search(text))]
+    if currency := CURRENCY.search(text):
+        matches.append(currency)
+    return [Finding("error", "price-reference", where, PRICE_MESSAGE.format(m.group(0)), excerpt(text, m))
+            for m in matches]
+
+
+def caption_findings(app: project.App, allow: tuple[str, ...]) -> list[Finding]:
+    """price-reference over snakelane.yml's framing.captions; a deck the UI test captions is OCR's to check."""
+    from ..screenshots.frame import caption_sets
+
+    framing = (app.config.get("screenshots") or {}).get("framing") or {}
+    if not framing.get("captions"):
+        return []
+    return [f for locale, slots in caption_sets(framing).items() for slot, caption in sorted(slots.items())
+            for f in price_findings(caption.replace("==", ""), f"{locale or 'screenshots'}/caption {slot}", allow)]
+
+
+def allowed(app: project.App) -> tuple[str, ...]:
+    return tuple((app.config.get("lint") or {}).get("allow", []))
+
+
 def legal_terms_url(app: project.App, platform_dir: Path) -> str | None:
     """The Terms of Use URL descriptions must carry, or None when the app sells no subscriptions."""
     from ..purchases.catalogue import catalogue_path, read_catalogue
@@ -170,7 +206,7 @@ def legal_link_findings(values: dict[str, dict[str, str | None]], terms_url: str
 
 
 def lint(values: dict[str, dict[str, str | None]], review_notes: str | None,
-         terms_url: str | None = None) -> list[Finding]:
+         terms_url: str | None = None, allow: tuple[str, ...] = ()) -> list[Finding]:
     """Every rule but URL reachability over {locale: {stem: text}}; `terms_url` turns on subscription-links."""
     found: list[Finding] = []
     for locale, fields in values.items():
@@ -180,6 +216,8 @@ def lint(values: dict[str, dict[str, str | None]], review_notes: str | None,
             where = f"{locale}/{stem}"
             found += [Finding("error", rule, where, message) for rule, message in hard_limit_problems(stem, text)]
             found += text_findings(text, where, english=locale.startswith("en"))
+            if stem in PRICE_FIELDS:
+                found += price_findings(text, where, allow)
             if stem == "keywords":
                 found += keyword_findings(text, where, fields.get("name"), fields.get("subtitle"))
         found += [Finding("error", "url-format", f"{locale}/{stem}", f"{url!r} is not an absolute http(s) URL")
@@ -217,7 +255,8 @@ def run(app: project.App, platform: str, check_urls: bool = False) -> list[Findi
     platform_dir, locales = app.platform_dir(platform), app.locales
     terms_url = legal_terms_url(app, platform_dir)
     values = read_listing(platform_dir, locales)
-    found = lint(values, read_review(platform_dir).get("notes"), terms_url)
+    found = lint(values, read_review(platform_dir).get("notes"), terms_url, allowed(app))
+    found += caption_findings(app, allowed(app))
     if check_urls:
         found += url_findings(values, terms_url)
     return ignored(app, found)

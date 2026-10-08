@@ -329,7 +329,8 @@ def release_findings(app: App, platform: str) -> list[lint.Finding]:
         return []
     info = find_editable_app_info(client, found_app["id"])
     live = fetch_live_state(client, info["id"], version, app.locales)
-    found = lint.lint(live["per_locale"], live["review"].get("notes"), lint.legal_terms_url(app, app.platform_dir(platform)))
+    found = lint.lint(live["per_locale"], live["review"].get("notes"), lint.legal_terms_url(app, app.platform_dir(platform)),
+                      lint.allowed(app))
     plan = build_push_plan(app.folder / platform, app.locales, app.config)
     found += [lint.Finding("warning", "unpushed", f"{locale}/listing",
                            f"local text differs from App Store Connect in {', '.join(sorted(fields))}; "

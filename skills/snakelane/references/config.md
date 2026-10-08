@@ -29,7 +29,7 @@ works renamed.
 | `aliases` | Extra names `--app` accepts (the file's `<name>` always works) |
 | `project` | The `.xcodeproj`, repo-relative. Only needed when the repo root has more than one |
 | `terms_url` | The Terms of Use URL an app that sells subscriptions must link in every description (`lint`'s `subscription-links`). Default: Apple's [standard EULA](https://www.apple.com/legal/internet-services/itunes/dev/stdeula/) |
-| `lint` | `ignore: [test-word, …]`: `lint` rules to skip for this app, so a heuristic's false positive never forces a code change |
+| `lint` | `ignore: [test-word, …]`: `lint` rules to skip for this app, so a heuristic's false positive never forces a code change. `allow: ["half price books", …]`: phrases `price-reference` passes over, for a name that only looks like a price |
 | `gallery` | `icon: path/to/icon.png`: repo-relative icon for `gallery`'s mocks. Default: the repo's `AppIcon.appiconset`, else (with `--live`) the App Store's icon, else a DerivedData build's |
 | `developer_chrome_check` | `true`: `screenshots push` must OCR the deck for a DEBUG HUD (refuses if the `[check]` extra is missing). `false`: never. Absent: run if available |
 

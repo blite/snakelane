@@ -152,3 +152,29 @@ def test_the_rule_can_be_ignored(app: project.App) -> None:
     write(app, "default", "description", "Plan your week.")
     app.config["lint"] = {"ignore": ["subscription-links"]}
     assert links(app) == []
+
+
+
+def test_price_references_in_name_subtitle_and_keywords(app: project.App) -> None:
+    write(app, "default", "name", "Spider: No Ads")
+    write(app, "default", "subtitle", "Large cards. Buy once.")
+    write(app, "default", "keywords", "classic,free,sale,retro")
+    write(app, "default", "description", "Free to play, with a one-time $4.99 unlock.")
+    found = {(f.where, f.message.split('"')[1]) for f in lint.run(app, "ios")
+             if f.rule == "price-reference" and f.where.startswith("en-US/")}
+    assert found == {("en-US/subtitle", "Buy"), ("en-US/keywords", "sale")}  # "free" is not flagged
+
+
+def test_price_reference_is_bounded_and_allowable(tmp_path: Path) -> None:
+    app = make_app(tmp_path, lint={"allow": ["half price"]})
+    write(app, "default", "name", "Wholesale Log")
+    write(app, "default", "keywords", "inventory,half price books,purchased")
+    assert [f for f in lint.run(app, "ios") if f.rule == "price-reference"] == []
+
+
+def test_price_references_in_screenshot_captions(tmp_path: Path) -> None:
+    captions = {"en-US": {"1": "No ads\never", "2": ["Free to play", "every day"], "3": "One purchase, $4.99"},
+                "de-DE": {"1": "Keine Werbung"}}
+    app = make_app(tmp_path, locales=["en-US", "de-DE"], screenshots={"frame": "snakelane", "framing": {"captions": captions}})
+    found = {(f.where, f.message.split('"')[1]) for f in lint.run(app, "ios") if f.rule == "price-reference"}
+    assert found == {("en-US/caption 3", "purchase"), ("en-US/caption 3", "$4")}

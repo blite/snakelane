@@ -104,6 +104,10 @@ On a first version:
   `iap.yml`, JPEG, 640×920 minimum) showing the purchase sheet *with its price*. A UI-test
   launch shows "Loading price…" unless the screenshot scheme's test action has a StoreKit
   configuration file; set one, or the shot is useless.
+- **That priced shot goes in `iap.yml`, never in the screenshot deck.** A paywall in the App
+  Store screenshots is a Guideline 2.3.7 rejection, as is a caption saying "free" or "one
+  purchase". If the deck's UI test shoots the paywall for the review screenshot, keep it out
+  of the deck (an underscore-prefixed file is excluded from the push).
 - **A first IAP is submitted together with an app version**: attach it on the version page
   ("In-App Purchases and Subscriptions") before submitting the build. It can't go to review
   alone the first time.

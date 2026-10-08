@@ -68,7 +68,7 @@ assert the numeric `apple_id`.
 Check locally before the call, so an over-length field is a typo rather than a half-applied
 push.
 
-**The name, subtitle and keywords must not mention price, not even "free".** [Guideline
+**The name, subtitle, keywords and screenshots must not mention price, not even "free".** [Guideline
 2.3.7](https://developer.apple.com/app-store/review/guidelines/#2.3.7) (Accurate Metadata) treats any reference to the app's price or business model as
 inappropriate in these fields, and it explicitly names free/discounted claims too: "No ads.
 Play free. Buy once." was rejected for exactly this ("Play free" and "Buy once" both read as
@@ -78,6 +78,25 @@ rejection note says it belongs. Pricing and "free"/"buy" language is fine there,
 `name.txt`, `subtitle.txt` or `keywords.txt`. Reject any subtitle draft
 containing "free", "price", "buy", "discount", "sale", "% off" or similar before it goes out
 for review, not after.
+
+Screenshots are held to the same rule, captions and content both. Spider Solitaire 1.0 was
+rejected (2026-10-08, 2.3.7) for a deck whose last two shots were a Home screen captioned
+"Free to play every day" and the purchase paywall with its price button, captioned "One
+purchase, every device". Apple's note: "references to free or discounted services are
+considered a price reference". The fix was a recaption ("New challenge every day") and
+dropping the paywall shot. So:
+
+- No caption with "buy", "one purchase", "one-time unlock", "no subscription", "sale" or a
+  currency amount. "Free" is the judgement call: Apple's note names it, and "Free to play"
+  was half of this rejection, but `lint` does not flag it (it is everywhere in honest
+  feature copy, and the family's other listings use it in the description and promo text,
+  where it is allowed). Prefer a caption that says what the screen does.
+- No paywall, purchase sheet, price button, "Unlock for $X" or strike-through price in any
+  shot. The IAP's *review* screenshot is where the priced sheet belongs; it is reviewer-only.
+- Coin balances and in-game currency are fine: they are not money.
+- `snakelane lint` (and so `store push`) catches price wording other than "free" in the
+  listing fields and in `framing.captions`. It cannot read a caption the UI test draws (`frame: test`) or what a
+  screen shows, so look at every framed shot before `store screenshots push`.
 
 **Reviewers want privacy and terms links inside `description.txt`.** Populating ASC's
 `privacyPolicyUrl` attribute is not the whole obligation. [Guideline 3.1.2](https://developer.apple.com/app-store/review/guidelines/#3.1.2) requires functional

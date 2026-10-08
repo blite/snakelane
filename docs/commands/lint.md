@@ -28,12 +28,21 @@ snakelane lint --strict --json   # warnings fail too; machine-readable
 | `test-word` | warning | "beta", "trial version" |
 | `apple-sentiment` | warning | disparaging Apple ([3.2.2](https://developer.apple.com/app-store/review/guidelines/#3.2.2)) |
 | `keyword-format` | warning | spaces after commas, duplicates, words already in the name or subtitle |
+| `price-reference` | error | "buy", "sale", "one-time", "$4.99"… in the name, subtitle, keywords or a `framing.captions` screenshot caption ([2.3.7](https://developer.apple.com/app-store/review/guidelines/#2.3.7)) |
 
 To turn a rule off for one app, put it in that app's config:
 
 ```yaml
 lint:
   ignore: [test-word]
+```
+
+`price-reference` passes over phrases listed under `allow`, for a name or keyword that only
+looks like a price (a bookshop app's `half price books`):
+
+```yaml
+lint:
+  allow: [half price books]
 ```
 
 ## translations: what is stale or unreviewed

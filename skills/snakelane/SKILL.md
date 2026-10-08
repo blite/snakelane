@@ -156,13 +156,22 @@ match what now exists. Only GETs are retried — a timed-out POST may have lande
   `push` needs an editable version — press "+" next to the current version in ASC if there is
   none; `pull` and `show` fall back to the live one.
 - Every IAP needs an App Review screenshot (640×920 is the floor) or stays
-  `MISSING_METADATA`. Show the purchase sheet with the price visible.
+  `MISSING_METADATA`. Show the purchase sheet with the price visible. That shot is for the
+  reviewer only: **never put a paywall, purchase sheet or price in the App Store deck.**
 - Touching an approved IAP localization or review screenshot re-opens it for review, so
   snakelane sends nothing when values already match.
 - Repricing an existing IAP is web-UI only; `iap push` refuses, so a sync can never reprice a
   live product.
-- Reviewers expect privacy **and** terms links inside `description.txt`, and no price/"free"
-  claims in name, subtitle or keywords ([Guideline 2.3.7](https://developer.apple.com/app-store/review/guidelines/#2.3.7)).
+- Reviewers expect privacy **and** terms links inside `description.txt`.
+- **No price in the name, subtitle, keywords or screenshots** — not in a caption, not on
+  the screen shot ([Guideline 2.3.7](https://developer.apple.com/app-store/review/guidelines/#2.3.7)).
+  A paywall shot with its price button, or a "One purchase" caption, is a rejection.
+  Business-model claims go in `description.txt` (or promotional text). Apple's note also
+  calls "free" a price reference; `lint` deliberately doesn't flag it, so judge a
+  "Free to play"-style caption yourself. `lint`'s `price-reference` rule checks the text
+  fields and `framing.captions`; a UI-test-drawn caption (`frame: test`) and what the
+  screens themselves show are yours to check — look at every framed shot before a push.
+  `lint.allow` exempts a phrase that only looks like a price.
 
 ## Pre-review checks
 
@@ -170,7 +179,8 @@ match what now exists. Only GETs are retried — a timed-out POST may have lande
 on the live listing it will submit (warning when local text hasn't been pushed); both stop on
 errors:
 over-limit fields, other platforms named (Android, Google Play), placeholders, profanity,
-malformed URLs. Warnings (beta wording, "coming soon", keyword waste) print and continue.
+malformed URLs, price references ("buy", "one-time", "$4.99") in the name, subtitle, keywords or
+screenshot captions. Warnings (beta wording, "coming soon", keyword waste) print and continue.
 Fix the copy; if a rule is wrong for this app, add it to `snakelane.yml`'s
 `"lint": {"ignore": [...]}` rather than passing `--skip-lint` every time. Run
 `lint --check-urls` before a release: a dead support URL is a rejection.
