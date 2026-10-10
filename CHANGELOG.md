@@ -6,6 +6,14 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **`store push` checks the App Review contact before writing.** App Store Connect refuses any
+  write to the review card (the notes included) until it has a first name, last name, email and
+  phone, and that refusal used to arrive after the listing text was already written. Now a push
+  that changes the review card stops first, naming the missing `review/first_name.txt`,
+  `last_name.txt`, `email_address.txt` or `phone_number.txt`; a field already set on App Store
+  Connect counts. The phone must start with `+` and a country code, and the email must look like
+  one; both are checked offline with the other limits.
+
 - **`lint` rejects price references (Guideline 2.3.7).** New `price-reference` rule, an error:
   "buy", "purchase", "sale", "one-time", "subscription", a currency amount and similar, in the
   name, subtitle, keywords or any `framing.captions` caption. `store push` stops on it. "free"

@@ -43,6 +43,8 @@ overrides that. `--app <name>` picks among several configs; with one it is not n
     │                        support_url, privacy_url, privacy_choices_url (.txt each)
     ├── <locale>/            per-locale overrides of any single field
     ├── copyright.txt, review/   one for every platform (a platform folder may override)
+    │                          review/: notes.txt, and the contact App Store Connect requires —
+    │                          first_name, last_name, email_address, phone_number (+country code)
     ├── iap.yml              everything the app sells — source of truth: one-time
     │                        purchases (`products`) and subscriptions (`subscription_groups`)
     ├── iap/                 their review screenshots

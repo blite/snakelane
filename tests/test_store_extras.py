@@ -61,3 +61,21 @@ def test_one_key_space_from_files_to_live_and_one_table_maps_it_to_app_store_con
             "per_locale": {"en-US": dict.fromkeys(fields.LISTING)}}
     changes = push.diff_plan_against_live(plan, live)
     assert changes["per_locale"] == {"en-US": {"promotional_text": "New levels."}}
+
+
+def test_the_review_contact_is_checked_before_any_write() -> None:
+    # FreeCell, 2026-10-09: notes alone got a 409 after the listing text was written.
+    assert fields.missing_contact({"notes": "Hi"}, {}) == list(fields.CONTACT)
+    assert fields.missing_contact({"notes": "Hi", "first_name": "Ada"},
+                                  {"last_name": "L", "email_address": "a@b.co", "phone_number": "+1 555"}) == []
+    assert fields.review_format_problems({"phone_number": "+1 555 123 4567", "email_address": "a@b.co"}) == []
+    assert len(fields.review_format_problems({"phone_number": "555 123 4567"})) == 1
+    assert len(fields.review_format_problems({"email_address": "not-an-email"})) == 1
+
+
+def test_a_badly_formatted_phone_stops_the_offline_plan(tmp_path) -> None:
+    platform_dir = tmp_path / "ios"
+    (platform_dir / "review").mkdir(parents=True)
+    (platform_dir / "review" / "phone_number.txt").write_text("555 123 4567")
+    with pytest.raises(SystemExit):
+        push.build_push_plan(platform_dir, [], {})

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -95,6 +96,26 @@ def read_review(platform_dir: Path) -> dict[str, str]:
     return {stem: text for stem in REVIEW
             if (text := read_text(platform_dir / "review" / f"{stem}.txt")
                 or read_text(platform_dir.parent / "review" / f"{stem}.txt"))}
+
+
+# App Store Connect refuses any write to the review card while one of these is empty on it.
+# Why: docs/design/foundations.md#the-review-contact-is-required-on-every-write
+CONTACT = ("first_name", "last_name", "email_address", "phone_number")
+
+
+def review_format_problems(review: dict[str, str]) -> list[str]:
+    """Local contact values Apple would reject: the phone needs `+` and a country code."""
+    problems = []
+    if (phone := review.get("phone_number")) and not re.fullmatch(r"\+\d[\d ().-]{5,}", phone):
+        problems.append(f"review/phone_number: {phone!r} — start with + and the country code, e.g. +1 555 123 4567")
+    if (email := review.get("email_address")) and not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+        problems.append(f"review/email_address: {email!r} is not an email address")
+    return problems
+
+
+def missing_contact(local: dict[str, str], live: dict[str, Any]) -> list[str]:
+    """Contact fields neither the local files nor App Store Connect's card has a value for."""
+    return [stem for stem in CONTACT if not local.get(stem) and not live.get(stem)]
 
 
 def review_attributes(review: dict[str, str]) -> dict[str, Any]:

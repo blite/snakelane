@@ -104,6 +104,10 @@ App Store Connect refused release notes for 1.2 with a 409 mid-push: "What's New
 
 Apple never creates a version's `appStoreReviewDetail` on a fresh app; fetching it 404s until the web UI saves the version or someone POSTs the record. The old Fastfile carried an `ensure_app_store_review_detail_exists` helper because deliver probed the resource and crashed on the 404. snakelane creates it on the first push, so the probe and the fix are the same code path. The create sends the full card, not just the changed fields, or the rest would be dropped.
 
+### The review contact is required on every write
+
+FreeCell's first `store push` (2026-10-09) changed only the review notes and got a 409 from App Store Connect: `contactFirstName`, `contactLastName`, `contactEmail` and `contactPhone` were all required, and the phone had to start with `+` and a country code. Apple validates the whole card on every write, not just the attributes sent, so notes alone fail while the card has no contact. The 409 came after the listing text had already been written, which left the push half done. `store push` now checks before writing anything: the phone and email format offline, and, once it has read the live card, that every contact field has a value locally or already on App Store Connect.
+
 ### A push is verified by reading it back
 
 After writing, `store push` reads App Store Connect again and compares. A mismatch means Apple accepted the write but stored something different, through normalisation, silent truncation or a race with the web UI. That drift otherwise goes unnoticed until review, so a mismatch exits non-zero for CI and agents.

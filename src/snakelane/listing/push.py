@@ -36,10 +36,12 @@ from .fields import (
     category_problems,
     hard_limit_problems,
     mask,
+    missing_contact,
     read_copyright,
     read_listing,
     read_review,
     review_attributes,
+    review_format_problems,
 )
 
 SKIPPED = ": (no file, or empty — skipped)"
@@ -66,6 +68,7 @@ def build_push_plan(platform_dir: Path, locales: list[str], app_config: dict[str
     violations = [f"{locale}/{stem}: {message}" for locale, fields in per_locale.items()
                   for stem, value in fields.items() for _, message in hard_limit_problems(stem, value)]
     violations += [f"review/notes: {message}" for _, message in hard_limit_problems("notes", plan["review"].get("notes"))]
+    violations += review_format_problems(plan["review"])
     if violations:
         for violation in violations:
             print(red(f"✗ {violation}"))
@@ -263,6 +266,12 @@ def cmd_push(args: SimpleNamespace) -> None:
         return
     print(f"\n{total} change(s) to push:")
     print_diff(changes, live)
+    # Before any write, so a missing contact can't leave a push half done.
+    # Why: docs/design/foundations.md#the-review-contact-is-required-on-every-write
+    if changes["review"] and (missing := missing_contact(plan["review"], live["review"])):
+        files = ", ".join(f"review/{stem}.txt" for stem in missing)
+        raise SystemExit(red(f"\n✗ App Store Connect needs the App Review contact before it will take any of the "
+                             f"review card. Add {files} (the phone with + and the country code) — nothing pushed."))
     if client.dry_run:
         print("\n[dry-run] nothing was written to App Store Connect.")
         return

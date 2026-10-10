@@ -147,8 +147,10 @@ that number, and the next `ship beta` picks the following one from TestFlight.
 
 - **App Privacy** (the nutrition label) — answer it to match the privacy policy.
 - **Price and availability** of the app itself (an IAP's are in `iap.yml`).
-- **App Review contact** (name, phone, email) on the version page; `store push` sends only
-  the review notes.
+- **App Review contact**: `review/first_name.txt`, `last_name.txt`, `email_address.txt` and
+  `phone_number.txt` (with `+` and the country code), pushed by `store push` with the notes.
+  App Store Connect refuses the notes until the contact is set, so `store push` stops early
+  without them.
 - **Content rights** and, for a game using Game Center, enabling Game Center on the version.
 - **CloudKit**: if the app syncs, deploy the development schema to Production in the CloudKit
   Console before release, or every production install syncs nothing.
