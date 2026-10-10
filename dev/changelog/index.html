@@ -794,6 +794,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../commands/gamecenter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    gamecenter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../commands/packs/" class="md-nav__link">
         
   
@@ -1116,6 +1144,34 @@
     
   
     Releasing and purchases
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/gamecenter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Game Center
   
 
     
@@ -1510,6 +1566,34 @@ major version is 0, a change that needs new <code>snakelane.yml</code> keys or c
 behaviour bumps the minor version. Each release is tagged <code>vX.Y.Z</code>.</p>
 <h2 id="unreleased">Unreleased<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
 <ul>
+<li>
+<p><strong><code>gamecenter images push</code>: Game Center images from Xcode's <code>.gamekit</code>.</strong> Xcode's Game Center
+  editor syncs achievements, leaderboards and activities to App Store Connect but not their
+  images. The new command reads every achievement and leaderboard image (per locale) and each
+  activity's default image from the bundle, checks size and alpha offline, compares each with
+  the live image by pixels (new, changed, unchanged), confirms (<code>--yes</code> skips it), uploads, waits
+  for Apple's processing and reads every image back. Records Xcode hasn't synced yet are reported
+  and skipped, never created. A record whose newest version is LIVE can't take a new image in
+  place; <code>--new-version</code> makes the next version for it. <code>gamecenter images show</code> is the read-only
+  view. The bundle is the repo's only <code>*.gamekit</code>, or new <code>snakelane.yml</code> key
+  <code>"gamecenter": {"gamekit": &lt;path&gt;}</code>; nothing to change for an app without Game Center.</p>
+</li>
+<li>
+<p><strong><code>store push</code> checks the App Review contact before writing.</strong> App Store Connect refuses any
+  write to the review card (the notes included) until it has a first name, last name, email and
+  phone, and that refusal used to arrive after the listing text was already written. Now a push
+  that changes the review card stops first, naming the missing <code>review/first_name.txt</code>,
+  <code>last_name.txt</code>, <code>email_address.txt</code> or <code>phone_number.txt</code>; a field already set on App Store
+  Connect counts. The phone must start with <code>+</code> and a country code, and the email must look like
+  one; both are checked offline with the other limits.</p>
+</li>
+<li>
+<p><strong><code>lint</code> rejects price references (Guideline 2.3.7).</strong> New <code>price-reference</code> rule, an error:
+  "buy", "purchase", "sale", "one-time", "subscription", a currency amount and similar, in the
+  name, subtitle, keywords or any <code>framing.captions</code> caption. <code>store push</code> stops on it. "free"
+  is deliberately not flagged. A phrase that only looks like a price goes in <code>snakelane.yml</code>'s
+  new <code>"lint": {"allow": [...]}</code>; <code>lint.ignore</code> still turns the rule off entirely.</p>
+</li>
 <li>
 <p><strong><code>store push --dry-run</code> shows the diff.</strong> With an API key set up it reads App Store Connect and
   prints the same coloured word diff the real push asks about, then stops; it used to list every

@@ -794,6 +794,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../commands/gamecenter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    gamecenter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../commands/packs/" class="md-nav__link">
         
   
@@ -1007,6 +1035,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#game-center-gamecenter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Game Center (gamecenter)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#background-assets-packs-packs" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1212,6 +1251,34 @@
     
   
     Releasing and purchases
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/gamecenter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Game Center
   
 
     
@@ -1491,6 +1558,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#game-center-gamecenter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Game Center (gamecenter)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#background-assets-packs-packs" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1603,7 +1681,7 @@ works renamed.</p>
 </tr>
 <tr>
 <td><code>lint</code></td>
-<td><code>ignore: [test-word, …]</code>: <code>lint</code> rules to skip for this app, so a heuristic's false positive never forces a code change</td>
+<td><code>ignore: [test-word, …]</code>: <code>lint</code> rules to skip for this app, so a heuristic's false positive never forces a code change. <code>allow: ["half price books", …]</code>: phrases <code>price-reference</code> passes over, for a name that only looks like a price</td>
 </tr>
 <tr>
 <td><code>gallery</code></td>
@@ -1667,6 +1745,13 @@ reliably see them, so the language key also goes through <code>/tmp/&lt;slug&gt;
 with <code>frame: snakelane</code> the band depth through <code>/tmp/&lt;slug&gt;-screenshot-banner.json</code>. A shoot
 first sets aside every image in the deck and the <code>ss-*</code> shots in <code>raw/</code>, and puts them back if
 it fails.</p>
+<h2 id="game-center-gamecenter">Game Center (<code>gamecenter</code>)<a class="headerlink" href="#game-center-gamecenter" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="nt">gamecenter</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">gamekit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">App/GameCenter/GameCenterResources.gamekit</span><span class="w">   </span><span class="c1"># Xcode's Game Center bundle, repo-relative</span>
+</code></pre></div>
+<p>Optional: without it, <code>gamecenter images</code> uses the repo's only <code>*.gamekit</code> folder (build output,
+<code>DerivedData</code>, <code>Pods</code> and dot-folders are skipped) and stops, naming them, when there are none
+or several. The app itself is found by <code>bundle_id</code> / <code>apple_id</code>, as for <code>store</code>.</p>
 <h2 id="background-assets-packs-packs">Background Assets packs (<code>packs</code>)<a class="headerlink" href="#background-assets-packs-packs" title="Permanent link">&para;</a></h2>
 <p><a href="https://developer.apple.com/documentation/backgroundassets">Background Assets</a> is Apple-hosted
 content an app downloads after install instead of shipping it in the binary. These keys

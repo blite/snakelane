@@ -794,6 +794,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../commands/gamecenter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    gamecenter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../commands/packs/" class="md-nav__link">
         
   
@@ -1276,6 +1304,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../design/gamecenter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Game Center
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../adr/0001-no-pbxproj-library/" class="md-nav__link">
         
   
@@ -1666,7 +1722,7 @@ assert the numeric <code>apple_id</code>.</p>
 <p><strong>Field limits:</strong> name 30, subtitle 30, keywords 100, promotional text 170, description 4000.
 Check locally before the call, so an over-length field is a typo rather than a half-applied
 push.</p>
-<p><strong>The name, subtitle and keywords must not mention price, not even "free".</strong> <a href="https://developer.apple.com/app-store/review/guidelines/#2.3.7">Guideline
+<p><strong>The name, subtitle, keywords and screenshots must not mention price, not even "free".</strong> <a href="https://developer.apple.com/app-store/review/guidelines/#2.3.7">Guideline
 2.3.7</a> (Accurate Metadata) treats any reference to the app's price or business model as
 inappropriate in these fields, and it explicitly names free/discounted claims too: "No ads.
 Play free. Buy once." was rejected for exactly this ("Play free" and "Buy once" both read as
@@ -1676,6 +1732,25 @@ rejection note says it belongs. Pricing and "free"/"buy" language is fine there,
 <code>name.txt</code>, <code>subtitle.txt</code> or <code>keywords.txt</code>. Reject any subtitle draft
 containing "free", "price", "buy", "discount", "sale", "% off" or similar before it goes out
 for review, not after.</p>
+<p>Screenshots are held to the same rule, captions and content both. Spider Solitaire 1.0 was
+rejected (2026-10-08, 2.3.7) for a deck whose last two shots were a Home screen captioned
+"Free to play every day" and the purchase paywall with its price button, captioned "One
+purchase, every device". Apple's note: "references to free or discounted services are
+considered a price reference". The fix was a recaption ("New challenge every day") and
+dropping the paywall shot. So:</p>
+<ul>
+<li>No caption with "buy", "one purchase", "one-time unlock", "no subscription", "sale" or a
+  currency amount. "Free" is the judgement call: Apple's note names it, and "Free to play"
+  was half of this rejection, but <code>lint</code> does not flag it (it is everywhere in honest
+  feature copy, and the family's other listings use it in the description and promo text,
+  where it is allowed). Prefer a caption that says what the screen does.</li>
+<li>No paywall, purchase sheet, price button, "Unlock for $X" or strike-through price in any
+  shot. The IAP's <em>review</em> screenshot is where the priced sheet belongs; it is reviewer-only.</li>
+<li>Coin balances and in-game currency are fine: they are not money.</li>
+<li><code>snakelane lint</code> (and so <code>store push</code>) catches price wording other than "free" in the
+  listing fields and in <code>framing.captions</code>. It cannot read a caption the UI test draws (<code>frame: test</code>) or what a
+  screen shows, so look at every framed shot before <code>store screenshots push</code>.</li>
+</ul>
 <p><strong>Reviewers want privacy and terms links inside <code>description.txt</code>.</strong> Populating ASC's
 <code>privacyPolicyUrl</code> attribute is not the whole obligation. <a href="https://developer.apple.com/app-store/review/guidelines/#3.1.2">Guideline 3.1.2</a> requires functional
 links to both the Terms of Use (EULA) and the privacy policy <em>in the description</em>, and

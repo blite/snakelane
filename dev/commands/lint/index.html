@@ -868,6 +868,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../gamecenter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    gamecenter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../packs/" class="md-nav__link">
         
   
@@ -1190,6 +1218,34 @@
     
   
     Releasing and purchases
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/gamecenter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Game Center
   
 
     
@@ -1563,11 +1619,21 @@ lint: 3 error(s), 2 warning(s)
 <td>warning</td>
 <td>spaces after commas, duplicates, words already in the name or subtitle</td>
 </tr>
+<tr>
+<td><code>price-reference</code></td>
+<td>error</td>
+<td>"buy", "sale", "one-time", "$4.99"… in the name, subtitle, keywords or a <code>framing.captions</code> screenshot caption (<a href="https://developer.apple.com/app-store/review/guidelines/#2.3.7">2.3.7</a>)</td>
+</tr>
 </tbody>
 </table>
 <p>To turn a rule off for one app, put it in that app's config:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">lint</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">ignore</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">test-word</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<p><code>price-reference</code> passes over phrases listed under <code>allow</code>, for a name or keyword that only
+looks like a price (a bookshop app's <code>half price books</code>):</p>
+<div class="highlight"><pre><span></span><code><span class="nt">lint</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">allow</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">half price books</span><span class="p p-Indicator">]</span>
 </code></pre></div>
 <h2 id="translations-what-is-stale-or-unreviewed">translations: what is stale or unreviewed<a class="headerlink" href="#translations-what-is-stale-or-unreviewed" title="Permanent link">&para;</a></h2>
 <p>snakelane doesn't translate; you or your agent do. It records what each translation was made
