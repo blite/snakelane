@@ -75,6 +75,7 @@ nav:
       - gallery: commands/gallery.md
       - lint · translations: commands/lint.md
       - ship · bump · status: commands/release.md
+      - gamecenter: commands/gamecenter.md
       - packs: commands/packs.md
       - auth: commands/auth.md
   - Reference:
@@ -85,6 +86,7 @@ nav:
       - Shooting and uploading: design/screenshots.md
       - Framing and the gallery: design/framing.md
       - Releasing and purchases: design/release.md
+      - Game Center: design/gamecenter.md
       - "ADR 1: no pbxproj library": adr/0001-no-pbxproj-library.md
       - "ADR 2: JPEG-only screenshots": adr/0002-jpeg-only-screenshot-decks.md
       - "ADR 3: subscription links in lint": adr/0003-lint-subscription-legal-links.md

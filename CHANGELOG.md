@@ -6,6 +6,17 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **`gamecenter images push`: Game Center images from Xcode's `.gamekit`.** Xcode's Game Center
+  editor syncs achievements, leaderboards and activities to App Store Connect but not their
+  images. The new command reads every achievement and leaderboard image (per locale) and each
+  activity's default image from the bundle, checks size and alpha offline, compares each with
+  the live image by pixels (new, changed, unchanged), confirms (`--yes` skips it), uploads, waits
+  for Apple's processing and reads every image back. Records Xcode hasn't synced yet are reported
+  and skipped, never created. A record whose newest version is LIVE can't take a new image in
+  place; `--new-version` makes the next version for it. `gamecenter images show` is the read-only
+  view. The bundle is the repo's only `*.gamekit`, or new `snakelane.yml` key
+  `"gamecenter": {"gamekit": <path>}`; nothing to change for an app without Game Center.
+
 - **`store push` checks the App Review contact before writing.** App Store Connect refuses any
   write to the review card (the notes included) until it has a first name, last name, email and
   phone, and that refusal used to arrive after the listing text was already written. Now a push

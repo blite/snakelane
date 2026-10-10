@@ -89,6 +89,12 @@ snakelane ship beta                # test → archive → TestFlight
    content Apple hosts and your app downloads after install, instead of shipping it in the
    binary. Package, verify and upload with `packs`
 
+**Game Center**
+
+- [x] `gamecenter images push`: the achievement, leaderboard and activity images in Xcode's
+   `.gamekit` bundle, which Xcode's own sync leaves out; compared by pixels, confirmed, uploaded
+   and read back
+
 **Shipping**
 
 - [x] `ship test | beta | release`: test, archive, upload, [TestFlight changelog](https://developer.apple.com/help/app-store-connect/test-a-beta-version/invite-external-testers) from git, attach,
@@ -119,8 +125,8 @@ snakelane ship beta                # test → archive → TestFlight
 
 ## Install
 
-Requires macOS with Xcode for `ship`, `shoot`, `bump` and `check`; `store` and `packs` need
-only Python 3.11+ and an App Store Connect API key.
+Requires macOS with Xcode for `ship`, `shoot`, `bump` and `check`; `store`, `gamecenter` and `packs`
+need only Python 3.11+ and an App Store Connect API key.
 
 Fork this repo, clone your fork, and install it editable, so the installed command runs
 your checkout:

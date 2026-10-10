@@ -94,6 +94,17 @@ with `frame: snakelane` the band depth through `/tmp/<slug>-screenshot-banner.js
 first sets aside every image in the deck and the `ss-*` shots in `raw/`, and puts them back if
 it fails.
 
+## Game Center (`gamecenter`)
+
+```yaml
+gamecenter:
+  gamekit: App/GameCenter/GameCenterResources.gamekit   # Xcode's Game Center bundle, repo-relative
+```
+
+Optional: without it, `gamecenter images` uses the repo's only `*.gamekit` folder (build output,
+`DerivedData`, `Pods` and dot-folders are skipped) and stops, naming them, when there are none
+or several. The app itself is found by `bundle_id` / `apple_id`, as for `store`.
+
 ## Background Assets packs (`packs`)
 
 [Background Assets](https://developer.apple.com/documentation/backgroundassets) is Apple-hosted

@@ -41,6 +41,10 @@ src/snakelane/
     media.py             image/video sizes, display types, which files make a deck
     upload.py            store screenshots / previews push
     gallery.py           `gallery`: HTML review page — decks, store mocks, before/after
+  gamecenter/            Game Center, from Xcode's .gamekit bundle
+    command.py           `gamecenter`: the command line only
+    gamekit.py           finding and reading the bundle, the image spec, pixel comparison
+    images.py            gamecenter images show / push
   release/               getting a build out
     ship.py              `ship`: test → archive → TestFlight → submit; release settings; bump-version
     status.py            `status`: versions, review in progress, latest build (read-only)

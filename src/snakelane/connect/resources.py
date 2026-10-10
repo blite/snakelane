@@ -106,21 +106,24 @@ def source_checksum(data: bytes) -> str:
     return hashlib.md5(data).hexdigest()
 
 
-def upload_asset_resource(client: asc.Client, resource_type: str, path: Path, relationships: dict[str, Any]) -> str:
-    """Reserve, upload each byte range to its presigned URL, commit with the MD5; returns the resource
-    id. Apple can still reject it: see `wait_for_asset_processing`."""
+def upload_asset_resource(client: asc.Client, resource_type: str, path: Path, relationships: dict[str, Any],
+                          api: str = "v1", checksum: bool = True) -> str:
+    """Reserve, upload each byte range to its presigned URL, commit (with the MD5 unless `checksum` is
+    False: Game Center images take `uploaded` alone); returns the resource id. `api` is the path's
+    version, "v2" for some Game Center resources. Apple can still reject it: see `wait_for_asset_processing`."""
     data = path.read_bytes()
-    resource = client.post(f"/v1/{resource_type}", asc.resource_body(
+    resource = client.post(f"/{api}/{resource_type}", asc.resource_body(
         resource_type, {"fileName": path.name, "fileSize": len(data)}, relationships=relationships))["data"]
     for op in asc.attributes(resource).get("uploadOperations", []):
         client.upload_part(op, data)
-    client.patch(f"/v1/{resource_type}/{resource['id']}", asc.resource_body(
-        resource_type, {"uploaded": True, "sourceFileChecksum": source_checksum(data)}, id_=resource["id"]))
+    commit = {"uploaded": True, **({"sourceFileChecksum": source_checksum(data)} if checksum else {})}
+    client.patch(f"/{api}/{resource_type}/{resource['id']}", asc.resource_body(resource_type, commit, id_=resource["id"]))
     return resource["id"]
 
 
 def wait_for_asset_processing(
     client: asc.Client, resource_type: str, pending: dict[str, str], timeout: float = 600, interval: float = 10,
+    api: str = "v1",
 ) -> tuple[list[str], list[tuple[str, str, str]], list[str]]:
     """Poll until Apple's ingest reaches a verdict. `pending` is id -> name; returns
     (complete names, failed (name, id, Apple's error), timed-out names).
@@ -133,7 +136,7 @@ def wait_for_asset_processing(
     while remaining and time.monotonic() < deadline:
         for resource_id in list(remaining):
             try:
-                payload = client.get(f"/v1/{resource_type}/{resource_id}")
+                payload = client.get(f"/{api}/{resource_type}/{resource_id}")
             except asc.ASCError as error:
                 # Any failed read means "unknown", i.e. timed out.
                 # Why: docs/design/foundations.md#a-failed-processing-poll-counts-as-timed-out
@@ -157,6 +160,29 @@ def report_processing(failed: list[tuple[str, str, str]], timed_out: list[str], 
     for name in timed_out:
         print(red(f"{indent}✗ {name}: still processing when the wait gave up — check App Store Connect"))
     return not (failed or timed_out)
+
+
+def fetch_image_asset(attributes: dict[str, Any]) -> Any | None:
+    """The full-size PNG behind an uploaded image's `imageAsset` (a Pillow image), or None when Apple
+    has none to serve yet. Apple's CDN, not the API: no token, and only GETs, retried."""
+    import io
+
+    import requests
+    from PIL import Image
+    from requests.adapters import HTTPAdapter
+    from urllib3.util.retry import Retry
+
+    asset = attributes.get("imageAsset") or {}
+    template, width, height = asset.get("templateUrl"), asset.get("width"), asset.get("height")
+    if not (template and width and height):
+        return None
+    url = template.replace("{w}", str(width)).replace("{h}", str(height)).replace("{f}", "png")
+    with requests.Session() as session:
+        session.mount("https://", HTTPAdapter(max_retries=Retry(total=3, backoff_factor=1,
+                                                                status_forcelist=asc.Client.RETRYABLE_STATUS)))
+        response = session.get(url, timeout=120)
+    response.raise_for_status()
+    return Image.open(io.BytesIO(response.content))
 
 
 def get_optional(client: asc.Client, path: str) -> dict[str, Any] | None:

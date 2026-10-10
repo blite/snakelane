@@ -1,6 +1,6 @@
 ---
 name: snakelane
-description: Operate and set up snakelane, a fastlane-free App Store Connect CLI (`snakelane auth|store|ship|shots|bump|packs|check|frame`) that pushes listing text, screenshots, App Previews, in-app purchases and subscriptions from a plain-text `metadata/` tree, ships test → archive → TestFlight → review, and sets CFBundleVersion from an Archive post-action. Use when a user asks to push metadata, update the App Store listing, sync or create IAPs, shoot or upload screenshots, push an App Preview, submit for review, upload to TestFlight, bump the build number, set up App Store automation or do a new app's first upload and submission; or names `snakelane`, `snakelane.yml`, `iap.yml`, or the old per-app `Metadata/scripts/*.py` it replaces. Also use when naming an IAP or asset pack (ids are permanent) and when an ASC push fails with a 409, an invalid field, a rejected screenshot size or a bounced preview. Never use fastlane.
+description: Operate and set up snakelane, a fastlane-free App Store Connect CLI (`snakelane auth|store|gamecenter|ship|shots|bump|packs|check|frame`) that pushes listing text, screenshots, App Previews, in-app purchases and subscriptions from a plain-text `metadata/` tree, ships test → archive → TestFlight → review, and sets CFBundleVersion from an Archive post-action. Use when a user asks to push metadata, update the App Store listing, sync or create IAPs, upload Game Center achievement or leaderboard images, shoot or upload screenshots, push an App Preview, submit for review, upload to TestFlight, bump the build number, set up App Store automation or do a new app's first upload and submission; or names `snakelane`, `snakelane.yml`, `iap.yml`, or the old per-app `Metadata/scripts/*.py` it replaces. Also use when naming an IAP or asset pack (ids are permanent) and when an ASC push fails with a 409, an invalid field, a rejected screenshot size or a bounced preview. Never use fastlane.
 ---
 
 # snakelane: App Store Connect without fastlane
@@ -97,6 +97,9 @@ snakelane check                           # refuse a deck shot from a DEBUG buil
 snakelane frame                           # caption raw shots in Python (Pillow)
 snakelane frame --theme <name>            # try a look; writes .snakelane/, not the deck
 
+snakelane gamecenter images show         # each .gamekit image vs ASC: new/changed/unchanged/skipped
+snakelane gamecenter images push [--dry-run] [--yes] [--new-version]
+
 snakelane ship test | beta | release [--no-submit] | bump-version
 snakelane bump --dry-run                  # the number the next archive would get
 snakelane bump --post-action              # print the scheme's Archive post-action
@@ -110,7 +113,8 @@ Every command has `--help`. Everything app-specific is a key in `snakelane.yml`;
 ## What this skill must not do
 
 - **Do not run anything that writes to App Store Connect without being asked** — `store push`,
-  `screenshots push`, `previews push`, `iap push`, `subs push`, `ship beta|release`. They
+  `screenshots push`, `previews push`, `iap push`, `subs push`, `gamecenter images push`,
+  `ship beta|release`. They
   mutate a live listing, and `iap push --create` makes identifiers that are permanent.
   `--dry-run`, `show` and `shoot --dry-run` are always safe.
 - **Do not create or rename products.** Propose the identifier, explain the permanence, and
@@ -267,6 +271,24 @@ Don't mark `--reviewed` on your own translation without the user's go-ahead.
 
 `references/gotchas.md` has the full list — simulator clone sets, preview specs, the
 Xcode-project traps — read it when a push fails or an upload bounces later.
+
+## Game Center images
+
+Xcode's Game Center editor writes a `*.gamekit` bundle and syncs its records and text to App
+Store Connect, but not the images. `snakelane gamecenter images push` uploads them: every
+achievement and leaderboard image (1024×1024) per locale, and each activity's default image
+(3840×2160), all RGB with no alpha (checked offline first).
+
+- Sync from Xcode **first**. A record or locale App Store Connect doesn't have yet is reported
+  and skipped; snakelane never creates Game Center records.
+- Images are compared by **pixels**: App Store Connect re-encodes uploads, so bytes and
+  checksums never match.
+- A record whose newest version is **LIVE** can't take a new image in place. `--new-version`
+  creates the next version (a review item that ships with the next app version); without it the
+  image is skipped with that explanation. Don't pass it without the user's go-ahead.
+- An app in a Game Center group keeps its records on the group; ids there start `grp.`.
+- Replacing an image deletes the old one first (ASC holds one per localization). If the upload
+  then fails, the push says so in red; re-run it.
 
 ## Build numbers
 

@@ -19,6 +19,7 @@ COMMANDS: dict[str, tuple[str, str]] = {
     "packs": ("release.assetpacks", "package and upload Background Assets packs"),
     "check": ("screenshots.check", "OCR a deck for developer overlays (debug HUDs) before upload"),
     "frame": ("screenshots.frame", "caption the deck again from its raw shots, without shooting"),
+    "gamecenter": ("gamecenter.command", "upload the .gamekit's achievement, leaderboard and activity images"),
     "lint": ("listing.lint", "lint the listing for what App Review rejects, offline"),
     "translations": ("listing.translations", "track which translated fields are stale or unreviewed"),
     "status": ("release.status", "what App Store Connect holds right now: versions, review, builds"),
