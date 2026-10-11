@@ -166,6 +166,17 @@ def rewrite_spans(source: str, spans: list[tuple[int, int]], pattern: re.Pattern
     return source, count
 
 
+def testflight_apps(app: App) -> list[App]:
+    """The apps whose TestFlight builds bound this app's next number.
+
+    In "app" scope only this one. In "project" scope every app built from
+    the same Xcode project, since they share its numbers — never an app in
+    another project of the same repo, whose numbering is its own."""
+    if scope(app) == "app":
+        return [app]
+    return [other for other in project.list_apps(app.root) if other.pbxproj.resolve() == app.pbxproj.resolve()]
+
+
 def testflight_high_water(app: App) -> int:
     """The largest TestFlight build number, or 0 if unknown.
 
@@ -180,7 +191,7 @@ def testflight_high_water(app: App) -> int:
     if not asc.Credentials.available():
         print("  (no API key set up — `snakelane auth setup` — skipping TestFlight check)")
         return 0
-    high, apps = 0, [app] if scope(app) == "app" else project.list_apps(app.root)
+    high, apps = 0, testflight_apps(app)
     try:
         # No retries, so a dead network degrades in seconds; `get`, not `get_all`, which would page every build.
         client = asc.Client(timeout=10, retries=0)

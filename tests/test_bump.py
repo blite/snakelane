@@ -58,6 +58,22 @@ def test_project_and_app_scopes(repo: Path, monkeypatch: pytest.MonkeyPatch) -> 
     assert bump.write_pbxproj(app, 41) == 3
 
 
+def test_project_scope_asks_testflight_only_about_apps_in_the_same_project(repo: Path) -> None:
+    """Two apps in one repo, each in its own Xcode project: neither's TestFlight builds number the other."""
+    (repo / project.CONFIG_NAME).unlink()
+    (repo / "snakelane.example.yml").write_text("bundle_id: com.example.app\nproject: Example.xcodeproj\n")
+    (repo / "snakelane.widgetless.yml").write_text("bundle_id: com.example.lite\nproject: Example.xcodeproj\n")
+    (repo / "Other.xcodeproj").mkdir()
+    (repo / "Other.xcodeproj" / "project.pbxproj").write_text(PBXPROJ)
+    (repo / "snakelane.other.yml").write_text("bundle_id: com.example.other\nproject: Other.xcodeproj\n")
+    example = project.load_app(repo / "snakelane.example.yml")
+    other = project.load_app(repo / "snakelane.other.yml")
+    assert [a.config["bundle_id"] for a in bump.testflight_apps(example)] == ["com.example.app", "com.example.lite"]
+    assert [a.config["bundle_id"] for a in bump.testflight_apps(other)] == ["com.example.other"]
+    example.config["build_number_scope"] = "app"
+    assert [a.config["bundle_id"] for a in bump.testflight_apps(example)] == ["com.example.app"]
+
+
 @pytest.mark.parametrize("layout", ["ios", "macos"])
 def test_stamping_and_verifying_an_archive(repo: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
                                            layout: str) -> None:

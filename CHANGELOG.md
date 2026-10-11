@@ -6,6 +6,11 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **`bump` in a repo with several Xcode projects asks TestFlight only about its own.** In
+  `"project"` scope the next build number took the highest TestFlight build of every app in the
+  repo, so a second app in its own project (FreeCell's repo taking Pyramid) started from the first
+  app's numbers. It now considers only the apps whose `project` is this app's.
+
 - **`gamecenter images push`: Game Center images from Xcode's `.gamekit`.** Xcode's Game Center
   editor syncs achievements, leaderboards and activities to App Store Connect but not their
   images. The new command reads every achievement and leaderboard image (per locale) and each
