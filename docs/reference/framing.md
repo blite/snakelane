@@ -234,6 +234,7 @@ screenshots:
     layout: stacked                     # full-bleed | stacked | device
     fit: scale                          # scale | crop (default crop for full-bleed)
     device: {width: 0.84, radius: 0.07, gap: 0.02, bleed: false}   # layout: device
+    # any device value per deck: radius: {iphone: 0.07, mac: 0.012}; a deck left out gets the default
 
     caption:
       shape: band                       # band | arch | callout | headline

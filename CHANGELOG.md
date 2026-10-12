@@ -6,6 +6,12 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **`framing.device` values can differ per deck.** Any key (`width`, `radius`, `gap`, `bleed`)
+  takes a mapping by deck, as `caption.position` already did: `radius: {iphone: 0.07, mac:
+  0.012}`. The radius is a share of the capture's width, so the 7% that suits a portrait phone
+  rounded a landscape Mac window's corners off its traffic lights and toolbar buttons. A deck
+  left out of the mapping gets the default.
+
 - **`bump` in a repo with several Xcode projects asks TestFlight only about its own.** In
   `"project"` scope the next build number took the highest TestFlight build of every app in the
   repo, so a second app in its own project (FreeCell's repo taking Pyramid) started from the first

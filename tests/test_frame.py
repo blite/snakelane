@@ -175,6 +175,34 @@ def test_band_position_can_differ_per_deck(app: project.App) -> None:
         frame.frame_deck(app, "en-US")
 
 
+def test_device_settings_can_differ_per_deck(app: project.App) -> None:
+    for deck, n, size in (("iphone", 1, (1284, 2778)), ("iphone", 2, (1284, 2778)), ("iphone", 3, (1284, 2778)),
+                          ("mac", 1, (2880, 1800))):
+        raw = project.DeckTree.for_deck(app, deck).raw("en-US")
+        raw.mkdir(parents=True, exist_ok=True)
+        Image.new("RGB", size, "#FF0000").save(raw / f"ss-{n:02}.png")
+    styled(app, layout="device", theme={"background": "#000000"},
+           device={"radius": {"iphone": 0.07, "mac": 0.01}})
+    frame.frame_deck(app, "en-US")
+
+    def corner_is_rounded(deck: str) -> bool:
+        """10px in from the red card's top-left corner along the diagonal: outside a radius over
+        ~34px, inside a smaller one."""
+        with Image.open(project.DeckTree.for_deck(app, deck).framed("en-US") / "ss-01.jpg") as out:
+            rgb = out.convert("RGB")
+            r, g, _ = rgb.point(lambda v: 255 if v > 128 else 0).split()
+            red_only = Image.composite(r, Image.new("L", out.size, 0), Image.eval(g, lambda v: 255 - v))
+            x0, y0, _, _ = red_only.getbbox()
+            pr, pg, _ = rgb.getpixel((x0 + 10, y0 + 10))
+            return not (pr > 150 and pg < 100)
+
+    assert corner_is_rounded("iphone"), "the phone card keeps its 7% radius"
+    assert not corner_is_rounded("mac"), "the Mac card is nearly square"
+    styled(app, layout="device", device={"radius": {"watch": 0.01}})
+    with pytest.raises(SystemExit, match="unknown deck"):
+        frame.frame_deck(app, "en-US")
+
+
 def test_the_banner_handoff_is_the_depth_the_band_is_drawn_at(app: project.App) -> None:
     styled(app, layout="full-bleed", caption={"shape": "arch", "depth": 0.158},
            theme={"lip": {"color": "#BF8F2E", "height": 33}},

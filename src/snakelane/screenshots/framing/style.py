@@ -108,6 +108,23 @@ def theme_of(value: Any) -> Theme:
     return theme
 
 
+def per_deck(where: str, value: Any, deck: str | None) -> Any:
+    """A setting given once, or per deck as {iphone: …, mac: …}; None when this deck has no entry."""
+    if not isinstance(value, dict):
+        return value
+    if unknown := set(value) - set(DECKS) - {"_comment"}:
+        raise SystemExit(f"{where}: unknown deck(s) {', '.join(sorted(unknown))}; decks are {', '.join(DECKS)}")
+    return value.get(deck or "")
+
+
+def device_for(cfg: dict[str, Any], deck: str | None) -> dict[str, Any]:
+    """`framing.device` for one deck: each key a value or a per-deck mapping (a portrait phone's
+    corner radius is far too round on a landscape Mac window); a deck without an entry gets the default."""
+    resolved = {key: per_deck(f"framing.device.{key}", value, deck)
+                for key, value in (cfg.get("device") or {}).items() if key != "_comment"}
+    return {key: value for key, value in resolved.items() if value is not None}
+
+
 def style_for(cfg: dict[str, Any], slot: dict[str, Any], deck: str | None) -> Style:
     """One slot's style: the framing's settings, then the slot's."""
     base_caption, slot_caption = cfg.get("caption") or {}, slot.get("caption") or {}
@@ -125,11 +142,7 @@ def style_for(cfg: dict[str, Any], slot: dict[str, Any], deck: str | None) -> St
     caption.setdefault("shape", "headline" if layout == "device" else "band")
     check_keys("framing.caption", caption, {f.name for f in fields(Caption)})
     caption.pop("_comment", None)
-    if isinstance(position := caption.get("position", "top"), dict):
-        if unknown := set(position) - set(DECKS):
-            raise SystemExit(f"framing.caption.position: unknown deck(s) {', '.join(sorted(unknown))}; "
-                             f"decks are {', '.join(DECKS)}")
-        caption["position"] = position.get(deck or "", "top")
+    caption["position"] = per_deck("framing.caption.position", caption.get("position", "top"), deck) or "top"
     c = Caption(**caption)
     if c.shape not in SHAPES:
         raise SystemExit(f"framing.caption.shape must be one of {', '.join(SHAPES)}, not {c.shape!r}")
@@ -137,5 +150,5 @@ def style_for(cfg: dict[str, Any], slot: dict[str, Any], deck: str | None) -> St
         raise SystemExit(f'framing.caption.position must be "top" or "bottom", not {c.position!r}')
     check_keys("framing.caption.callout", c.callout, CALLOUT_KEYS)
     return Style(layout=layout, fit=fit, caption=c, theme=theme_of(cfg.get("theme")),
-                 device=dict(cfg.get("device") or {}), rotate=turn,
+                 device=device_for(cfg, deck), rotate=turn,
                  bias=None if slot.get("bias") is None else float(slot["bias"]))
