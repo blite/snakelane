@@ -18,7 +18,10 @@ spelling in configs and docs, at the cost of a one-time edit per app.
 A caption is a slot the deck promises. If no platform produced it, a stage never ran or a file
 went missing, and the deck would ship a shot short while `frame` reported success. TowerDefense's own
 captioner exited 1 on exactly this, and `frame` keeps that behaviour. The check runs across
-platforms, because an iPad deck may leave out a phone-only shot.
+the decks that share a set of captions, because an iPad deck may leave out a phone-only shot.
+It stops at that set: before decks could have their own captions, Cloudless Cam numbered its Mac
+shots 05-07 to give them Mac wording, and then neither platform's shoot could finish in a fresh
+checkout, because each set's shots counted as missing until the other platform had been shot.
 
 ### Captures are made upright first
 

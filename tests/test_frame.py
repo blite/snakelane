@@ -34,6 +34,57 @@ def test_a_caption_no_deck_produced_fails_the_run(app: project.App) -> None:
         frame.frame_deck(app, "en-US")
 
 
+def mac_capture(app: project.App, n: int, locale: str = "en-US") -> None:
+    raw = project.DeckTree.for_deck(app, "mac").raw(locale)
+    raw.mkdir(parents=True, exist_ok=True)
+    Image.new("RGB", (2880, 1800), "white").save(raw / f"ss-{n:02}.png")
+
+
+def test_a_deck_can_have_its_own_captions(app: project.App, capsys: pytest.CaptureFixture[str]) -> None:
+    styled(app, captions={"1": "Tap one", "2": "Tap two", "3": "Tap three",
+                          "mac": {"1": "Click one", "2": "Click two"}})
+    for n in (1, 2, 3):
+        capture(app, "iphone", n)
+    for n in (1, 2):
+        mac_capture(app, n)
+    assert frame.frame_deck(app, "en-US") == 5
+    out = capsys.readouterr().out
+    assert "“Click one”" in out and "“Tap one”" in out
+    assert frame.captions(app, frame.framing(app), "en-US", "ipad")[1] == "Tap one", "no ipad key: the shared ones"
+    assert frame.banner_handoff(app, "mac")["slots"].keys() == {"1", "2"}
+
+
+def test_deck_captions_take_the_per_locale_form_too(app: project.App) -> None:
+    styled(app, captions={"en-US": {"1": "Tap"}, "de-DE": {"1": "Tippen"},
+                          "mac": {"en-US": {"1": "Click"}, "de-DE": {"1": "Klicken"}}})
+    cfg = frame.framing(app)
+    assert frame.captions(app, cfg, "de-DE", "mac") == {1: "Klicken"}
+    assert frame.captions(app, cfg, "de-DE", "iphone") == {1: "Tippen"}
+
+
+def test_each_caption_set_is_checked_only_against_its_own_decks(app: project.App) -> None:
+    styled(app, captions={"1": "Tap", "2": "Tap", "3": "Tap", "mac": {"1": "Click", "2": "Click"}})
+    for n in (1, 2, 3):
+        capture(app, "iphone", n)
+    # A fresh checkout: no Mac captures anywhere, and an iOS-only frame mustn't need them.
+    assert frame.frame_deck(app, "en-US", decks=["iphone", "ipad"]) == 3
+    mac_capture(app, 1)
+    with pytest.raises(SystemExit, match=r"shot\(s\) 2 in snakelane.yml \"framing.captions.mac\" have no capture in mac"):
+        frame.frame_deck(app, "en-US", decks=["mac"])
+    # And the Mac's raws never satisfy the shared captions.
+    project.DeckTree.for_deck(app, "iphone").raw("en-US").joinpath("ss-03.png").unlink()
+    mac_capture(app, 3)
+    with pytest.raises(SystemExit, match=r"shot\(s\) 3 .* have no capture in any deck"):
+        frame.frame_deck(app, "en-US", decks=["iphone"])
+
+
+def test_only_deck_captions_need_one_for_every_deck_framed(app: project.App) -> None:
+    styled(app, captions={"mac": {"1": "Click"}})
+    capture(app, "iphone", 1)
+    with pytest.raises(SystemExit, match="no captions for the decks without their own"):
+        frame.frame_deck(app, "en-US")
+
+
 def test_a_shot_one_platform_leaves_out_is_fine(app: project.App) -> None:
     for n in (1, 2, 3):
         capture(app, "iphone", n)

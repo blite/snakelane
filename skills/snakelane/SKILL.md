@@ -233,7 +233,9 @@ Don't mark `--reviewed` on your own translation without the user's go-ahead.
   `--bundle <dir>` (outside `metadata/`) makes a copy that works off this Mac, e.g. as a CI
   artifact on a pull request that changes screenshots.
 - `framing.captions` is one `{"1": …}` map for every locale, or keyed by locale
-  (`{en-US: {"1": …}, de-DE: {"1": …}}`); a locale without an entry gets the primary's. When
+  (`{en-US: {"1": …}, de-DE: {"1": …}}`); a locale without an entry gets the primary's. A
+  deck key (`iphone`, `ipad`, `mac`) gives that deck its own captions in either form, so a Mac
+  deck says "click" and "window" with its shots still numbered from 01. When
   translating captions, keep every mark and use the words the localized app itself uses for its
   features (the app's own strings), not a fresh translation of the English.
 - Art only one app uses (badge cards, stickers) is that app's code, not a snakelane option:

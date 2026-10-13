@@ -7,7 +7,8 @@ metadata/<platform>/screenshots/<locale>/<device>/ss-NN.jpg. Settings: snakelane
 `screenshots.framing` (keys: docs/reference/framing.md; reasons: docs/design/framing.md).
 A raw file's slot is its `ss-NN` name; a capture without a caption is an error. `framing.captions`
 is one {slot: caption} map for every locale, or {locale: {slot: caption}}; a locale without an
-entry gets the primary locale's.
+entry gets the primary locale's. A deck key (iphone, ipad, mac) holds that deck's own captions in
+either form; a deck without one uses the rest.
 """
 
 from __future__ import annotations
@@ -53,29 +54,66 @@ def slot_map(where: str, source: dict[Any, Any]) -> dict[int, str]:
     return {int(k): "\n".join(map(str, v)) if isinstance(v, list) else str(v) for k, v in source.items()}
 
 
-def caption_sets(cfg: dict[str, Any]) -> dict[str | None, dict[int, str]]:
-    """Every caption map in framing.captions: {None: map} for the one-map form, else by locale.
-    Slot keys are numbers, locale keys are not; that is how the two forms are told apart."""
+def captions_where(group: str | None) -> str:
+    """Where a caption group lives in snakelane.yml, for messages."""
+    return CAPTIONS if group is None else f'snakelane.yml "framing.captions.{group}"'
+
+
+def caption_group(cfg: dict[str, Any], deck: str | None) -> str | None:
+    """Which captions `deck` uses: its own deck key in framing.captions, else the shared ones (None).
+    A Mac window is clicked and an iPhone tapped, so the same shot can need different words."""
+    source = cfg.get("captions")
+    return deck if isinstance(source, dict) and deck in source else None
+
+
+def caption_source(cfg: dict[str, Any], group: str | None) -> tuple[str, dict[Any, Any]]:
+    """The raw captions mapping for one group (a deck, or None for the shared ones), and where it is."""
     if not isinstance(source := cfg.get("captions"), dict):
         raise SystemExit('frame: set "framing.captions" in snakelane.yml: {"1": "Caption", …}')
+    if group is not None:
+        if not isinstance(source[group], dict):
+            raise SystemExit(f'{captions_where(group)} must be captions for the {group} deck: '
+                             '{"1": "Caption", …} or {"en-US": {"1": "Caption", …}, …}')
+        return captions_where(group), source[group]
+    return CAPTIONS, {k: v for k, v in source.items() if k not in DECKS}
+
+
+def caption_sets(cfg: dict[str, Any], group: str | None = None) -> dict[str | None, dict[int, str]]:
+    """Every caption map in one group: {None: map} for the one-map form, else by locale. Slot keys
+    are numbers, locale keys are not; that is how the two forms are told apart."""
+    where, source = caption_source(cfg, group)
     source = {k: v for k, v in source.items() if k != "_comment"}
+    if not source:
+        raise SystemExit(f"{CAPTIONS} has no captions for the decks without their own "
+                         f"({', '.join(d for d in DECKS if d not in (cfg.get('captions') or {}))}); "
+                         'add shared ones, {"1": "Caption", …}, or a key for each deck')
     slot_keys = [k for k in source if is_slot_key(k)]
     if len(slot_keys) == len(source):
-        return {None: slot_map(CAPTIONS, source)}
+        return {None: slot_map(where, source)}
     if slot_keys:
-        raise SystemExit(f"{CAPTIONS} mixes shot numbers ({', '.join(map(str, slot_keys))}) with locales; use "
+        raise SystemExit(f"{where} mixes shot numbers ({', '.join(map(str, slot_keys))}) with locales; use "
                          'one form: {"1": "Caption", …} for every locale, or {"en-US": {"1": "Caption", …}, …}')
     sets: dict[str | None, dict[int, str]] = {}
     for locale, entry in source.items():
         if not isinstance(entry, dict):
-            raise SystemExit(f'{CAPTIONS}.{locale} must map shot numbers to captions: {{"1": "Caption", …}}')
-        sets[str(locale)] = slot_map(f"{CAPTIONS}.{locale}", entry)
+            raise SystemExit(f'{where}.{locale} must map shot numbers to captions: {{"1": "Caption", …}}')
+        sets[str(locale)] = slot_map(f"{where}.{locale}", entry)
     return sets
 
 
-def captions_source(app: App, cfg: dict[str, Any], locale: str | None) -> str | None:
-    """Whose captions `locale` gets: its own, else the primary locale's; None for the one-map form."""
-    sets = caption_sets(cfg)
+def all_caption_sets(cfg: dict[str, Any]) -> dict[str | None, dict[str | None, dict[int, str]]]:
+    """caption_sets for every group in use: the shared captions (if any) and each deck's own."""
+    source = cfg.get("captions") if isinstance(cfg.get("captions"), dict) else {}
+    groups: list[str | None] = [d for d in DECKS if d in source]
+    if any(k not in DECKS and k != "_comment" for k in source) or not groups:
+        groups.insert(0, None)
+    return {g: caption_sets(cfg, g) for g in groups}
+
+
+def captions_source(app: App, cfg: dict[str, Any], locale: str | None, deck: str | None = None) -> str | None:
+    """Whose captions `locale` gets in `deck`: its own, else the primary locale's; None for the
+    one-map form."""
+    sets = caption_sets(cfg, caption_group(cfg, deck))
     if None in sets:
         return None
     if locale is not None and locale in sets:
@@ -86,16 +124,18 @@ def captions_source(app: App, cfg: dict[str, Any], locale: str | None) -> str | 
                      f"locale {primary}; add a {locale or primary} entry")
 
 
-def captions(app: App, cfg: dict[str, Any], locale: str | None = None) -> dict[int, str]:
-    """Slot -> caption for `locale` from snakelane.yml's framing.captions (a list is the caption's
-    lines): the one map, or the locale's own, falling back to the primary locale's."""
-    return caption_sets(cfg)[captions_source(app, cfg, locale)]
+def captions(app: App, cfg: dict[str, Any], locale: str | None = None, deck: str | None = None) -> dict[int, str]:
+    """Slot -> caption for `locale` in `deck` from snakelane.yml's framing.captions (a list is the
+    caption's lines): the deck's own or the shared ones; the one map, or the locale's own, falling
+    back to the primary locale's."""
+    return caption_sets(cfg, caption_group(cfg, deck))[captions_source(app, cfg, locale, deck)]
 
 
 def fallback_note(app: App, cfg: dict[str, Any], locale: str) -> str | None:
-    """One line when `locale` borrows another locale's captions."""
-    source = captions_source(app, cfg, locale)
-    return None if source in (None, locale) else f"captions: {locale} has none in {CAPTIONS}; using {source}'s"
+    """One line when `locale` borrows another locale's captions, in any caption group."""
+    borrowed = sorted({source for group in all_caption_sets(cfg)
+                       if (source := captions_source(app, cfg, locale, group)) not in (None, locale)})
+    return f"captions: {locale} has none in {CAPTIONS}; using {', '.join(borrowed)}'s" if borrowed else None
 
 
 def slot_of(path: Path) -> int | None:
@@ -108,7 +148,7 @@ def banner_handoff(app: App, deck: str, locale: str | None = None) -> dict[str, 
     cfg = framing(app)
     width, height = tuple((cfg.get("targets") or {}).get(deck) or DECK_CANVAS[deck])
     slots, handed = slots_of(cfg), {}
-    for n, text in sorted(captions(app, cfg, locale).items()):
+    for n, text in sorted(captions(app, cfg, locale, deck).items()):
         style = style_for(cfg, slots.get(n, {}), deck)
         if not style.caption_over_capture:
             handed[str(n)] = {"position": "none", "depth": 0}
@@ -129,11 +169,10 @@ def frame_deck(app: App, locale: str = "en-US", decks: list[str] | None = None, 
     if theme is not None:
         overrides = cfg.get("theme") if isinstance(cfg.get("theme"), dict) else {}
         check_framing(cfg := {**cfg, "theme": {**overrides, "base": theme}})
-    deck = captions(app, cfg, locale)
     if note := fallback_note(app, cfg, locale):
         print(f"  {note}")
     # Every locale's marks are checked, not just this one's: a broken translation fails the first run.
-    texts = [t for s in caption_sets(cfg).values() for t in s.values()]
+    texts = [t for sets in all_caption_sets(cfg).values() for s in sets.values() for t in s.values()]
     the_theme = theme_of(cfg.get("theme"))
     for text in texts:
         parse_caption(the_theme, text)
@@ -141,7 +180,9 @@ def frame_deck(app: App, locale: str = "en-US", decks: list[str] | None = None, 
     if the_theme.accent and any(map(OLD_ACCENT.search, texts)) and not any("==" in t for t in texts):
         print(f"  note: captions in {CAPTIONS} use *word*, which is italic; the accent colour is ==word==")
     targets = {k: tuple(v) for k, v in (cfg.get("targets") or {}).items()}
-    slots, produced, total = slots_of(cfg), set(), 0
+    slots, total = slots_of(cfg), 0
+    produced: dict[str | None, set[int]] = {}  # by caption group: the shared captions, or a deck's own
+    framed_groups: set[str | None] = set()
     hook = decorate.load(app, cfg)
     for platform in decks or DECKS:
         tree = DeckTree.for_deck(app, platform)
@@ -154,6 +195,9 @@ def frame_deck(app: App, locale: str = "en-US", decks: list[str] | None = None, 
             if decks:
                 print(f"{platform:7s} no captures in {raw}")
             continue
+        deck = captions(app, cfg, locale, platform)
+        group = caption_group(cfg, platform)
+        framed_groups.add(group)
         target = targets.get(platform)
         print(f"{platform:7s} -> " + (f"{target[0]}x{target[1]}" if target else "native size"))
         for src in shots:
@@ -170,24 +214,29 @@ def frame_deck(app: App, locale: str = "en-US", decks: list[str] | None = None, 
             save_jpeg(image, dst)  # the extraction's writer, so the two decks match
             print(f"          {dst.name:<34s} {note:<48s} “{deck[n]}”")
             total += 1
-            produced.add(n)
+            produced.setdefault(group, set()).add(n)
         print(f"          written to {framed}")
     if not total:
         raise SystemExit(f"nothing framed — put captures in raw/{locale}/ as ss-01.png .. or run `snakelane shoot`")
-    # Across platforms: an iPad deck may omit a phone-only shot. A run framing only some decks
-    # (`shoot --platform macos`) counts the others' raws as they stand, or a phone-only shot reads
-    # as missing from a Mac shoot that was never going to take it.
+    # Per caption group, across the decks that share it: an iPad deck may omit a phone-only shot. A
+    # run framing only some decks (`shoot --platform ios`) counts the others in the same group by
+    # their raws as they stand, and doesn't check a group it framed nothing in — the Mac's own
+    # captions are the Mac shoot's to check.
     # Why: docs/design/framing.md#a-missing-captioned-shot-fails-the-run
     for other in DECKS:
         if decks is not None and other in decks:
             continue
+        if (group := caption_group(cfg, other)) not in framed_groups:
+            continue
         raw = DeckTree.for_deck(app, other).raw(locale)
         if raw.is_dir():
-            produced |= {n for p in deck_files([raw], IMAGE_SUFFIXES, "raw", quiet=True)
-                         if (n := slot_of(p)) is not None}
-    if missing := sorted(set(deck) - produced):
-        raise SystemExit(f"captioned shot(s) {', '.join(map(str, missing))} in {CAPTIONS} have no capture "
-                         f"in any deck for {locale}; shoot them, or drop their captions")
+            produced.setdefault(group, set()).update(
+                n for p in deck_files([raw], IMAGE_SUFFIXES, "raw", quiet=True) if (n := slot_of(p)) is not None)
+    for group in sorted(framed_groups, key=lambda g: g or ""):
+        captioned = caption_sets(cfg, group)[captions_source(app, cfg, locale, group)]
+        if missing := sorted(set(captioned) - produced.get(group, set())):
+            raise SystemExit(f"captioned shot(s) {', '.join(map(str, missing))} in {captions_where(group)} have "
+                             f"no capture in {group or 'any deck'} for {locale}; shoot them, or drop their captions")
     print(f"\n{total} framed.")
     return total
 

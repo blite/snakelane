@@ -70,6 +70,25 @@ entry must caption every shot it has, as the one map must. The two forms don't m
 numbers and locales in one map is an error. Marks are checked in every locale's captions on
 every run, so a broken translation fails before it is drawn.
 
+### Captions per deck
+
+A deck key (`iphone`, `ipad`, `mac`) gives that deck its own captions, in either form above;
+every deck without one uses the rest. A Mac app is clicked and fills a window where the phone
+app is tapped and fills the screen, so the same shot often needs different words:
+
+```yaml
+captions:
+  en-US: {"1": "All your cameras", "2": "==Live== in one tap"}
+  de-DE: {"1": "Alle Kameras", "2": "==Live== mit einem Tippen"}
+  mac:
+    en-US: {"1": "All your cameras", "2": "==Live== in one click"}
+    de-DE: {"1": "Alle Kameras", "2": "==Live== mit einem Klick"}
+```
+
+Shot numbers then mean the same thing in every deck (the Mac's first shot is `ss-01`), and each
+set is checked only against the decks that use it: a captioned shot must exist in one of them,
+so an iOS-only shoot never needs Mac captures to exist, and the reverse.
+
 ## Decorating shots in the app's own code
 
 Art that belongs to one app and no other, such as badge cards, a sticker, or an arrow pointing

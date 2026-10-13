@@ -6,6 +6,14 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **Screenshot captions can differ per deck.** A deck key in `framing.captions` (`iphone`,
+  `ipad`, `mac`) holds that deck's own captions, one map or per locale; every other deck uses the
+  rest. A Mac deck can say "click" and "window" while keeping its shots numbered from `ss-01`.
+  The missing-shot check now runs per caption set, against the decks that use it, so an iOS-only
+  shoot no longer needs Mac captures to exist (and the reverse). Cloudless Cam had numbered its
+  Mac shots 05-07 to get Mac wording, and then neither platform could finish a shoot in a fresh
+  checkout. `lint`'s price check covers each deck's captions.
+
 - **`framing.device` values can differ per deck.** Any key (`width`, `radius`, `gap`, `bleed`)
   takes a mapping by deck, as `caption.position` already did: `radius: {iphone: 0.07, mac:
   0.012}`. The radius is a share of the capture's width, so the 7% that suits a portrait phone

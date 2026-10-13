@@ -178,3 +178,10 @@ def test_price_references_in_screenshot_captions(tmp_path: Path) -> None:
     app = make_app(tmp_path, locales=["en-US", "de-DE"], screenshots={"frame": "snakelane", "framing": {"captions": captions}})
     found = {(f.where, f.message.split('"')[1]) for f in lint.run(app, "ios") if f.rule == "price-reference"}
     assert found == {("en-US/caption 3", "purchase"), ("en-US/caption 3", "$4")}
+
+
+def test_price_references_in_a_decks_own_captions(tmp_path: Path) -> None:
+    captions = {"1": "No ads", "mac": {"1": "Buy once, use it on your Mac"}}
+    app = make_app(tmp_path, screenshots={"frame": "snakelane", "framing": {"captions": captions}})
+    found = {(f.where, f.message.split('"')[1]) for f in lint.run(app, "ios") if f.rule == "price-reference"}
+    assert found == {("mac/screenshots/caption 1", "Buy")}

@@ -155,13 +155,16 @@ def price_findings(text: str, where: str, allow: tuple[str, ...] = ()) -> list[F
 
 def caption_findings(app: project.App, allow: tuple[str, ...]) -> list[Finding]:
     """price-reference over snakelane.yml's framing.captions; a deck the UI test captions is OCR's to check."""
-    from ..screenshots.frame import caption_sets
+    from ..screenshots.frame import all_caption_sets
 
     framing = (app.config.get("screenshots") or {}).get("framing") or {}
     if not framing.get("captions"):
         return []
-    return [f for locale, slots in caption_sets(framing).items() for slot, caption in sorted(slots.items())
-            for f in price_findings(caption.replace("==", ""), f"{locale or 'screenshots'}/caption {slot}", allow)]
+    return [f for group, sets in all_caption_sets(framing).items() for locale, slots in sets.items()
+            for slot, caption in sorted(slots.items())
+            for f in price_findings(caption.replace("==", ""),
+                                    "/".join(filter(None, [group, locale or "screenshots"])) + f"/caption {slot}",
+                                    allow)]
 
 
 def allowed(app: project.App) -> tuple[str, ...]:
