@@ -173,6 +173,9 @@ def test_band_position_can_differ_per_deck(app: project.App) -> None:
     styled(app, caption={"position": "middle"})
     with pytest.raises(SystemExit, match='"top" or "bottom"'):
         frame.frame_deck(app, "en-US")
+    styled(app, caption={"position": {"iphone": ""}})  # a blank is a typo, not "use the default"
+    with pytest.raises(SystemExit, match='"top" or "bottom"'):
+        frame.frame_deck(app, "en-US")
 
 
 def test_device_settings_can_differ_per_deck(app: project.App) -> None:

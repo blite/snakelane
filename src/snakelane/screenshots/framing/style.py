@@ -142,7 +142,8 @@ def style_for(cfg: dict[str, Any], slot: dict[str, Any], deck: str | None) -> St
     caption.setdefault("shape", "headline" if layout == "device" else "band")
     check_keys("framing.caption", caption, {f.name for f in fields(Caption)})
     caption.pop("_comment", None)
-    caption["position"] = per_deck("framing.caption.position", caption.get("position", "top"), deck) or "top"
+    position = per_deck("framing.caption.position", caption.get("position", "top"), deck)
+    caption["position"] = "top" if position is None else position
     c = Caption(**caption)
     if c.shape not in SHAPES:
         raise SystemExit(f"framing.caption.shape must be one of {', '.join(SHAPES)}, not {c.shape!r}")
