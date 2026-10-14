@@ -6,6 +6,12 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **`lint` flags "free" as a price reference** in the name, subtitle, keywords and screenshot
+  captions. It was left out as too common in honest copy, until App Review rejected FreeCell
+  for the caption "A free deal, every day" (2026-10-14), after Spider Solitaire's "Free to
+  play every day". A word with "free" inside it (FreeCell) doesn't match; a phrase that only
+  looks like a price, such as a "free cell" keyword, goes in `lint.allow`.
+
 - **Screenshot captions can differ per deck.** A deck key in `framing.captions` (`iphone`,
   `ipad`, `mac`) holds that deck's own captions, one map or per locale; every other deck uses the
   rest. A Mac deck can say "click" and "window" while keeping its shots numbered from `ss-01`.

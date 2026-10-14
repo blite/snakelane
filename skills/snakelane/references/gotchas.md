@@ -86,15 +86,14 @@ purchase, every device". Apple's note: "references to free or discounted service
 considered a price reference". The fix was a recaption ("New challenge every day") and
 dropping the paywall shot. So:
 
-- No caption with "buy", "one purchase", "one-time unlock", "no subscription", "sale" or a
-  currency amount. "Free" is the judgement call: Apple's note names it, and "Free to play"
-  was half of this rejection, but `lint` does not flag it (it is everywhere in honest
-  feature copy, and the family's other listings use it in the description and promo text,
-  where it is allowed). Prefer a caption that says what the screen does.
+- No caption with "free", "buy", "one purchase", "one-time unlock", "no subscription",
+  "sale" or a currency amount. FreeCell 1.0 was rejected (2026-10-14) for "A free deal,
+  every day" alone; it went out as "Challenges, every day". "Free" stays fine in the
+  description and promotional text. Prefer a caption that says what the screen does.
 - No paywall, purchase sheet, price button, "Unlock for $X" or strike-through price in any
   shot. The IAP's *review* screenshot is where the priced sheet belongs; it is reviewer-only.
 - Coin balances and in-game currency are fine: they are not money.
-- `snakelane lint` (and so `store push`) catches price wording other than "free" in the
+- `snakelane lint` (and so `store push`) catches price wording, "free" included, in the
   listing fields and in `framing.captions`. It cannot read a caption the UI test draws (`frame: test`) or what a
   screen shows, so look at every framed shot before `store screenshots push`.
 

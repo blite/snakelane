@@ -172,9 +172,8 @@ match what now exists. Only GETs are retried — a timed-out POST may have lande
 - **No price in the name, subtitle, keywords or screenshots** — not in a caption, not on
   the screen shot ([Guideline 2.3.7](https://developer.apple.com/app-store/review/guidelines/#2.3.7)).
   A paywall shot with its price button, or a "One purchase" caption, is a rejection.
-  Business-model claims go in `description.txt` (or promotional text). Apple's note also
-  calls "free" a price reference; `lint` deliberately doesn't flag it, so judge a
-  "Free to play"-style caption yourself. `lint`'s `price-reference` rule checks the text
+  Business-model claims go in `description.txt` (or promotional text). "Free" counts too
+  (FreeCell was rejected for "A free deal, every day"), and `lint` flags it. `lint`'s `price-reference` rule checks the text
   fields and `framing.captions`; a UI-test-drawn caption (`frame: test`) and what the
   screens themselves show are yours to check — look at every framed shot before a push.
   `lint.allow` exempts a phrase that only looks like a price.

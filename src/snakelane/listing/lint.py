@@ -19,7 +19,7 @@ Rules (error = blocks the push; warning = printed):
     test-word             warning  "beta", "trial version", "pre-release" framing
     apple-sentiment       warning  disparaging Apple or its platforms (guideline 3.2.2)
     keyword-format        warning  spaces after commas, duplicates, empty entries, words in the name/subtitle
-    price-reference       error    "buy", "sale", "one-time", "$4.99", … in the name, subtitle, keywords or a
+    price-reference       error    "free", "buy", "sale", "$4.99", … in the name, subtitle, keywords or a
                                    screenshot caption (framing.captions) — guideline 2.3.7
 
 Phrases are bounded by Latin letters rather than `\\b`; placeholders are case-sensitive.
@@ -75,10 +75,10 @@ PHRASE_RULES = [
     (["beta", "trial version", "pre-release", "prerelease", "test version", "demo version"], "test-word", "warning",
      '"{}" reads as unfinished software (2.2)', False),
 ]
-# Guideline 2.3.7: price belongs in the description, never where a shopper sees it first. "free" is left out
-# on purpose: too common in honest feature copy to block a push on.
+# Guideline 2.3.7: price belongs in the description, never where a shopper sees it first. "free" counts (Apple
+# rejected two decks for it); a word with "free" inside, like FreeCell, doesn't match.
 PRICE_FIELDS = ("name", "subtitle", "keywords")
-PRICE_PHRASES = ["price", "prices", "pricing", "buy", "purchase", "discount", "sale", "% off", "half price",
+PRICE_PHRASES = ["free", "price", "prices", "pricing", "buy", "purchase", "discount", "sale", "% off", "half price",
                  "one-time", "subscription", "cheap"]
 CURRENCY = re.compile(r"[$€£¥]\s?\d|\d\s?[$€£¥]")
 PRICE_MESSAGE = '"{}" reads as a price reference, which App Review rejects here (2.3.7); say it in the description'
