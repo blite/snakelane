@@ -1567,6 +1567,12 @@ behaviour bumps the minor version. Each release is tagged <code>vX.Y.Z</code>.</
 <h2 id="unreleased">Unreleased<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
 <ul>
 <li>
+<p><strong><code>asset_packs.source_under</code></strong> restricts <code>packs package</code> to pictures under one folder, e.g.
+  <code>approved</code> when only reviewed content may ship: a pack whose <code>pictureSource</code> sits anywhere else
+  is refused before anything is staged. A pack's contents freeze at first upload, and Puzzle Reef
+  uploaded two packs from its pre-review folder before it had this gate (2026-09-12).</p>
+</li>
+<li>
 <p><strong><code>gamecenter submit</code></strong> adds every Game Center record waiting for review (achievements,
   leaderboards, leaderboard sets, activities, challenges) to the app's draft review submission,
   with the app version being prepared, in one run; <code>--dry-run</code> shows it and <code>--without-version</code>
