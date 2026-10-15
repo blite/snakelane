@@ -17,6 +17,9 @@ snakelane.yml "asset_packs" block:
     "content_root"     repo-relative base for pictureSource (default: repo root).
     "record"           hosted-pack record, relative to the app folder (default "ios/asset_packs.json").
     "build_dir"        repo-relative output folder (default "build/asset-packs").
+    "source_under"     a folder (relative to content_root) every pictureSource must sit in, e.g.
+                       "approved" when only reviewed pictures may ship; packaging anything else is
+                       refused. Default: no restriction.
 
 pack.json (ships in the binary): snakelane reads assetPackID, delivery ("backgroundAsset" when hosted),
 pictureSource, imageExtension (default "heic"), items[].resourceName (one <name>.<ext> each), productID
@@ -62,6 +65,7 @@ class Packs:
     content_root: Path
     record: Path
     build: Path
+    source_under: str | None = None
 
     @classmethod
     def load(cls, app: App) -> Packs:
@@ -78,7 +82,8 @@ class Packs:
         return cls(app, app.root / config["manifests"], config["bundle_path"].strip("/"),
                    content_root=app.root / config.get("content_root", "."),
                    record=app.folder / config.get("record", "ios/asset_packs.json"),
-                   build=app.root / config.get("build_dir", "build/asset-packs"))
+                   build=app.root / config.get("build_dir", "build/asset-packs"),
+                   source_under=(config.get("source_under") or "").strip("/") or None)
 
     def rel(self, path: Path) -> Path:  # for messages
         try:
@@ -103,9 +108,18 @@ class Packs:
         return json.loads(manifest.read_text())
 
 
-def picture_source(theme: str, pack: dict[str, Any]) -> str:
+def picture_source(theme: str, pack: dict[str, Any], source_under: str | None = None) -> str:
+    """The pack's pictureSource; with `source_under`, refused unless it sits in that folder.
+
+    A pack's id and contents freeze at first upload, so an app with a review step packages only
+    from that step's output, and says so here rather than trusting each pack.json."""
     if not (relative := pack.get("pictureSource")):
         raise SystemExit(f"{theme}/pack.json has no pictureSource, so there is no folder to package from")
+    if source_under and Path(relative).parts[:len(Path(source_under).parts)] != Path(source_under).parts:
+        raise SystemExit(
+            f"{theme}: pictureSource is {relative}, not under {source_under}/; only pictures that "
+            f"have been through {source_under}/ may be packaged (asset_packs.source_under)"
+        )
     return relative
 
 
@@ -114,7 +128,7 @@ def stage(packs: Packs, theme: str, pack: dict[str, Any]) -> tuple[Path, list[st
 
     Why: docs/design/release.md#path-equivalence-and-the-staging-tree"""
     extension = pack.get("imageExtension", "heic")
-    source_dir = packs.content_root / picture_source(theme, pack)
+    source_dir = packs.content_root / picture_source(theme, pack, packs.source_under)
     if not source_dir.is_dir():
         raise SystemExit(f"{theme}: pictureSource {packs.rel(source_dir)} is not a folder")
     root, relative = packs.build / "stage" / theme, packs.in_bundle(theme)

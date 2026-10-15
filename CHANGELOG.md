@@ -6,6 +6,11 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **`asset_packs.source_under`** restricts `packs package` to pictures under one folder, e.g.
+  `approved` when only reviewed content may ship: a pack whose `pictureSource` sits anywhere else
+  is refused before anything is staged. A pack's contents freeze at first upload, and Puzzle Reef
+  uploaded two packs from its pre-review folder before it had this gate (2026-09-12).
+
 - **`gamecenter submit`** adds every Game Center record waiting for review (achievements,
   leaderboards, leaderboard sets, activities, challenges) to the app's draft review submission,
   with the app version being prepared, in one run; `--dry-run` shows it and `--without-version`

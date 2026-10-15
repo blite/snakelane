@@ -120,4 +120,5 @@ asset_packs:
   content_root: Content
   record: ios/asset_packs.json           # upload record, in the metadata folder
   build_dir: build/asset-packs
+  source_under: approved                 # optional: refuse a pictureSource outside this folder
 ```
