@@ -94,6 +94,9 @@ snakelane ship beta                # test → archive → TestFlight
 - [x] `gamecenter images push`: the achievement, leaderboard and activity images in Xcode's
    `.gamekit` bundle, which Xcode's own sync leaves out; compared by pixels, confirmed, uploaded
    and read back
+- [x] `gamecenter submit`: every achievement and leaderboard waiting for review added to the
+   draft review submission with the app version, in one run (never submitted)
+- [x] `lint` catches achievement points App Store Connect refuses (over 100, or 1,000 in all)
 
 **Shipping**
 

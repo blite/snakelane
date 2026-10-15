@@ -11,7 +11,8 @@ snakelane ship bump-version --bump minor
 ```
 
 `release` never pushes text, so what goes to review is the listing App Store Connect already
-holds. `release` lints that listing first, and warns when your local files differ from it.
+holds. It sends every Game Center record waiting for review with the version (see
+[`gamecenter submit`](gamecenter.md#sending-the-records-to-review)). `release` lints that listing first, and warns when your local files differ from it.
 
 ## Build numbers
 

@@ -6,6 +6,13 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **`gamecenter submit`** adds every Game Center record waiting for review (achievements,
+  leaderboards, leaderboard sets, activities, challenges) to the app's draft review submission,
+  with the app version being prepared, in one run; `--dry-run` shows it and `--without-version`
+  leaves the version out. It never submits. App Store Connect's web pages take them one page at
+  a time, thirteen for Pyramid Solitaire's first release. **`ship release` now sends any records
+  still waiting with the version**, and no longer adds a version already in the draft.
+
 - **`lint` checks Game Center achievement points** (`gamecenter-points`, an error): an
   achievement in the `.gamekit` worth more than 100, or more than 1,000 in all. App Store
   Connect refuses either, and Xcode's Game Center sync then creates nothing and shows no

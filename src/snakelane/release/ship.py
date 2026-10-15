@@ -270,22 +270,30 @@ def apply_release_settings(client: asc.Client, version: dict[str, Any], settings
         print("  release: phased release removed — everyone gets it at once")
 
 
-def submit_for_review(client: asc.Client, app_id: str, version_id: str, platform: str) -> None:
-    """Add the version to the open review submission (or a new one) and submit it."""
-    platform_enum = asc.platform_enum(platform)
-    submissions = client.get_all(f"/v1/apps/{app_id}/reviewSubmissions", {"filter[platform]": platform_enum})
-    if submission := next((s for s in submissions if asc.attributes(s).get("state") == "READY_FOR_REVIEW"), None):
-        print(f"  reusing open review submission {submission['id']}")
+def submit_for_review(client: asc.Client, app_id: str, version_id: str, platform: str,
+                      app_config: dict[str, Any] | None = None) -> None:
+    """Add the version, and every Game Center record waiting for review, to the open review
+    submission (or a new one) and submit it."""
+    from ..gamecenter import review
+
+    submission = review.draft(client, app_id, platform)
+    version = get_optional(client, f"/v1/appStoreVersions/{version_id}") or {}
+    if asc.attributes(version).get("appStoreState") == "READY_FOR_REVIEW":
+        print("  the version is already in the submission")  # `gamecenter submit` put it there
     else:
-        submission = client.post("/v1/reviewSubmissions", asc.resource_body(
-            "reviewSubmissions", {"platform": platform_enum},
-            relationships={"app": asc.relationship("apps", app_id)}))["data"]
-        print(f"  created review submission {submission['id']}")
-    client.post("/v1/reviewSubmissionItems", {"data": {"type": "reviewSubmissionItems", "relationships": {
-        "reviewSubmission": asc.relationship("reviewSubmissions", submission["id"]),
-        "appStoreVersion": asc.relationship("appStoreVersions", version_id),
-    }}})
-    print("  added the version to the submission")
+        client.post("/v1/reviewSubmissionItems", {"data": {"type": "reviewSubmissionItems", "relationships": {
+            "reviewSubmission": asc.relationship("reviewSubmissions", submission["id"]),
+            "appStoreVersion": asc.relationship("appStoreVersions", version_id),
+        }}})
+        print("  added the version to the submission")
+    if app_config is not None:
+        # A first achievement or leaderboard must go to review with an app version.
+        # Why: docs/design/gamecenter.md#game-center-records-go-to-review-in-one-call
+        try:
+            pending = review.pending_items(client, app_config)
+        except SystemExit:  # Game Center isn't enabled for the app
+            pending = []
+        review.add(client, submission["id"], pending)
     client.patch(f"/v1/reviewSubmissions/{submission['id']}",
                  asc.resource_body("reviewSubmissions", {"submitted": True}, id_=submission["id"]))
     print("  SUBMITTED FOR REVIEW")
@@ -411,7 +419,7 @@ def release(
     apply_release_settings(client, version, settings)
     if no_submit:
         return print("staged (--no-submit): version + build are set, review not requested")
-    submit_for_review(client, app_id, version["id"], platform)
+    submit_for_review(client, app_id, version["id"], platform, resolved.config)
 
 
 @cli.command("bump-version")

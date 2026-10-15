@@ -45,6 +45,7 @@ src/snakelane/
     command.py           `gamecenter`: the command line only
     gamekit.py           finding and reading the bundle, the image spec, pixel comparison
     images.py            gamecenter images show / push
+    review.py            gamecenter submit: records waiting for review into the draft submission
   release/               getting a build out
     ship.py              `ship`: test → archive → TestFlight → submit; release settings; bump-version
     status.py            `status`: versions, review in progress, latest build (read-only)

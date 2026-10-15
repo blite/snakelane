@@ -46,3 +46,10 @@ is left alone either way.
 A localization holds one image, so a replacement deletes the old one first. If the upload after
 that fails, the record is left with no image, which a player would see as a blank tile; the push
 prints that in red with the record's name before the error, and a re-run shows it as new.
+
+## Review
+
+### Game Center records go to review in one call
+
+A new achievement or leaderboard reaches players only through App Review, and a first one must go with an app version. App Store Connect's web pages add each record to a submission from its own page, so a first release of Pyramid Solitaire meant thirteen trips through "Add for Review", and Golf's nineteen (2026-10-15). The API takes them as review submission items, one relationship per kind (`gameCenterAchievementVersion`, `gameCenterLeaderboardVersion`, `gameCenterLeaderboardSetVersion`, `gameCenterActivityVersion`, `gameCenterChallengeVersion`; the OpenAPI spec 4.5.1), so `gamecenter submit` adds every record whose newest version is in Prepare for Submission, Rejected or Developer Rejected. Ready for Review means it is already in a draft; anything later is in review or live. It adds the app version being prepared too, and stops at the draft: submitting is a decision, and `ship release` is the command that makes it. `ship release` adds any records still waiting to the submission it sends, so a release can't leave them behind, and skips adding the app version when `gamecenter submit` already put it in the draft (adding it twice is refused).
+
