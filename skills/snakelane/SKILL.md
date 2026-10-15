@@ -165,7 +165,9 @@ match what now exists. Only GETs are retried — a timed-out POST may have lande
   `MISSING_METADATA`. Show the purchase sheet with the price visible. That shot is for the
   reviewer only: **never put a paywall, purchase sheet or price in the App Store deck.**
 - Touching an approved IAP localization or review screenshot re-opens it for review, so
-  snakelane sends nothing when values already match.
+  snakelane sends nothing when values already match. An approved IAP *localization* can't be
+  edited through the API at all (409, "…in ACTIVE state"): `iap push` lists those changes for
+  App Store Connect's website and carries on with the rest.
 - Repricing an existing IAP is web-UI only; `iap push` refuses, so a sync can never reprice a
   live product.
 - Reviewers expect privacy **and** terms links inside `description.txt`.

@@ -26,11 +26,21 @@ from .catalogue import (
     select_iap_products,
 )
 
+# App Store Connect refuses any API edit to an approved localization (HTTP 409, "Cannot edit
+# InAppPurchaseLocalization when it is in ACTIVE state"); only its website changes one.
+FROZEN_STATES = {"APPROVED"}
+
 
 def sync_localizations(client: asc.Client, indent: str, label: str, kind: str,
                        relationships: dict[str, Any], live: dict[str, dict[str, Any]],
-                       wanted: dict[str, dict[str, Any]]) -> None:
-    """Create missing locales, PATCH only changed non-blank fields: a touched localization re-opens review."""
+                       wanted: dict[str, dict[str, Any]], owner: str = "",
+                       problems: list[str] | None = None) -> None:
+    """Create missing locales, PATCH only changed non-blank fields: a touched localization re-opens review.
+
+    With `problems` (in-app purchases), an approved localization isn't PATCHed, since Apple refuses it:
+    the change is reported there (with `owner`, the product id) and the push carries on, so new locales
+    are still created. Without it, a refusal stops the push as before.
+    """
     for locale, fields in wanted.items():
         fields = {k: v for k, v in fields.items() if v}
         if (current := live.get(locale)) is None:
@@ -39,9 +49,26 @@ def sync_localizations(client: asc.Client, indent: str, label: str, kind: str,
             client.report(f"{indent}✓ {label} created [{locale}]")
         elif not (changed := {k: v for k, v in fields.items() if v != asc.attributes(current).get(k)}):
             print(f"{indent}= {label} [{locale}] already matches")
+        elif problems is not None and (asc.attributes(current).get("state") in FROZEN_STATES
+                                       or not _try_patch(client, kind, current["id"], changed)):
+            wants = ", ".join(f"{k}={v!r}" for k, v in changed.items())
+            print(f"{indent}⚠ {label} [{locale}] is approved; App Store Connect only lets its website change it: {wants}")
+            problems.append(f"{owner or label} [{locale}]: approved, change it on App Store Connect's website: {wants}")
         else:
-            client.patch(f"/v1/{kind}/{current['id']}", asc.resource_body(kind, changed, id_=current["id"]))
+            if problems is None:
+                client.patch(f"/v1/{kind}/{current['id']}", asc.resource_body(kind, changed, id_=current["id"]))
             client.report(f"{indent}✓ {label} updated [{locale}]: {', '.join(changed)}")
+
+
+def _try_patch(client: asc.Client, kind: str, resource_id: str, changed: dict[str, Any]) -> bool:
+    """PATCH, False when Apple refuses it as frozen (409) so the caller reports instead of aborting."""
+    try:
+        client.patch(f"/v1/{kind}/{resource_id}", asc.resource_body(kind, changed, id_=resource_id))
+    except asc.ASCError as error:
+        if error.status != 409:
+            raise
+        return False
+    return True
 
 
 def ensure_availability(client: asc.Client, indent: str, existing: str, kind: str,
@@ -156,7 +183,8 @@ def cmd_iap_push(args: SimpleNamespace) -> None:
         sync_localizations(client, "  ", "localization", "inAppPurchaseLocalizations", {"inAppPurchaseV2": rel},
                            keyed(client, f"/v2/inAppPurchases/{resource_id}/inAppPurchaseLocalizations"),
                            {locale: {k: w.get(k) for k in ("name", "description")}
-                            for locale, w in product.get("localizations", {}).items()})
+                            for locale, w in product.get("localizations", {}).items()},
+                           product_id, problems)
         # Price, availability and review screenshot are set once, never changed by a sync.
         # Why: docs/design/release.md#set-once-price-availability-and-review-screenshot
         if product.get("price"):

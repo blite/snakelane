@@ -6,6 +6,14 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **`store iap push` reports a change to an approved localization instead of stopping on it.**
+  App Store Connect refuses any API edit to an approved in-app purchase localization (HTTP 409,
+  "Cannot edit InAppPurchaseLocalization when it is in ACTIVE state"); only its website changes
+  one. The push used to die on the first, so nothing after it in the catalogue ran, new locales
+  included. Now it skips each one, carries on, and ends with the list of changes to make on the
+  website. Jigsaw's first push stopped at one French name before reaching the Italian and Russian
+  localizations of nine packs (2026-10-15). Subscriptions are unchanged.
+
 - **`asset_packs.source_under`** restricts `packs package` to pictures under one folder, e.g.
   `approved` when only reviewed content may ship: a pack whose `pictureSource` sits anywhere else
   is refused before anything is staged. A pack's contents freeze at first upload, and Puzzle Reef
