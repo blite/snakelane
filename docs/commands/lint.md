@@ -29,6 +29,7 @@ snakelane lint --strict --json   # warnings fail too; machine-readable
 | `apple-sentiment` | warning | disparaging Apple ([3.2.2](https://developer.apple.com/app-store/review/guidelines/#3.2.2)) |
 | `keyword-format` | warning | spaces after commas, duplicates, words already in the name or subtitle |
 | `price-reference` | error | "free", "buy", "sale", "one-time", "$4.99"… in the name, subtitle, keywords or a `framing.captions` screenshot caption ([2.3.7](https://developer.apple.com/app-store/review/guidelines/#2.3.7)) |
+| `gamecenter-points` | error | an achievement in the `.gamekit` worth more than 100 points, or more than 1,000 in all: App Store Connect refuses it, and Xcode's sync then creates nothing and shows no error. The bundle is `gamecenter.gamekit`, else the repo's only one ([why](../design/foundations.md#game-center-points)) |
 
 To turn a rule off for one app, put it in that app's config:
 

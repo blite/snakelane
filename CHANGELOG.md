@@ -6,6 +6,13 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **`lint` checks Game Center achievement points** (`gamecenter-points`, an error): an
+  achievement in the `.gamekit` worth more than 100, or more than 1,000 in all. App Store
+  Connect refuses either, and Xcode's Game Center sync then creates nothing and shows no
+  error. Pyramid Solitaire's 150-point achievement kept all thirteen of its records off App
+  Store Connect through five syncs (2026-10-15). The bundle is `gamecenter.gamekit`, else the
+  repo's only one.
+
 - **The default iPhone size is 6.3"** (1206×2622, shot on the iPhone 17 Pro), the class Apple's
   screenshot specifications now require ("iPhone with Dynamic Island, medium display") and
   ASC's media page offers first. It was 6.5" (iPhone 14 Plus). The 6.3" slot, `APP_IPHONE_61`,

@@ -21,10 +21,13 @@ Rules (error = blocks the push; warning = printed):
     keyword-format        warning  spaces after commas, duplicates, empty entries, words in the name/subtitle
     price-reference       error    "free", "buy", "sale", "$4.99", … in the name, subtitle, keywords or a
                                    screenshot caption (framing.captions) — guideline 2.3.7
+    gamecenter-points     error    an achievement over 100 points, or over 1,000 in all, in the .gamekit
+                                   (gamecenter.gamekit, else the repo's only one); Xcode's sync fails silently
 
 Phrases are bounded by Latin letters rather than `\\b`; placeholders are case-sensitive.
 Why: docs/design/foundations.md#lint-matching-rules
 Why price-reference: docs/design/foundations.md#price-references-in-the-name-keywords-and-screenshots
+Why gamecenter-points: docs/design/foundations.md#game-center-points
 
 ## snakelane.yml
 
@@ -167,6 +170,22 @@ def caption_findings(app: project.App, allow: tuple[str, ...]) -> list[Finding]:
                                     allow)]
 
 
+def gamecenter_findings(app: project.App) -> list[Finding]:
+    """gamecenter-points over the app's .gamekit: the one `gamecenter.gamekit` names, else the
+    repo's only one. No bundle, or several and none named, is no opinion here."""
+    from ..gamecenter import gamekit
+
+    configured = (app.config.get("gamecenter") or {}).get("gamekit")
+    try:
+        bundle = gamekit.find_bundle(app.root, configured)
+    except SystemExit:
+        if configured:
+            raise
+        return []
+    return [Finding("error", "gamecenter-points", f"gamecenter/{where}", message)
+            for where, message in gamekit.points_problems(bundle)]
+
+
 def allowed(app: project.App) -> tuple[str, ...]:
     return tuple((app.config.get("lint") or {}).get("allow", []))
 
@@ -260,6 +279,7 @@ def run(app: project.App, platform: str, check_urls: bool = False) -> list[Findi
     values = read_listing(platform_dir, locales)
     found = lint(values, read_review(platform_dir).get("notes"), terms_url, allowed(app))
     found += caption_findings(app, allowed(app))
+    found += gamecenter_findings(app)
     if check_urls:
         found += url_findings(values, terms_url)
     return ignored(app, found)

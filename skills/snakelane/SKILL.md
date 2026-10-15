@@ -283,6 +283,9 @@ achievement and leaderboard image (1024×1024) per locale, and each activity's d
 
 - Sync from Xcode **first**. A record or locale App Store Connect doesn't have yet is reported
   and skipped; snakelane never creates Game Center records.
+- **Run `snakelane lint` before syncing.** Its `gamecenter-points` rule catches an achievement
+  over 100 points or a total over 1,000: App Store Connect refuses either, and Xcode's sync then
+  creates nothing and shows no error (Pyramid Solitaire, 2026-10-15).
 - Images are compared by **pixels**: App Store Connect re-encodes uploads, so bytes and
   checksums never match.
 - A record whose newest version is **LIVE** can't take a new image in place. `--new-version`

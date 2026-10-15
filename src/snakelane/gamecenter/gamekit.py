@@ -8,6 +8,7 @@ names. The parts read here:
     resources.leaderboardImages        as achievementImages
     resources.leaderboardLocalizations as achievementLocalizations
     resources.gameActivityDefaultImages {vendorIdentifier: {localID, url}}  one per activity, no locale
+    resources.achievements             [{vendorIdentifier, points, …}]  for lint's points check
 
 A localID is mapped to its record and locale through the localizations, never by splitting the
 string: a vendor identifier may itself contain hyphens.
@@ -27,6 +28,11 @@ SKIP_DIRS = {"build", "DerivedData", ".build", "Pods", "node_modules", "Carthage
 # Apple's spec: RGB, no transparency. Achievement and leaderboard images are 1024×1024; an
 # activity's default image is 3840×2160 (the challenge image size, and what ASC holds for one).
 SIZES = {"achievement": (1024, 1024), "leaderboard": (1024, 1024), "activity": (3840, 2160)}
+
+# App Store Connect's caps on achievement points. Xcode's sync sends them unchecked and, when ASC
+# refuses one, shows nothing and creates nothing. Why: docs/design/foundations.md#game-center-points
+MAX_ACHIEVEMENT_POINTS = 100
+MAX_TOTAL_POINTS = 1_000
 
 
 @dataclass(frozen=True)
@@ -65,13 +71,31 @@ def find_bundle(root: Path, configured: str | None = None) -> Path:
                      + '); name one with "gamecenter": {"gamekit": <path>} in the config')
 
 
+def read_resources(bundle: Path) -> dict[str, Any]:
+    try:
+        return json.loads((bundle / RESOURCES).read_text()).get("resources") or {}
+    except (OSError, ValueError) as error:
+        raise SystemExit(f"{bundle / RESOURCES}: {error}") from None
+
+
+def points_problems(bundle: Path) -> list[tuple[str, str]]:
+    """(vendor identifier or "achievements", why) for every achievement worth more than ASC takes,
+    and for a total over its cap. Archived achievements count: ASC keeps them."""
+    achievements = read_resources(bundle).get("achievements") or []
+    problems = [(a.get("vendorIdentifier", "?"), f"{points} points: App Store Connect takes 0 to "
+                 f"{MAX_ACHIEVEMENT_POINTS} for an achievement, and Xcode's sync fails without a word")
+                for a in achievements
+                if not 0 <= (points := a.get("points") or 0) <= MAX_ACHIEVEMENT_POINTS]
+    if (total := sum(a.get("points") or 0 for a in achievements)) > MAX_TOTAL_POINTS:
+        problems.append(("achievements", f"{total} points in all: App Store Connect takes at most "
+                         f"{MAX_TOTAL_POINTS:,} for an app"))
+    return problems
+
+
 def read_bundle(bundle: Path) -> tuple[list[Image], list[str]]:
     """(every image the bundle names, problems with the bundle itself). A missing file is not a
     problem here: the push reports and skips it."""
-    try:
-        resources = json.loads((bundle / RESOURCES).read_text()).get("resources") or {}
-    except (OSError, ValueError) as error:
-        raise SystemExit(f"{bundle / RESOURCES}: {error}") from None
+    resources = read_resources(bundle)
     images: list[Image] = []
     problems: list[str] = []
     for kind in ("achievement", "leaderboard"):

@@ -187,3 +187,38 @@ def test_price_references_in_a_decks_own_captions(tmp_path: Path) -> None:
     app = make_app(tmp_path, screenshots={"frame": "snakelane", "framing": {"captions": captions}})
     found = {(f.where, f.message.split('"')[1]) for f in lint.run(app, "ios") if f.rule == "price-reference"}
     assert found == {("mac/screenshots/caption 1", "Buy")}
+
+
+def gamekit_with(folder: Path, points: list[int]) -> Path:
+    """A .gamekit holding only achievements worth `points`, as Xcode writes the file."""
+    import json
+
+    folder.mkdir(parents=True, exist_ok=True)
+    achievements = [{"vendorIdentifier": f"game.ach.{n}", "points": p} for n, p in enumerate(points)]
+    (folder / "gameCenterResources.json").write_text(json.dumps({"resources": {"achievements": achievements}}))
+    return folder
+
+
+def test_an_achievement_over_100_points_is_an_error(tmp_path: Path) -> None:
+    gamekit_with(tmp_path / "App" / "GameCenterResources.gamekit", [10, 150, 100])
+    app = make_app(tmp_path)
+    assert {k: v for k, v in rules(app).items() if k[1] == "gamecenter-points"} == {
+        ("gamecenter/game.ach.1", "gamecenter-points"): "error"}
+
+
+def test_more_than_1000_points_in_all_is_an_error(tmp_path: Path) -> None:
+    gamekit_with(tmp_path / "Game.gamekit", [100] * 11)
+    found = [f for f in lint.run(make_app(tmp_path), "ios") if f.rule == "gamecenter-points"]
+    assert [(f.where, f.message.split(":")[0]) for f in found] == [("gamecenter/achievements", "1100 points in all")]
+
+
+def test_the_configured_gamekit_is_the_one_checked(tmp_path: Path) -> None:
+    gamekit_with(tmp_path / "A" / "GameCenterResources.gamekit", [150])
+    gamekit_with(tmp_path / "B" / "GameCenterResources.gamekit", [50])
+    assert not [f for f in lint.run(make_app(tmp_path), "ios") if f.rule == "gamecenter-points"]  # two, none named
+    app = make_app(tmp_path, gamecenter={"gamekit": "A/GameCenterResources.gamekit"})
+    assert [f.where for f in lint.run(app, "ios") if f.rule == "gamecenter-points"] == ["gamecenter/game.ach.0"]
+
+
+def test_an_app_without_a_gamekit_has_no_opinion(app: project.App) -> None:
+    assert not [f for f in lint.run(app, "ios") if f.rule == "gamecenter-points"]

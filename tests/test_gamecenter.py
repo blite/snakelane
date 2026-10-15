@@ -251,3 +251,14 @@ def test_a_replacement_deletes_then_uploads_and_shouts_if_the_upload_fails(
         images.push_one(client, target)  # type: ignore[arg-type]
     assert calls == ["DELETE /v2/gameCenterLeaderboardImages/old", "UPLOAD api=v2 checksum=False"]
     assert "old image was DELETED and the upload FAILED" in capsys.readouterr().out
+
+
+def test_points_within_app_store_connect_s_caps_are_no_problem(tmp_path: Path) -> None:
+    folder = make_bundle(tmp_path / "Game.gamekit")
+    data = json.loads((folder / gamekit.RESOURCES).read_text())
+    data["resources"]["achievements"] = [{"vendorIdentifier": ACH, "points": 100}, {"vendorIdentifier": "b", "points": 0}]
+    (folder / gamekit.RESOURCES).write_text(json.dumps(data))
+    assert gamekit.points_problems(folder) == []
+    data["resources"]["achievements"][0]["points"] = 101
+    (folder / gamekit.RESOURCES).write_text(json.dumps(data))
+    assert [where for where, _ in gamekit.points_problems(folder)] == [ACH]

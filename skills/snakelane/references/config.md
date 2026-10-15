@@ -104,7 +104,8 @@ gamecenter:
 
 Optional: without it, `gamecenter images` uses the repo's only `*.gamekit` folder (build output,
 `DerivedData`, `Pods` and dot-folders are skipped) and stops, naming them, when there are none
-or several. The app itself is found by `bundle_id` / `apple_id`, as for `store`.
+or several. `lint` reads the same bundle for its `gamecenter-points` check, and skips the check
+when there are several and none is named. The app itself is found by `bundle_id` / `apple_id`, as for `store`.
 
 ## Background Assets packs (`packs`)
 
