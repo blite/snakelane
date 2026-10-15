@@ -151,10 +151,19 @@ def cmd_submit(args: SimpleNamespace) -> None:
             return
     submission = draft(client, app_id, platform)
     if version:
-        client.post("/v1/reviewSubmissionItems", {"data": {"type": "reviewSubmissionItems", "relationships": {
-            "reviewSubmission": asc.relationship("reviewSubmissions", submission["id"]),
-            "appStoreVersion": asc.relationship("appStoreVersions", version["id"]),
-        }}})
+        try:
+            client.post("/v1/reviewSubmissionItems", {"data": {"type": "reviewSubmissionItems", "relationships": {
+                "reviewSubmission": asc.relationship("reviewSubmissions", submission["id"]),
+                "appStoreVersion": asc.relationship("appStoreVersions", version["id"]),
+            }}})
+        except asc.ASCError as error:
+            if error.status != 409:
+                raise
+            raise SystemExit(
+                f"App Store Connect won't take version {asc.attributes(version).get('versionString')} for review "
+                "yet: it is missing something review needs, usually the listing text (`snakelane store push`), "
+                "the screenshots (`snakelane store screenshots push`) or a build. The draft submission is "
+                "kept and reused next run; no Game Center record was added.\n" + str(error)) from None
         print(f"  {'would add' if client.dry_run else 'added'} app version {asc.attributes(version).get('versionString')}")
     add(client, submission["id"], todo)
     if client.dry_run:

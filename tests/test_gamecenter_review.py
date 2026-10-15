@@ -104,3 +104,17 @@ def test_ship_release_doesn_t_add_a_version_already_in_the_draft(config: dict[st
     client = app_store_connect(app_state="READY_FOR_REVIEW")
     ship.submit_for_review(client, "42", "v1", "ios", config)
     assert ("appStoreVersion", "v1") not in added(client)
+
+
+def test_a_version_not_ready_for_review_says_what_to_push(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    make_app(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    client = app_store_connect()
+
+    def refuse(path: str, body: dict[str, Any]) -> dict[str, Any]:
+        raise asc.ASCError("POST /v1/reviewSubmissionItems → HTTP 409: not in valid state", status=409)
+
+    monkeypatch.setattr(client, "post", refuse)
+    monkeypatch.setattr(asc, "Client", lambda **_: client)
+    with pytest.raises(SystemExit, match=r"store push"):
+        review.cmd_submit(SimpleNamespace(app=None, platform=None, dry_run=False, yes=True, without_version=False))
