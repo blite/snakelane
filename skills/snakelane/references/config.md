@@ -65,7 +65,7 @@ screenshots:
   test: AppUITests/AppUITestsScreenshotsUITests   # -only-testing; null = whole scheme/plan
   test_plan: null
   devices:                       # name, UDID, or {name|id, os, deck: iphone|ipad}
-    - iPhone 14 Plus             # 6.5", the default size
+    - iPhone 17 Pro              # 6.3", the default size
     - iPad Pro 13-inch (M5)      # 13"
   locales: [en-US]               # or a mapping {es-MX: es-MX, de-DE: de} → the language key
                                  #   written to /tmp/<slug>-screenshot-locale for the test

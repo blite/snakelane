@@ -32,7 +32,7 @@ Things to notice:
 
 - **A missing or empty file means "leave the live value alone".** en-AU has no `name.txt`, so it
   gets the default; nothing ever pushes a blank over App Store Connect.
-- **Screenshots are found by pixel size,** not by folder or file name: 1284×2778 is the 6.5"
+- **Screenshots are found by pixel size,** not by folder or file name: 1206×2622 is the 6.3"
   iPhone slot, 2064×2752 the 13" iPad. The names only set the order.
 - **A locale with no screenshot folder inherits** the primary language's shots on the App
   Store (en-AU here). An *empty* folder is different: the push reads it as "delete this

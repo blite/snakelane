@@ -247,7 +247,7 @@ screenshots:
   framing:
     captions: {"1": "Caption", "2": [line, line]}   # required; a list is the caption's lines
     # or per locale: {en-US: {"1": …}, de-DE: {"1": …}}; a locale without one gets the primary's
-    targets: {iphone: [1284, 2778], ipad: [2064, 2752], mac: [2880, 1800]}  # default: each capture's size
+    targets: {iphone: [1206, 2622], ipad: [2064, 2752], mac: [2880, 1800]}  # default: each capture's size
     decorate: null                      # a repo-relative .py with decorate(image, shot); see above
 
     layout: stacked                     # full-bleed | stacked | device

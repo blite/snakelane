@@ -10,9 +10,9 @@ These are the reasons behind decisions in `src/snakelane/screenshots/` (shoot, e
 
 ### The default lineup
 
-The default iPhone is the iPhone 14 Plus, which shoots the 6.5" display class (1284x2778, `APP_IPHONE_65`), chosen over a current 6.9" device. App Store Connect's media page shows every class that was not uploaded natively as a dimmed, scaled copy, so the class that was shot is the only one that looks crisp there. Apple also scales a 6.5" deck up to 6.9" displays when no 6.9" set exists, but does not scale a 6.9" deck down. The physically 6.5-inch iPhone Air does not shoot this class: its 1260x2736 files under 6.9".
+The default iPhone is the iPhone 17 Pro, which shoots the 6.3" display class (1206x2622, `APP_IPHONE_61`; the iPhone 15, 15 Pro and 16 shoot 1179x2556, the same slot). Apple's screenshot-specifications page names it "iPhone with Dynamic Island (medium display)" and makes it the one required iPhone class ("At least one screenshot for iPhone with Dynamic Island (medium display)"), and ASC's media page now offers "6.1" or 6.3" displays" first. App Store Connect shows every class that was not uploaded natively as a dimmed, scaled copy, so shooting the required class is also what keeps it crisp there.
 
-This was re-decided on 2026-10-02. Apple's screenshot-specifications page now describes the scaling the other way (6.5" derived from 6.9"), and 6.9"-only apps are live. The default stayed 6.5" on the dimming argument alone.
+This was decided on 2026-10-15. Until then the default was the iPhone 14 Plus at 6.5" (1284x2778, `APP_IPHONE_65`), chosen on 2026-10-02 over a 6.9" device because ASC then offered 6.5" as its default slot and Apple scaled a 6.5" deck up to 6.9" but not a 6.9" deck down. Once ASC's media page led with 6.3", a 6.5" deck was the one shown dimmed. A 6.5" or 6.9" deck still uploads, with a warning; switching an app means re-shooting, and the push's stale-set sweep then deletes the old class's set.
 
 The iPad is the 13" iPad Pro, which ASC now requires. The 12.9" (2048x2732) is legacy and no longer an installed simulator on current Xcodes; both file under `APP_IPAD_PRO_3GEN_129`. Switching class means re-shooting, because the push reads the class from the pixels and a stale set left in ASC keeps being preferred. A full `shoot` clears the tree first, so it handles this on its own.
 
@@ -134,13 +134,13 @@ The check needs macOS's Vision framework through pyobjc, an optional extra. With
 
 ### The display-type table
 
-The display type is read from the image's pixel size. Both orientations are listed because a device rotated for a landscape shot still maps to the same slot. Which slot a deck fills is decided by what was shot, never by a config key. Sizes were verified against ASC on 2026-09-11 and Apple's screenshot-specifications page on 2026-10-02. Apple moves this (the iPad slot already went from 12.9" to 13"), so ASC's own media page is the arbiter.
+The display type is read from the image's pixel size. Both orientations are listed because a device rotated for a landscape shot still maps to the same slot. Which slot a deck fills is decided by what was shot, never by a config key. Sizes were verified against ASC on 2026-09-11 and Apple's screenshot-specifications page on 2026-10-02; the 6.3" class (1179x2556, 1206x2622) on 2026-10-15, from both. Apple moves this (the iPad slot already went from 12.9" to 13"), so ASC's own media page is the arbiter.
 
 1290x2796, the third accepted 6.9" size (iPhone 14, 15 and 16 Pro Max and Plus), was missing until 2026-10-02, so a deck shot on one of those simulators failed the push as an unknown size. The legacy 12.9" iPad sizes stay mapped so an older deck still pushes until its next re-shoot. The iPad naming is a trap: the current device is named for its chip and the legacy one for its inches, so the older simulator is the one that reads like the deliberate choice.
 
 ### Non-default sizes are a warning
 
-Any accepted size uploads. A size other than the default (6.5" iPhone, 13" iPad) gets a warning, because the class that was shot is the one ASC shows as uploaded rather than dimmed.
+Any accepted size uploads. A size other than the default (6.3" iPhone, 13" iPad) gets a warning, because the class that was shot is the one ASC shows as uploaded rather than dimmed.
 
 ### At most ten screenshots per set
 
@@ -152,7 +152,7 @@ Until 2026-10-02 snakelane carried its own PNG decoder (scanline unfiltering, Pa
 
 ### An App Preview's slot comes from the screenshots beside it
 
-Apple accepts 886x1920 for both the 6.5" and 6.9" preview slots, so a video's own pixels cannot say which deck it belongs to. The `ss-NN` shots in the same folder can: their display class is unambiguous, and one folder is one device class. The video's dimensions are then validated against what that slot accepts, so a wrong encode fails in seconds rather than at Apple's end hours later. An earlier version mapped 886x1920 straight to the 6.9" slot and invented a 1080x1920 entry for 6.5" that appears nowhere in Apple's table, which would have uploaded every 6.5" deck's preview into the 6.9" slot.
+Apple accepts 886x1920 for the 6.3", 6.5" and 6.9" preview slots alike, so a video's own pixels cannot say which deck it belongs to. The `ss-NN` shots in the same folder can: their display class is unambiguous, and one folder is one device class. The video's dimensions are then validated against what that slot accepts, so a wrong encode fails in seconds rather than at Apple's end hours later. An earlier version mapped 886x1920 straight to the 6.9" slot and invented a 1080x1920 entry for 6.5" that appears nowhere in Apple's table, which would have uploaded every 6.5" deck's preview into the 6.9" slot.
 
 886x1920 looks invented but is 1920 on the long edge at 19.5:9, the shape of every notched iPhone. 1080x1920 is the 16:9 size and belongs to the 5.5" and 4.0" slots. The iPad slot accepts 1200x1600 only; 900x1200 belongs to the 2nd-generation 12.9" preview type (`IPAD_PRO_129`). The table is a local pre-check from Apple's [app preview specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/app-preview-specifications); ASC is the arbiter.
 

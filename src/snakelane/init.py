@@ -73,7 +73,7 @@ platforms: [{", ".join(platforms)}]
 #   secondary: UTILITIES
 
 # screenshots:
-#   devices: [iPhone 14 Plus, iPad Pro 13-inch (M5)]   # 6.5" iPhone and 13" iPad
+#   devices: [iPhone 17 Pro, iPad Pro 13-inch (M5)]   # 6.3" iPhone and 13" iPad
 """
 
 

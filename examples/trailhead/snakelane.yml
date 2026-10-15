@@ -19,5 +19,5 @@ categories:
   secondary: NAVIGATION
 
 screenshots:
-  devices: [iPhone 14 Plus, iPad Pro 13-inch (M5)]   # 6.5" iPhone and 13" iPad
+  devices: [iPhone 17 Pro, iPad Pro 13-inch (M5)]   # 6.3" iPhone and 13" iPad
   locales: [en-US, de-DE]                            # en-AU inherits en-US's shots

@@ -5,7 +5,7 @@
 ```bash
 snakelane shoot --dry-run           # the plan: devices, locales, what's replaced
 snakelane shoot                     # every device × screenshot locale
-snakelane shoot --device "iPhone 14 Plus" --locales de-DE
+snakelane shoot --device "iPhone 17 Pro" --locales de-DE
 snakelane shoot --platform macos    # the Mac deck, from this Mac
 ```
 

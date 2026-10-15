@@ -70,7 +70,7 @@ snakelane ship beta                # test → archive → TestFlight
 - [x] The app leaves room for the caption: `shoot` hands it the band's depth
 - [x] Push screenshots and App Previews, with the slot worked out from [pixel size](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications), the
    10-per-set limit enforced, and Apple's processing waited on
-- [x] Warnings for sizes other than the 6.5" iPhone and 13" iPad defaults
+- [x] Warnings for sizes other than the 6.3" iPhone and 13" iPad defaults
 - [x] OCR check that refuses a deck shot from a debug build (`check`)
 - [x] HTML review page (`gallery`): every deck against what's live or the last commit, App Store
    search-result and product-page mocks, lint and translation status per locale

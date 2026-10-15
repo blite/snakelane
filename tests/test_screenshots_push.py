@@ -18,6 +18,11 @@ def test_every_accepted_69_inch_size_maps(tmp_path: Path, size: tuple[int, int])
     assert media.display_type_for(image(tmp_path / "ss-01.png", *size)) == "APP_IPHONE_67"
 
 
+@pytest.mark.parametrize("size", [(1179, 2556), (1206, 2622), (2622, 1206)])
+def test_every_accepted_63_inch_size_maps(tmp_path: Path, size: tuple[int, int]) -> None:
+    assert media.display_type_for(image(tmp_path / "ss-01.png", *size)) == "APP_IPHONE_61"
+
+
 def test_unknown_size_is_refused(tmp_path: Path) -> None:
     with pytest.raises(SystemExit, match="unknown screenshot pixel size"):
         media.display_type_for(image(tmp_path / "ss-01.png", 1668, 2420))
@@ -36,20 +41,20 @@ def test_sets_over_ten_are_reported_per_locale_and_type() -> None:
 
 
 def test_default_sizes_raise_no_warning() -> None:
-    assert media.size_warnings([(1284, 2778), (1242, 2688), (2064, 2752), (2880, 1800)]) == []
+    assert media.size_warnings([(1206, 2622), (1179, 2556), (2064, 2752), (2880, 1800)]) == []
 
 
 def test_other_accepted_sizes_warn_but_still_map(tmp_path: Path) -> None:
-    files = [image(tmp_path / f"{n}.png", 1320, 2868) for n in range(3)]
+    files = [image(tmp_path / f"{n}.png", 1284, 2778) for n in range(3)]
     files.append(image(tmp_path / "ipad.png", 2048, 2732))
     warnings = media.size_warnings([media.screenshot_dimensions(f) for f in files])
     assert warnings == [
         '1 iPad screenshot(s) at 2048x2732, not the 13" snakelane defaults to'
         ' — 12.9" is the legacy size; re-shoot on iPad Pro 13-inch (M5)',
-        '3 iPhone screenshot(s) at 1320x2868, not the 6.5" snakelane defaults to'
-        ' — ASC will show the 6.5" slot dimmed',
+        '3 iPhone screenshot(s) at 1284x2778, not the 6.3" snakelane defaults to'
+        ' — ASC will show the 6.3" slot, the one it requires, dimmed; re-shoot on iPhone 17 Pro',
     ]
-    assert {media.display_type_for(f) for f in files} == {"APP_IPHONE_67", "APP_IPAD_PRO_3GEN_129"}
+    assert {media.display_type_for(f) for f in files} == {"APP_IPHONE_65", "APP_IPAD_PRO_3GEN_129"}
 
 
 def test_a_rejected_screenshot_is_retried_into_its_own_set(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:

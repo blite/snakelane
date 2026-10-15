@@ -43,7 +43,7 @@ snakelane store screenshots show
 ```
 
 The deck is `metadata/<platform>/screenshots/<locale>/` (in `iphone/` and `ipad/` for iOS),
-uploaded in file-name order. The slot each image fills is worked out from its pixel size. 6.5" iPhone and 13" iPad are the
+uploaded in file-name order. The slot each image fills is worked out from its pixel size. 6.3" iPhone and 13" iPad are the
 defaults; other [sizes Apple accepts](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications) upload with a warning, and sizes it doesn't are refused.
 A push replaces each set wholesale:
 

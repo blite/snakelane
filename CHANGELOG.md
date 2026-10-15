@@ -6,6 +6,15 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **The default iPhone size is 6.3"** (1206×2622, shot on the iPhone 17 Pro), the class Apple's
+  screenshot specifications now require ("iPhone with Dynamic Island, medium display") and
+  ASC's media page offers first. It was 6.5" (iPhone 14 Plus). The 6.3" slot, `APP_IPHONE_61`,
+  is new: its sizes (1179×2556 and 1206×2622) used to fail the push as unknown, and its App
+  Preview slot takes 886×1920. A 6.5" or 6.9" deck still uploads, now with a warning; re-shoot
+  to move an app, and the push deletes the old class's live set. `frame`'s default iPhone
+  canvas follows. An app that names `iPhone 14 Plus` in `screenshots.devices` keeps shooting
+  6.5" until it changes the name.
+
 - **A callout's placement can differ per deck.** `edge`, `centre`, `width`, `height` and
   `radius` under `framing.caption.callout` take a mapping by deck, as `caption.position` does:
   `centre: {iphone: 0.09, ipad: 0.88}`. A landscape table on its side leaves its bare felt in

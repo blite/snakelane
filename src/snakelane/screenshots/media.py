@@ -28,6 +28,8 @@ def _both_ways(sizes: list[tuple[int, int]]) -> list[tuple[int, int]]:
 # Why: docs/design/screenshots.md#the-display-type-table
 # Each iOS slot, the display App Store Connect names it by (the gallery's label), and its sizes.
 IOS_SLOTS = [
+    # Apple's one required iPhone class ("Dynamic Island, medium display"): 15 / 16 / 15 Pro, then 16 Pro / 17 / 17 Pro.
+    ("APP_IPHONE_61", '6.3"', [(1179, 2556), (1206, 2622)]),
     ("APP_IPHONE_65", '6.5"', [(1242, 2688), (1284, 2778)]),  # 11 Pro Max / XS Max, 14 Plus / 13 Pro Max
     # Plus the physically 6.5" iPhone Air (1260x2736), which files here.
     ("APP_IPHONE_67", '6.9"', [(1260, 2736), (1290, 2796), (1320, 2868)]),
@@ -42,19 +44,20 @@ SCREENSHOT_DISPLAY_TYPES = {
 
 # The sizes snakelane shoots by default; any other accepted size uploads with a warning.
 # Why: docs/design/screenshots.md#non-default-sizes-are-a-warning
-DISPLAY_TYPE_FAMILY = {"APP_IPHONE_65": "iPhone", "APP_IPHONE_67": "iPhone",
+DISPLAY_TYPE_FAMILY = {"APP_IPHONE_61": "iPhone", "APP_IPHONE_65": "iPhone", "APP_IPHONE_67": "iPhone",
                        "APP_IPAD_PRO_3GEN_129": "iPad", "APP_DESKTOP": "Mac"}
 PREFERRED_SIZES = {  # family -> (label, sizes, advice)
-    "iPhone": ('6.5"', {d for d, t in SCREENSHOT_DISPLAY_TYPES.items() if t == "APP_IPHONE_65"},
-               'ASC will show the 6.5" slot dimmed'),
+    "iPhone": ('6.3"', {d for d, t in SCREENSHOT_DISPLAY_TYPES.items() if t == "APP_IPHONE_61"},
+               'ASC will show the 6.3" slot, the one it requires, dimmed; re-shoot on iPhone 17 Pro'),
     "iPad": ('13"', {(2064, 2752), (2752, 2064)}, '12.9" is the legacy size; re-shoot on iPad Pro 13-inch (M5)'),
 }
 
 # Accepted App Preview sizes per slot, a local pre-check of Apple's app-preview-specifications page.
-# Keys are previewType values (no APP_ prefix: ASC 409s on it). 886x1920 fits both iPhone slots,
+# Keys are previewType values (no APP_ prefix: ASC 409s on it). 886x1920 fits every iPhone slot,
 # so the slot comes from the shots beside a video, not this table.
 # Why: docs/design/screenshots.md#an-app-previews-slot-comes-from-the-screenshots-beside-it
 ACCEPTED_PREVIEW_SIZES = {
+    "IPHONE_61": {(886, 1920), (1920, 886)},
     "IPHONE_65": {(886, 1920), (1920, 886)},
     "IPHONE_67": {(886, 1920), (1920, 886)},
     "IPAD_PRO_3GEN_129": {(1200, 1600), (1600, 1200)},  # not 900x1200: that is the 2nd-gen 12.9"'s
@@ -161,8 +164,8 @@ def preview_type_for(path: Path, deck: Path) -> str:
     Why: docs/design/screenshots.md#an-app-previews-slot-comes-from-the-screenshots-beside-it"""
     if not (shots := deck_files([deck], DECK_SUFFIXES, "screenshot", quiet=True)):
         raise SystemExit(
-            f"{path.name} has no screenshots beside it in {deck}, so there is nothing to tell a 6.5\" preview "
-            "from a 6.9\" one — Apple accepts 886x1920 for both. Shoot the deck first, or upload this preview "
+            f"{path.name} has no screenshots beside it in {deck}, so there is nothing to tell which iPhone slot "
+            "a preview fills — Apple accepts 886x1920 for every one. Shoot the deck first, or upload this preview "
             "by hand."
         )
     display_type = display_type_for(shots[0])

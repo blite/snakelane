@@ -6,7 +6,7 @@ snakelane.yml "screenshots" (all optional; full reference in the skill's referen
     scheme            scheme to test under; default the top-level "scheme"
     test              -only-testing id, or null: whole scheme; default <scheme>UITests/<scheme>UITestsScreenshotsUITests
     test_plan         -testPlan name
-    devices           names, UDIDs or {"name"|"id", "os", "deck"}; default ["iPhone 14 Plus", "iPad Pro 13-inch (M5)"]
+    devices           names, UDIDs or {"name"|"id", "os", "deck"}; default ["iPhone 17 Pro", "iPad Pro 13-inch (M5)"]
     locales           ASC locales, or {ASC locale: language key for the test}; default ["en-US"]
     env               extra test-runner variables (TEST_RUNNER_ prefix added); default {}
     frame             who draws captions: "test" (default; reframe runs reframe_test) | "snakelane" | "none"
@@ -42,9 +42,9 @@ from ..project import IMAGE_SUFFIXES, App, DeckTree, device_deck, resolve_app
 from ..xcode import run, show, sweep_test_devices
 from .extract import extract_deck
 
-# The 6.5" iPhone class (deliberately not 6.9") and the 13" iPad.
+# The 6.3" iPhone class, the one Apple requires, and the 13" iPad.
 # Why: docs/design/screenshots.md#the-default-lineup
-DEFAULT_DEVICES = ["iPhone 14 Plus", "iPad Pro 13-inch (M5)"]
+DEFAULT_DEVICES = ["iPhone 17 Pro", "iPad Pro 13-inch (M5)"]
 MAC_DESTINATION = "platform=macOS,arch=arm64"  # the app sizes its own window to an ASC Mac size
 # framed/: every image, since the push uploads every image there. raw/: only the shots.
 # Why: docs/design/screenshots.md#what-a-shoot-clears

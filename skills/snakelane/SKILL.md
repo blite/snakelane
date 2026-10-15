@@ -243,9 +243,10 @@ Don't mark `--reviewed` on your own translation without the user's go-ahead.
 - 1–10 screenshots per set (locale × display type); the push refuses an 11th before deleting
   anything. A locale with no folder at all inherits the primary language's screenshots on the
   store — nothing is copied, and that is a valid way to ship a locale.
-- iPhone 6.5" (1284×2778) is the default size on purpose, not an oversight: a 6.5" set shows
-  in ASC's media page as uploaded, not dimmed as a scaled derivative. Apple's [spec page](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications) lists
-  6.9" first and accepts either; don't "upgrade" an app's lineup to 6.9" unprompted.
+- iPhone 6.3" (1206×2622, the `iPhone 17 Pro` simulator; 1179×2556 also fits) is the default
+  size: Apple's [spec page](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications) requires "at least one screenshot for iPhone with Dynamic Island
+  (medium display)", and ASC's media page offers it first (2026-10-15). It was 6.5" until then.
+  An app whose deck is still 6.5" or 6.9" uploads with a warning; move it at its next re-shoot.
 - iPad 13" (2064×2752, the `iPad Pro 13-inch (M5)` simulator) is the default and the size to
   shoot. It shares the 12.9" slot; 12.9" decks are legacy, so move an app to 13" at its next
   re-shoot. Confirm device names against `xcrun simctl list devices available`.

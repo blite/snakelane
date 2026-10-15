@@ -117,7 +117,7 @@ custom terms page, link Apple's standard EULA:
 ## Screenshots
 
 **The caption band must not add height.** ASC enforces [exact dimensions per display type](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications)
-(2778×1284 for iPhone 6.5", 2752×2064 for iPad 13"), so a band stacked *above* a
+(2622×1206 for iPhone 6.3", 2752×2064 for iPad 13"), so a band stacked *above* a
 full-size capture makes the output ~13 % taller and every shot rejects with "Invalid screen
 size". `snakelane frame` keeps the size in every layout: `full-bleed` paints the caption
 over the capture's top strip; `stacked` scales the capture into the area below the band
@@ -134,9 +134,9 @@ gets its depth from `shoot` (the banner handoff), so the two never drift.
 
 **Read the sizes off App Store Connect, not off a guide.** ASC names the accepted sizes for
 each slot on the media page itself, and that is the only source that is about *your* app.
-Third-party articles are confidently wrong in both directions. Several insist the 6.9" iPhone
-set is mandatory when ASC offers 6.5" as the default slot, which would have sent a whole deck
-to the wrong class.
+Third-party articles are confidently wrong in both directions. Several insisted the 6.9" iPhone
+set was mandatory while ASC offered 6.5" as the default slot, which would have sent a whole deck
+to the wrong class; since 2026 ASC offers and requires 6.3".
 
 **Shoot the iPad at 13-inch (2064×2752), not 12.9-inch (2048×2732).** Sixteen pixels apart,
 nearly the same physical panel, and ASC lists the 13" as the iPad slot's size while the 12.9"
@@ -150,13 +150,13 @@ inches ("iPad Pro (12.9-inch) (6th generation)"), so the older, wronger device i
 that reads like the deliberate choice.
 
 **Name the simulator, not the size, when asking for hand-shot captures.** A person shooting
-by hand picks a device from a menu, and the size follows from it; asking for "2778×1284"
+by hand picks a device from a menu, and the size follows from it; asking for "2622×1206"
 leaves them to reverse-engineer which device that is, and several devices are one row apart
 in the menu with a different size. The two ASC default slots today:
 
 | Slot | Pixels (landscape) | Simulator | Note |
 |---|---|---|---|
-| iPhone 6.5" | 2778×1284 | **iPhone 14 Plus** | Also iPhone 12/13/14 Pro Max. NOT iPhone 15/16/17: those are 6.3"/6.9" classes at different sizes. |
+| iPhone 6.3" | 2622×1206 | **iPhone 17 Pro** | Also iPhone 16 Pro and 17; iPhone 15, 15 Pro and 16 shoot 2556×1179, the same slot. NOT the Pro Max or Plus: those are 6.9". |
 | iPad 13" | 2752×2064 | **iPad Pro 13-inch (M4)** or later | NOT "iPad Pro (12.9-inch) (6th generation)", which is 2732×2048. |
 
 Verify rather than trust the table: `xcrun simctl list devices available` names what is
