@@ -150,6 +150,13 @@ def style_for(cfg: dict[str, Any], slot: dict[str, Any], deck: str | None) -> St
     if c.position not in ("top", "bottom"):
         raise SystemExit(f'framing.caption.position must be "top" or "bottom", not {c.position!r}')
     check_keys("framing.caption.callout", c.callout, CALLOUT_KEYS)
+    # Placement can differ per deck: a landscape shot's bare felt isn't in the same place on a phone
+    # and a tablet. A deck left out of a mapping gets the default.
+    for key in ("edge", "centre", "width", "height", "radius"):
+        if key in c.callout and (value := per_deck(f"framing.caption.callout.{key}", c.callout[key], deck)) is None:
+            del c.callout[key]
+        elif key in c.callout:
+            c.callout[key] = value
     return Style(layout=layout, fit=fit, caption=c, theme=theme_of(cfg.get("theme")),
                  device=device_for(cfg, deck), rotate=turn,
                  bias=None if slot.get("bias") is None else float(slot["bias"]))

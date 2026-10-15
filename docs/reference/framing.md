@@ -266,7 +266,8 @@ screenshots:
       align: center                     # center | left
       arch: 0.018                       # shape arch: how far it bows (negative sags)
       callout: {edge: right, centre: 0.6, width: 0.66, height: 0.115, radius: 0.04,
-                lip: null, shadow: null}  # shape callout; lip and shadow override the theme's
+                lip: null, shadow: null}  # shape callout; lip and shadow override the theme's;
+                                                  # edge, centre, width, height, radius per deck too: centre: {iphone: 0.09, ipad: 0.88}
 
     theme: felt                         # a name, or a mapping:
     # theme:

@@ -6,6 +6,11 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **A callout's placement can differ per deck.** `edge`, `centre`, `width`, `height` and
+  `radius` under `framing.caption.callout` take a mapping by deck, as `caption.position` does:
+  `centre: {iphone: 0.09, ipad: 0.88}`. A landscape table on its side leaves its bare felt in
+  different places on a phone and a tablet, and one centre covered cards on one of them.
+
 - **`lint` flags "free" as a price reference** in the name, subtitle, keywords and screenshot
   captions. It was left out as too common in honest copy, until App Review rejected FreeCell
   for the caption "A free deal, every day" (2026-10-14), after Spider Solitaire's "Free to

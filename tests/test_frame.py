@@ -453,3 +453,15 @@ def test_a_broken_decorate_hook_stops_the_run(app: project.App, source: str | No
         capture(app, "iphone", n)
     with pytest.raises(SystemExit, match=message):
         frame.frame_deck(app, "en-US")
+
+
+def test_callout_placement_can_differ_per_deck() -> None:
+    from snakelane.screenshots.framing.style import style_for
+
+    cfg = {"layout": "full-bleed", "caption": {"shape": "callout", "callout": {"centre": {"iphone": 0.12, "ipad": 0.88},
+                                                                              "width": 0.6}}}
+    assert style_for(cfg, {}, "iphone").caption.callout == {"centre": 0.12, "width": 0.6}
+    assert style_for(cfg, {}, "ipad").caption.callout == {"centre": 0.88, "width": 0.6}
+    assert style_for(cfg, {}, "mac").caption.callout == {"width": 0.6}  # left out: the default
+    with pytest.raises(SystemExit, match="unknown deck"):
+        style_for({"caption": {"shape": "callout", "callout": {"centre": {"watch": 0.5}}}}, {}, "iphone")
