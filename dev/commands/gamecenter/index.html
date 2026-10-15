@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#gamecenter-game-center-images" class="md-skip">
+        <a href="#gamecenter-game-center-images-and-review" class="md-skip">
           Skip to content
         </a>
       
@@ -808,6 +808,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    gamecenter
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -824,6 +842,36 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#sending-the-records-to-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sending the records to review
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1426,6 +1474,25 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#sending-the-records-to-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sending the records to review
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1449,7 +1516,7 @@
   
 
 
-<h1 id="gamecenter-game-center-images">gamecenter: Game Center images<a class="headerlink" href="#gamecenter-game-center-images" title="Permanent link">&para;</a></h1>
+<h1 id="gamecenter-game-center-images-and-review">gamecenter: Game Center images and review<a class="headerlink" href="#gamecenter-game-center-images-and-review" title="Permanent link">&para;</a></h1>
 <p>Xcode's Game Center editor writes a <code>*.gamekit</code> bundle and syncs its achievements, leaderboards
 and activities to App Store Connect, but not their images. <code>gamecenter images</code> uploads them.</p>
 <div class="highlight"><pre><span></span><code>snakelane<span class="w"> </span>gamecenter<span class="w"> </span>images<span class="w"> </span>show<span class="w">                </span><span class="c1"># each image against live (read-only)</span>
@@ -1503,6 +1570,20 @@ Apple's processing and reads each image back, comparing pixels again.</p>
 <p>Settings: <code>gamecenter.gamekit</code> in <a href="../../reference/config/#game-center-gamecenter">the config</a>,
 only needed when the repo has more than one bundle. Why it works this way:
 <a href="../../design/gamecenter/">design notes</a>.</p>
+<h2 id="sending-the-records-to-review">Sending the records to review<a class="headerlink" href="#sending-the-records-to-review" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>snakelane<span class="w"> </span>gamecenter<span class="w"> </span>submit<span class="w"> </span>--dry-run<span class="w">     </span><span class="c1"># every record waiting for review, and the writes</span>
+snakelane<span class="w"> </span>gamecenter<span class="w"> </span>submit<span class="w">               </span><span class="c1"># add them to the draft review submission (--yes skips the prompt)</span>
+snakelane<span class="w"> </span>gamecenter<span class="w"> </span>submit<span class="w"> </span>--without-version<span class="w">   </span><span class="c1"># leave the app version out</span>
+</code></pre></div>
+<p>App Store Connect's web pages add each achievement or leaderboard to a submission one at a
+time ("Add for Review"). <code>submit</code> adds them all: every achievement, leaderboard, leaderboard set,
+activity and challenge whose newest version is in Prepare for Submission or was rejected, to the
+app's draft review submission (a new one if there is none). The app version being prepared joins
+the same draft, since a first achievement or leaderboard must go to review with an app version.
+It never submits: check the draft in App Store Connect and submit it there, or with
+<code>ship release</code>, which adds any records still waiting to the submission it sends.</p>
+<p>Records already in a draft (Ready for Review), in review or live, and archived records, are
+listed and left alone.</p>
 
 
 

@@ -1622,7 +1622,12 @@ lint: 3 error(s), 2 warning(s)
 <tr>
 <td><code>price-reference</code></td>
 <td>error</td>
-<td>"buy", "sale", "one-time", "$4.99"… in the name, subtitle, keywords or a <code>framing.captions</code> screenshot caption (<a href="https://developer.apple.com/app-store/review/guidelines/#2.3.7">2.3.7</a>)</td>
+<td>"free", "buy", "sale", "one-time", "$4.99"… in the name, subtitle, keywords or a <code>framing.captions</code> screenshot caption (<a href="https://developer.apple.com/app-store/review/guidelines/#2.3.7">2.3.7</a>)</td>
+</tr>
+<tr>
+<td><code>gamecenter-points</code></td>
+<td>error</td>
+<td>an achievement in the <code>.gamekit</code> worth more than 100 points, or more than 1,000 in all: App Store Connect refuses it, and Xcode's sync then creates nothing and shows no error. The bundle is <code>gamecenter.gamekit</code>, else the repo's only one (<a href="../../design/foundations/#game-center-points">why</a>)</td>
 </tr>
 </tbody>
 </table>

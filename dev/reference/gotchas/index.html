@@ -1739,15 +1739,14 @@ purchase, every device". Apple's note: "references to free or discounted service
 considered a price reference". The fix was a recaption ("New challenge every day") and
 dropping the paywall shot. So:</p>
 <ul>
-<li>No caption with "buy", "one purchase", "one-time unlock", "no subscription", "sale" or a
-  currency amount. "Free" is the judgement call: Apple's note names it, and "Free to play"
-  was half of this rejection, but <code>lint</code> does not flag it (it is everywhere in honest
-  feature copy, and the family's other listings use it in the description and promo text,
-  where it is allowed). Prefer a caption that says what the screen does.</li>
+<li>No caption with "free", "buy", "one purchase", "one-time unlock", "no subscription",
+  "sale" or a currency amount. FreeCell 1.0 was rejected (2026-10-14) for "A free deal,
+  every day" alone; it went out as "Challenges, every day". "Free" stays fine in the
+  description and promotional text. Prefer a caption that says what the screen does.</li>
 <li>No paywall, purchase sheet, price button, "Unlock for $X" or strike-through price in any
   shot. The IAP's <em>review</em> screenshot is where the priced sheet belongs; it is reviewer-only.</li>
 <li>Coin balances and in-game currency are fine: they are not money.</li>
-<li><code>snakelane lint</code> (and so <code>store push</code>) catches price wording other than "free" in the
+<li><code>snakelane lint</code> (and so <code>store push</code>) catches price wording, "free" included, in the
   listing fields and in <code>framing.captions</code>. It cannot read a caption the UI test draws (<code>frame: test</code>) or what a
   screen shows, so look at every framed shot before <code>store screenshots push</code>.</li>
 </ul>
@@ -1766,7 +1765,7 @@ custom terms page, link Apple's standard EULA:
 <code>https://www.apple.com/legal/internet-services/itunes/dev/stdeula/</code>.</p>
 <h2 id="screenshots">Screenshots<a class="headerlink" href="#screenshots" title="Permanent link">&para;</a></h2>
 <p><strong>The caption band must not add height.</strong> ASC enforces <a href="https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications">exact dimensions per display type</a>
-(2778×1284 for iPhone 6.5", 2752×2064 for iPad 13"), so a band stacked <em>above</em> a
+(2622×1206 for iPhone 6.3", 2752×2064 for iPad 13"), so a band stacked <em>above</em> a
 full-size capture makes the output ~13 % taller and every shot rejects with "Invalid screen
 size". <code>snakelane frame</code> keeps the size in every layout: <code>full-bleed</code> paints the caption
 over the capture's top strip; <code>stacked</code> scales the capture into the area below the band
@@ -1781,9 +1780,9 @@ landscape layout the answer is almost always <code>stacked</code>. An app that d
 gets its depth from <code>shoot</code> (the banner handoff), so the two never drift.</p>
 <p><strong>Read the sizes off App Store Connect, not off a guide.</strong> ASC names the accepted sizes for
 each slot on the media page itself, and that is the only source that is about <em>your</em> app.
-Third-party articles are confidently wrong in both directions. Several insist the 6.9" iPhone
-set is mandatory when ASC offers 6.5" as the default slot, which would have sent a whole deck
-to the wrong class.</p>
+Third-party articles are confidently wrong in both directions. Several insisted the 6.9" iPhone
+set was mandatory while ASC offered 6.5" as the default slot, which would have sent a whole deck
+to the wrong class; since 2026 ASC offers and requires 6.3".</p>
 <p><strong>Shoot the iPad at 13-inch (2064×2752), not 12.9-inch (2048×2732).</strong> Sixteen pixels apart,
 nearly the same physical panel, and ASC lists the 13" as the iPad slot's size while the 12.9"
 is legacy. Both upload under the same <code>APP_IPAD_PRO_3GEN_129</code> display type, so nothing in the
@@ -1795,7 +1794,7 @@ is called for its chip ("iPad Pro 13-inch (M5)"), while the legacy one is called
 inches ("iPad Pro (12.9-inch) (6th generation)"), so the older, wronger device is the one
 that reads like the deliberate choice.</p>
 <p><strong>Name the simulator, not the size, when asking for hand-shot captures.</strong> A person shooting
-by hand picks a device from a menu, and the size follows from it; asking for "2778×1284"
+by hand picks a device from a menu, and the size follows from it; asking for "2622×1206"
 leaves them to reverse-engineer which device that is, and several devices are one row apart
 in the menu with a different size. The two ASC default slots today:</p>
 <table>
@@ -1809,10 +1808,10 @@ in the menu with a different size. The two ASC default slots today:</p>
 </thead>
 <tbody>
 <tr>
-<td>iPhone 6.5"</td>
-<td>2778×1284</td>
-<td><strong>iPhone 14 Plus</strong></td>
-<td>Also iPhone 12/13/14 Pro Max. NOT iPhone 15/16/17: those are 6.3"/6.9" classes at different sizes.</td>
+<td>iPhone 6.3"</td>
+<td>2622×1206</td>
+<td><strong>iPhone 17 Pro</strong></td>
+<td>Also iPhone 16 Pro and 17; iPhone 15, 15 Pro and 16 shoot 2556×1179, the same slot. NOT the Pro Max or Plus: those are 6.9".</td>
 </tr>
 <tr>
 <td>iPad 13"</td>

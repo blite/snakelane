@@ -1718,7 +1718,7 @@ works renamed.</p>
 <span class="w">  </span><span class="nt">test</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AppUITests/AppUITestsScreenshotsUITests</span><span class="w">   </span><span class="c1"># -only-testing; null = whole scheme/plan</span>
 <span class="w">  </span><span class="nt">test_plan</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
 <span class="w">  </span><span class="nt">devices</span><span class="p">:</span><span class="w">                       </span><span class="c1"># name, UDID, or {name|id, os, deck: iphone|ipad}</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">iPhone 14 Plus</span><span class="w">             </span><span class="c1"># 6.5", the default size</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">iPhone 17 Pro</span><span class="w">              </span><span class="c1"># 6.3", the default size</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">iPad Pro 13-inch (M5)</span><span class="w">      </span><span class="c1"># 13"</span>
 <span class="w">  </span><span class="nt">locales</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">en-US</span><span class="p p-Indicator">]</span><span class="w">               </span><span class="c1"># or a mapping {es-MX: es-MX, de-DE: de} → the language key</span>
 <span class="w">                                 </span><span class="c1">#   written to /tmp/&lt;slug&gt;-screenshot-locale for the test</span>
@@ -1728,7 +1728,8 @@ works renamed.</p>
 <span class="w">  </span><span class="nt">mac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w">                        </span><span class="c1"># present = enable --platform macos</span>
 <span class="w">  </span><span class="nt">framing</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nv">…</span><span class="p p-Indicator">}</span><span class="w">                   </span><span class="c1"># `snakelane frame`: captions ({"1": …}, or per locale</span>
 <span class="w">                                 </span><span class="c1">#   {en-US: {"1": …}, de-DE: {…}}; a locale without one gets the</span>
-<span class="w">                                 </span><span class="c1">#   primary's), targets (keyed iphone/ipad/mac), and three</span>
+<span class="w">                                 </span><span class="c1">#   primary's; a deck key, mac: {…}, gives that deck its own),</span>
+<span class="w">                                 </span><span class="c1">#   targets (keyed iphone/ipad/mac), and three</span>
 <span class="w">                                 </span><span class="c1">#   independent choices: layout (full-bleed|stacked|device, fit),</span>
 <span class="w">                                 </span><span class="c1">#   caption {shape band|arch|callout|headline, position, depth, …},</span>
 <span class="w">                                 </span><span class="c1">#   theme (a built-in name, or {base, fill, text, accent, font, lip, …});</span>
@@ -1751,7 +1752,8 @@ it fails.</p>
 </code></pre></div>
 <p>Optional: without it, <code>gamecenter images</code> uses the repo's only <code>*.gamekit</code> folder (build output,
 <code>DerivedData</code>, <code>Pods</code> and dot-folders are skipped) and stops, naming them, when there are none
-or several. The app itself is found by <code>bundle_id</code> / <code>apple_id</code>, as for <code>store</code>.</p>
+or several. <code>lint</code> reads the same bundle for its <code>gamecenter-points</code> check, and skips the check
+when there are several and none is named. The app itself is found by <code>bundle_id</code> / <code>apple_id</code>, as for <code>store</code>.</p>
 <h2 id="background-assets-packs-packs">Background Assets packs (<code>packs</code>)<a class="headerlink" href="#background-assets-packs-packs" title="Permanent link">&para;</a></h2>
 <p><a href="https://developer.apple.com/documentation/backgroundassets">Background Assets</a> is Apple-hosted
 content an app downloads after install instead of shipping it in the binary. These keys

@@ -1567,6 +1567,67 @@ behaviour bumps the minor version. Each release is tagged <code>vX.Y.Z</code>.</
 <h2 id="unreleased">Unreleased<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
 <ul>
 <li>
+<p><strong><code>gamecenter submit</code></strong> adds every Game Center record waiting for review (achievements,
+  leaderboards, leaderboard sets, activities, challenges) to the app's draft review submission,
+  with the app version being prepared, in one run; <code>--dry-run</code> shows it and <code>--without-version</code>
+  leaves the version out. It never submits. App Store Connect's web pages take them one page at
+  a time, thirteen for Pyramid Solitaire's first release. <strong><code>ship release</code> now sends any records
+  still waiting with the version</strong>, and no longer adds a version already in the draft.</p>
+</li>
+<li>
+<p><strong><code>lint</code> checks Game Center achievement points</strong> (<code>gamecenter-points</code>, an error): an
+  achievement in the <code>.gamekit</code> worth more than 100, or more than 1,000 in all. App Store
+  Connect refuses either, and Xcode's Game Center sync then creates nothing and shows no
+  error. Pyramid Solitaire's 150-point achievement kept all thirteen of its records off App
+  Store Connect through five syncs (2026-10-15). The bundle is <code>gamecenter.gamekit</code>, else the
+  repo's only one.</p>
+</li>
+<li>
+<p><strong>The default iPhone size is 6.3"</strong> (1206×2622, shot on the iPhone 17 Pro), the class Apple's
+  screenshot specifications now require ("iPhone with Dynamic Island, medium display") and
+  ASC's media page offers first. It was 6.5" (iPhone 14 Plus). The 6.3" slot, <code>APP_IPHONE_61</code>,
+  is new: its sizes (1179×2556 and 1206×2622) used to fail the push as unknown, and its App
+  Preview slot takes 886×1920. A 6.5" or 6.9" deck still uploads, now with a warning; re-shoot
+  to move an app, and the push deletes the old class's live set. <code>frame</code>'s default iPhone
+  canvas follows. An app that names <code>iPhone 14 Plus</code> in <code>screenshots.devices</code> keeps shooting
+  6.5" until it changes the name.</p>
+</li>
+<li>
+<p><strong>A callout's placement can differ per deck.</strong> <code>edge</code>, <code>centre</code>, <code>width</code>, <code>height</code> and
+  <code>radius</code> under <code>framing.caption.callout</code> take a mapping by deck, as <code>caption.position</code> does:
+  <code>centre: {iphone: 0.09, ipad: 0.88}</code>. A landscape table on its side leaves its bare felt in
+  different places on a phone and a tablet, and one centre covered cards on one of them.</p>
+</li>
+<li>
+<p><strong><code>lint</code> flags "free" as a price reference</strong> in the name, subtitle, keywords and screenshot
+  captions. It was left out as too common in honest copy, until App Review rejected FreeCell
+  for the caption "A free deal, every day" (2026-10-14), after Spider Solitaire's "Free to
+  play every day". A word with "free" inside it (FreeCell) doesn't match; a phrase that only
+  looks like a price, such as a "free cell" keyword, goes in <code>lint.allow</code>.</p>
+</li>
+<li>
+<p><strong>Screenshot captions can differ per deck.</strong> A deck key in <code>framing.captions</code> (<code>iphone</code>,
+  <code>ipad</code>, <code>mac</code>) holds that deck's own captions, one map or per locale; every other deck uses the
+  rest. A Mac deck can say "click" and "window" while keeping its shots numbered from <code>ss-01</code>.
+  The missing-shot check now runs per caption set, against the decks that use it, so an iOS-only
+  shoot no longer needs Mac captures to exist (and the reverse). Cloudless Cam had numbered its
+  Mac shots 05-07 to get Mac wording, and then neither platform could finish a shoot in a fresh
+  checkout. <code>lint</code>'s price check covers each deck's captions.</p>
+</li>
+<li>
+<p><strong><code>framing.device</code> values can differ per deck.</strong> Any key (<code>width</code>, <code>radius</code>, <code>gap</code>, <code>bleed</code>)
+  takes a mapping by deck, as <code>caption.position</code> already did: <code>radius: {iphone: 0.07, mac:
+  0.012}</code>. The radius is a share of the capture's width, so the 7% that suits a portrait phone
+  rounded a landscape Mac window's corners off its traffic lights and toolbar buttons. A deck
+  left out of the mapping gets the default.</p>
+</li>
+<li>
+<p><strong><code>bump</code> in a repo with several Xcode projects asks TestFlight only about its own.</strong> In
+  <code>"project"</code> scope the next build number took the highest TestFlight build of every app in the
+  repo, so a second app in its own project (FreeCell's repo taking Pyramid) started from the first
+  app's numbers. It now considers only the apps whose <code>project</code> is this app's.</p>
+</li>
+<li>
 <p><strong><code>gamecenter images push</code>: Game Center images from Xcode's <code>.gamekit</code>.</strong> Xcode's Game Center
   editor syncs achievements, leaderboards and activities to App Store Connect but not their
   images. The new command reads every achievement and leaderboard image (per locale) and each

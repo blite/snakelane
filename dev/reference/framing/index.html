@@ -609,6 +609,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#captions-per-deck" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Captions per deck
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1592,6 +1603,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#captions-per-deck" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Captions per deck
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1809,6 +1831,20 @@ first of <code>locales</code>); <code>frame</code> and <code>shoot --dry-run</co
 entry must caption every shot it has, as the one map must. The two forms don't mix: shot
 numbers and locales in one map is an error. Marks are checked in every locale's captions on
 every run, so a broken translation fails before it is drawn.</p>
+<h3 id="captions-per-deck">Captions per deck<a class="headerlink" href="#captions-per-deck" title="Permanent link">&para;</a></h3>
+<p>A deck key (<code>iphone</code>, <code>ipad</code>, <code>mac</code>) gives that deck its own captions, in either form above;
+every deck without one uses the rest. A Mac app is clicked and fills a window where the phone
+app is tapped and fills the screen, so the same shot often needs different words:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">captions</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">en-US</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="s">"1"</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">"All</span><span class="nv"> </span><span class="s">your</span><span class="nv"> </span><span class="s">cameras"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"2"</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">"==Live==</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">one</span><span class="nv"> </span><span class="s">tap"</span><span class="p p-Indicator">}</span>
+<span class="w">  </span><span class="nt">de-DE</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="s">"1"</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">"Alle</span><span class="nv"> </span><span class="s">Kameras"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"2"</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">"==Live==</span><span class="nv"> </span><span class="s">mit</span><span class="nv"> </span><span class="s">einem</span><span class="nv"> </span><span class="s">Tippen"</span><span class="p p-Indicator">}</span>
+<span class="w">  </span><span class="nt">mac</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">en-US</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="s">"1"</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">"All</span><span class="nv"> </span><span class="s">your</span><span class="nv"> </span><span class="s">cameras"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"2"</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">"==Live==</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">one</span><span class="nv"> </span><span class="s">click"</span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="nt">de-DE</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="s">"1"</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">"Alle</span><span class="nv"> </span><span class="s">Kameras"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"2"</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">"==Live==</span><span class="nv"> </span><span class="s">mit</span><span class="nv"> </span><span class="s">einem</span><span class="nv"> </span><span class="s">Klick"</span><span class="p p-Indicator">}</span>
+</code></pre></div>
+<p>Shot numbers then mean the same thing in every deck (the Mac's first shot is <code>ss-01</code>), and each
+set is checked only against the decks that use it: a captioned shot must exist in one of them,
+so an iOS-only shoot never needs Mac captures to exist, and the reverse.</p>
 <h2 id="decorating-shots-in-the-apps-own-code">Decorating shots in the app's own code<a class="headerlink" href="#decorating-shots-in-the-apps-own-code" title="Permanent link">&para;</a></h2>
 <p>Art that belongs to one app and no other, such as badge cards, a sticker, or an arrow pointing
 at a control, stays in that app's repo. Name a Python file with <code>decorate</code>:</p>
@@ -1966,12 +2002,13 @@ theme. These three are the other apps' looks, written as overrides:</p>
 <span class="w">  </span><span class="nt">framing</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">captions</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="s">"1"</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">"Caption"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"2"</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">line</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">line</span><span class="p p-Indicator">]}</span><span class="w">   </span><span class="c1"># required; a list is the caption's lines</span>
 <span class="w">    </span><span class="c1"># or per locale: {en-US: {"1": …}, de-DE: {"1": …}}; a locale without one gets the primary's</span>
-<span class="w">    </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">iphone</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1284</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2778</span><span class="p p-Indicator">],</span><span class="nt"> ipad</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">2064</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2752</span><span class="p p-Indicator">],</span><span class="nt"> mac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">2880</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1800</span><span class="p p-Indicator">]}</span><span class="w">  </span><span class="c1"># default: each capture's size</span>
+<span class="w">    </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">iphone</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1206</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2622</span><span class="p p-Indicator">],</span><span class="nt"> ipad</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">2064</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2752</span><span class="p p-Indicator">],</span><span class="nt"> mac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">2880</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1800</span><span class="p p-Indicator">]}</span><span class="w">  </span><span class="c1"># default: each capture's size</span>
 <span class="w">    </span><span class="nt">decorate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">                      </span><span class="c1"># a repo-relative .py with decorate(image, shot); see above</span>
 
 <span class="w">    </span><span class="nt">layout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">stacked</span><span class="w">                     </span><span class="c1"># full-bleed | stacked | device</span>
 <span class="w">    </span><span class="nt">fit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">scale</span><span class="w">                          </span><span class="c1"># scale | crop (default crop for full-bleed)</span>
 <span class="w">    </span><span class="nt">device</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">width</span><span class="p">:</span><span class="w"> </span><span class="nv">0.84</span><span class="p p-Indicator">,</span><span class="nt"> radius</span><span class="p">:</span><span class="w"> </span><span class="nv">0.07</span><span class="p p-Indicator">,</span><span class="nt"> gap</span><span class="p">:</span><span class="w"> </span><span class="nv">0.02</span><span class="p p-Indicator">,</span><span class="nt"> bleed</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="p p-Indicator">}</span><span class="w">   </span><span class="c1"># layout: device</span>
+<span class="w">    </span><span class="c1"># any device value per deck: radius: {iphone: 0.07, mac: 0.012}; a deck left out gets the default</span>
 
 <span class="w">    </span><span class="nt">caption</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">shape</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">band</span><span class="w">                       </span><span class="c1"># band | arch | callout | headline</span>
@@ -1984,7 +2021,8 @@ theme. These three are the other apps' looks, written as overrides:</p>
 <span class="w">      </span><span class="nt">align</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">center</span><span class="w">                     </span><span class="c1"># center | left</span>
 <span class="w">      </span><span class="nt">arch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.018</span><span class="w">                       </span><span class="c1"># shape arch: how far it bows (negative sags)</span>
 <span class="w">      </span><span class="nt">callout</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">edge</span><span class="p">:</span><span class="w"> </span><span class="nv">right</span><span class="p p-Indicator">,</span><span class="nt"> centre</span><span class="p">:</span><span class="w"> </span><span class="nv">0.6</span><span class="p p-Indicator">,</span><span class="nt"> width</span><span class="p">:</span><span class="w"> </span><span class="nv">0.66</span><span class="p p-Indicator">,</span><span class="nt"> height</span><span class="p">:</span><span class="w"> </span><span class="nv">0.115</span><span class="p p-Indicator">,</span><span class="nt"> radius</span><span class="p">:</span><span class="w"> </span><span class="nv">0.04</span><span class="p p-Indicator">,</span>
-<span class="nt">                lip</span><span class="p">:</span><span class="w"> </span><span class="nv">null</span><span class="p p-Indicator">,</span><span class="nt"> shadow</span><span class="p">:</span><span class="w"> </span><span class="nv">null</span><span class="p p-Indicator">}</span><span class="w">  </span><span class="c1"># shape callout; lip and shadow override the theme's</span>
+<span class="nt">                lip</span><span class="p">:</span><span class="w"> </span><span class="nv">null</span><span class="p p-Indicator">,</span><span class="nt"> shadow</span><span class="p">:</span><span class="w"> </span><span class="nv">null</span><span class="p p-Indicator">}</span><span class="w">  </span><span class="c1"># shape callout; lip and shadow override the theme's;</span>
+<span class="w">                                                  </span><span class="c1"># edge, centre, width, height, radius per deck too: centre: {iphone: 0.09, ipad: 0.88}</span>
 
 <span class="w">    </span><span class="nt">theme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">felt</span><span class="w">                         </span><span class="c1"># a name, or a mapping:</span>
 <span class="w">    </span><span class="c1"># theme:</span>

@@ -1629,7 +1629,7 @@ snakelane.</p>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> The app leaves room for the caption: <code>shoot</code> hands it the band's depth</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Push screenshots and App Previews, with the slot worked out from <a href="https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications">pixel size</a>, the
    10-per-set limit enforced, and Apple's processing waited on</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Warnings for sizes other than the 6.5" iPhone and 13" iPad defaults</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Warnings for sizes other than the 6.3" iPhone and 13" iPad defaults</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> OCR check that refuses a deck shot from a debug build (<code>check</code>)</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> HTML review page (<code>gallery</code>): every deck against what's live or the last commit, App Store
    search-result and product-page mocks, lint and translation status per locale</li>
@@ -1653,6 +1653,9 @@ snakelane.</p>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>gamecenter images push</code>: the achievement, leaderboard and activity images in Xcode's
    <code>.gamekit</code> bundle, which Xcode's own sync leaves out; compared by pixels, confirmed, uploaded
    and read back</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>gamecenter submit</code>: every achievement and leaderboard waiting for review added to the
+   draft review submission with the app version, in one run (never submitted)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <code>lint</code> catches achievement points App Store Connect refuses (over 100, or 1,000 in all)</li>
 </ul>
 <p><strong>Shipping</strong></p>
 <ul class="task-list">

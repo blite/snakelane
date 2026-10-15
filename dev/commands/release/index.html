@@ -1591,7 +1591,8 @@ snakelane<span class="w"> </span>ship<span class="w"> </span>release<span class=
 snakelane<span class="w"> </span>ship<span class="w"> </span>bump-version<span class="w"> </span>--bump<span class="w"> </span>minor
 </code></pre></div>
 <p><code>release</code> never pushes text, so what goes to review is the listing App Store Connect already
-holds. <code>release</code> lints that listing first, and warns when your local files differ from it.</p>
+holds. It sends every Game Center record waiting for review with the version (see
+<a href="../gamecenter/#sending-the-records-to-review"><code>gamecenter submit</code></a>). <code>release</code> lints that listing first, and warns when your local files differ from it.</p>
 <h2 id="build-numbers">Build numbers<a class="headerlink" href="#build-numbers" title="Permanent link">&para;</a></h2>
 <p>Every archive, from Xcode or <code>xcodebuild</code>, gets <code>max(project + 1, TestFlight + 1)</code>, written to
 the project file and stamped into the app and every extension. That happens in the scheme's
