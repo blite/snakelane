@@ -6,6 +6,12 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **A hung screenshot test is cut off at three minutes and retried once** (`-test-timeouts-enabled
+  YES`, a 180 s allowance, `-retry-tests-on-failure -test-iterations 2`). On a fresh simulator or a
+  busy Mac a single XCUITest launch could hang for 13 minutes and fail the whole pass; Lamplight's
+  and FreeCell's iOS 27 decks lost half an hour each that way (2026-10-15). A shot that fails twice
+  still fails the shoot.
+
 - **`screenshots.mac.frame`** sets who captions the Mac deck, overriding `screenshots.frame` for
   it: an app whose UI test draws its iOS banners (`frame: test`) can have snakelane frame its Mac
   deck with `mac: {frame: snakelane}` and `snakelane frame --platform macos`. Jigsaw's Mac deck

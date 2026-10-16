@@ -176,3 +176,16 @@ def test_each_locale_gets_its_own_captions_banner(app: project.App, capsys: pyte
     assert depth["de-DE"] > depth["en-US"] == depth["fr-FR"], "three lines need a deeper band than one"
     shoot.print_plan(plan)
     assert "fr-FR has none" in capsys.readouterr().out
+
+
+def test_a_hung_shot_is_cut_off_and_retried() -> None:
+    """Each test gets three minutes and one retry, on iOS and the Mac, before `test`."""
+    app = SimpleNamespace(project=Path("App.xcodeproj"))
+    for mac in (False, True):
+        cmd = shoot.xcodebuild_test(app, "App", "platform=iOS Simulator,id=X", test=None, test_plan=None,
+                                    xcresult=None, mac=mac)
+        assert cmd[-1] == "test"
+        flags = cmd[cmd.index("-test-timeouts-enabled"):-1]
+        assert flags == ["-test-timeouts-enabled", "YES", "-default-test-execution-time-allowance", "180",
+                         "-maximum-test-execution-time-allowance", "180", "-retry-tests-on-failure",
+                         "-test-iterations", "2"]

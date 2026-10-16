@@ -392,8 +392,21 @@ def xcodebuild_test(app: App, scheme: str, destination: str, *, test: str | None
         *(["-allowProvisioningUpdates"] if mac else []),
         *(["-resultBundlePath", str(xcresult)] if xcresult is not None else []),
         *(["-only-testing", test] if test else []),
-        "-parallel-testing-enabled", "NO", "test",  # serial: docs/design/screenshots.md#tests-run-serially
+        "-parallel-testing-enabled", "NO",  # serial: docs/design/screenshots.md#tests-run-serially
+        *SHOT_TIMEOUT_AND_RETRY,
+        "test",
     ]
+
+
+# A hung shot is cut off and run again rather than costing the pass.
+# Why: docs/design/screenshots.md#a-hung-shot-is-cut-off-and-retried
+SHOT_TIMEOUT_AND_RETRY = (
+    "-test-timeouts-enabled", "YES",
+    "-default-test-execution-time-allowance", "180",
+    "-maximum-test-execution-time-allowance", "180",
+    "-retry-tests-on-failure",
+    "-test-iterations", "2",
+)
 
 
 def make_plan(app: App, config: ShotsConfig, args: SimpleNamespace) -> Plan:
