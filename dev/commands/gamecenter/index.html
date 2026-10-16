@@ -1580,6 +1580,8 @@ time ("Add for Review"). <code>submit</code> adds them all: every achievement, l
 activity and challenge whose newest version is in Prepare for Submission or was rejected, to the
 app's draft review submission (a new one if there is none). The app version being prepared joins
 the same draft, since a first achievement or leaderboard must go to review with an app version.
+A record App Store Connect refuses (an incomplete one, say) is left out, and the run ends naming
+it; <code>ship release</code> submits the version without it and lists it.
 It never submits: check the draft in App Store Connect and submit it there, or with
 <code>ship release</code>, which adds any records still waiting to the submission it sends.</p>
 <p>Records already in a draft (Ready for Review), in review or live, and archived records, are

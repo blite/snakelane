@@ -1567,9 +1567,30 @@ behaviour bumps the minor version. Each release is tagged <code>vX.Y.Z</code>.</
 <h2 id="unreleased">Unreleased<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
 <ul>
 <li>
+<p><strong>A missing metadata folder stops every command that reads the listing</strong>, naming the
+  <code>metadata</code> key, instead of reading as an empty listing: <code>lint</code> reported clean for
+  TowerDefense while its files were still in <code>Metadata/PicnicDefense/</code> (2026-10-16). <code>bump</code>'s log
+  line now names the app, not the folder, so it doesn't need one.</p>
+</li>
+<li>
+<p><strong><code>snakelane frame</code> frames a deck at one size.</strong> Without <code>framing.targets</code>, a deck whose captures
+  differ in size (key art beside screen captures) is framed at its most common App Store size, and
+  the files that differ are named; it used to frame each at its own size, which left Picnic
+  Defense's slot 9 at 1456x816. A target that fits no App Store slot is now a warning.</p>
+</li>
+<li>
+<p><strong>A hung screenshot test is cut off at three minutes and retried once</strong> (<code>-test-timeouts-enabled
+  YES</code>, a 180 s allowance, <code>-retry-tests-on-failure -test-iterations 2</code>). On a fresh simulator or a
+  busy Mac a single XCUITest launch could hang for 13 minutes and fail the whole pass; Lamplight's
+  and FreeCell's iOS 27 decks lost half an hour each that way (2026-10-15). A shot that fails twice
+  still fails the shoot. When a retried shot leaves captures from both attempts, the newest of
+  each slot, the passing attempt's, is the one filed into the deck.</p>
+</li>
+<li>
 <p><strong><code>screenshots.mac.frame</code></strong> sets who captions the Mac deck, overriding <code>screenshots.frame</code> for
   it: an app whose UI test draws its iOS banners (<code>frame: test</code>) can have snakelane frame its Mac
-  deck with <code>mac: {frame: snakelane}</code> and <code>snakelane frame --platform macos</code>. Jigsaw's Mac deck
+  deck with <code>mac: {frame: snakelane}</code> and <code>snakelane frame --platform macos</code> (or plain <code>snakelane
+  frame</code> for a Mac-only app). Jigsaw's Mac deck
   is captured by hand and had no captions at all (2026-10-15).</p>
 </li>
 <li>
@@ -1584,13 +1605,15 @@ behaviour bumps the minor version. Each release is tagged <code>vX.Y.Z</code>.</
   "Cannot edit InAppPurchaseLocalization when it is in ACTIVE state"); only its website changes
   one. The push used to die on the first, so nothing after it in the catalogue ran, new locales
   included. Now it skips each one, carries on, and ends with the list of changes to make on the
-  website. Jigsaw's first push stopped at one French name before reaching the Italian and Russian
+  website. A 409 on a localization that isn't approved is listed the same way, with Apple's
+  words rather than "approved". Jigsaw's first push stopped at one French name before reaching the Italian and Russian
   localizations of nine packs (2026-10-15). Subscriptions are unchanged.</p>
 </li>
 <li>
 <p><strong><code>asset_packs.source_under</code></strong> restricts <code>packs package</code> to pictures under one folder, e.g.
   <code>approved</code> when only reviewed content may ship: a pack whose <code>pictureSource</code> sits anywhere else
-  is refused before anything is staged. A pack's contents freeze at first upload, and Puzzle Reef
+  is refused before anything is staged; the path is normalised first, so <code>approved/../raw</code> is
+  refused too. A pack's contents freeze at first upload, and Puzzle Reef
   uploaded two packs from its pre-review folder before it had this gate (2026-09-12).</p>
 </li>
 <li>
@@ -1599,7 +1622,10 @@ behaviour bumps the minor version. Each release is tagged <code>vX.Y.Z</code>.</
   with the app version being prepared, in one run; <code>--dry-run</code> shows it and <code>--without-version</code>
   leaves the version out. It never submits. App Store Connect's web pages take them one page at
   a time, thirteen for Pyramid Solitaire's first release. <strong><code>ship release</code> now sends any records
-  still waiting with the version</strong>, and no longer adds a version already in the draft.</p>
+  still waiting with the version</strong>, and no longer adds a version already in the draft. A record
+  App Store Connect refuses (409) is left out and named: <code>ship release</code> still submits the version
+  and lists it, <code>gamecenter submit</code> adds the rest and then stops with it. A version in Metadata
+  Rejected joins the draft too.</p>
 </li>
 <li>
 <p><strong><code>lint</code> checks Game Center achievement points</strong> (<code>gamecenter-points</code>, an error): an

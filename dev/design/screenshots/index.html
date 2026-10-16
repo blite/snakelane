@@ -1223,6 +1223,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#a-hung-shot-is-cut-off-and-retried" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A hung shot is cut off and retried
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-mac-lane-checks-for-developer-mode-and-automation-mode" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2117,6 +2128,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#a-hung-shot-is-cut-off-and-retried" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A hung shot is cut off and retried
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-mac-lane-checks-for-developer-mode-and-automation-mode" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2650,6 +2672,12 @@
 <p>The device is booted first and <code>bootstatus -b</code> waits for the boot. <code>simctl status_bar</code> against a shut-down device prints "Unable to lookup in current state: Shutdown" to stderr without failing, so the override silently does not apply. That produced a deck with a charging-bolt battery left over from a previous boot's override. Overrides live on the device, and test clones inherit them.</p>
 <h3 id="tests-run-serially">Tests run serially<a class="headerlink" href="#tests-run-serially" title="Permanent link">&para;</a></h3>
 <p><code>xcodebuild</code> gets <code>-parallel-testing-enabled NO</code>. On iOS this keeps the test on the parent simulator the status-bar pin already booted, rather than a cold test clone: cold clone boots are where XCUITest's launch request races SpringBoard and retries with a huge <code>wait_for_debugger</code> dump. <code>ship</code> runs its tests the same way. On a Mac the reason is stronger: parallel workers are separate copies of the app on the same desktop, and one's capture can catch another's window.</p>
+<h3 id="a-hung-shot-is-cut-off-and-retried">A hung shot is cut off and retried<a class="headerlink" href="#a-hung-shot-is-cut-off-and-retried" title="Permanent link">&para;</a></h3>
+<p>Every shoot's <code>xcodebuild</code> gets a three-minute allowance per test (<code>-test-timeouts-enabled YES</code>, default and maximum 180 s) and one retry of a failed test (<code>-retry-tests-on-failure -test-iterations 2</code>). A screenshot test is a launch, a wait and a capture: under a minute when the simulator is well. On a freshly created simulator, or a Mac busy with other builds, XCUITest's launch spent four to nine minutes "Setting up automation session", and the accessibility server then died (<code>kAXErrorServerNotFound</code>) under a query with a 20-second timeout that hung for thirteen minutes (Lamplight's and FreeCell's iOS 27 decks, 2026-10). One such shot failed the pass, and with it the deck, after half an hour. Cut off at three minutes and run again, the same shot passes on a relaunch; a shot that fails twice is a real failure, reported as before. A test that needs longer than three minutes is not a screenshot test.</p>
+<p>A retried test leaves both attempts' attachments in the result bundle, and the hung attempt may
+already have captured a shot or two in a bad state. The extract keeps the newest capture of each
+slot (the attachment's <code>timestamp</code>), which is the passing attempt's; it used to keep whichever
+the manifest listed last.</p>
 <h3 id="the-mac-lane-checks-for-developer-mode-and-automation-mode">The Mac lane checks for developer mode and Automation Mode<a class="headerlink" href="#the-mac-lane-checks-for-developer-mode-and-automation-mode" title="Permanent link">&para;</a></h3>
 <p>Both switches are administrator actions, so the shoot prints the commands rather than running them. They are once per machine, though an OS upgrade turns Automation Mode back off. Without developer mode the failure arrives after the whole project has built, as "The test runner failed to initialize for UI testing (Underlying Error: Authentication canceled…)", which names a dialog rather than the switch. Without Automation Mode every synthesized click and key is dropped after about five seconds with no error. The no-authentication setting is used because a run that asks for a password part-way through is a run nobody is watching.</p>
 <p>The iOS lane needs neither switch, because the simulator is not the host.</p>

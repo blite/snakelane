@@ -1406,6 +1406,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#a-deck-is-framed-at-one-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A deck is framed at one size
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#key-art-is-a-full-bleed-slot-not-a-layout" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2035,6 +2046,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#a-deck-is-framed-at-one-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A deck is framed at one size
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#key-art-is-a-full-bleed-slot-not-a-layout" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2259,6 +2281,14 @@ each pass, and the UI test passes it to the app. The depth includes the lip and 
 <p>A slot with a callout, a turned capture, key art (a slot with a <code>bias</code>), or any layout other than
 full-bleed gets <code>none</code>. In the other layouts the caption doesn't overlap the capture, so there
 is nothing to keep clear, and key art isn't a screen the app lays out.</p>
+<h3 id="a-deck-is-framed-at-one-size">A deck is framed at one size<a class="headerlink" href="#a-deck-is-framed-at-one-size" title="Permanent link">&para;</a></h3>
+<p>Without <code>targets</code>, a shot used to be framed at its own capture's size. That is right while a
+deck's captures agree, and they do when one device shoots them all. A slot fed something else
+breaks it: Picnic Defense's key art is 1456x816, so on 2026-10-16 slot 9 came out 1456x816 beside
+2622x1206 shots, a size App Store Connect takes in no slot, and nothing said so until the push.
+When a deck's captures differ, they are now all framed at the most common App Store size among
+them (else the most common size), and the files that differ are named. A deck whose target
+fits no App Store slot is a warning at frame time.</p>
 <h3 id="key-art-is-a-full-bleed-slot-not-a-layout">Key art is a full-bleed slot, not a layout<a class="headerlink" href="#key-art-is-a-full-bleed-slot-not-a-layout" title="Permanent link">&para;</a></h3>
 <p>There was a <code>cover</code> layout for Picnic Defense's key art: fill the canvas, crop toward the
 bottom. It was full-bleed with a different crop position, so it became the slot's <code>bias</code>.
