@@ -6,6 +6,16 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **`screenshots.mac.frame`** sets who captions the Mac deck, overriding `screenshots.frame` for
+  it: an app whose UI test draws its iOS banners (`frame: test`) can have snakelane frame its Mac
+  deck with `mac: {frame: snakelane}` and `snakelane frame --platform macos`. Jigsaw's Mac deck
+  is captured by hand and had no captions at all (2026-10-15).
+
+- **Fixed: a `stacked` capture scaled to fit now sits on the theme's `background`.** It was
+  padded out to the full width in the caption's fill colour first, which covered the background
+  the docs promise behind a scaled capture, so a Mac window in a cream band's theme came out on
+  cream instead of the colour asked for.
+
 - **`store iap push` reports a change to an approved localization instead of stopping on it.**
   App Store Connect refuses any API edit to an approved in-app purchase localization (HTTP 409,
   "Cannot edit InAppPurchaseLocalization when it is in ACTIVE state"); only its website changes

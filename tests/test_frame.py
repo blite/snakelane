@@ -465,3 +465,17 @@ def test_callout_placement_can_differ_per_deck() -> None:
     assert style_for(cfg, {}, "mac").caption.callout == {"width": 0.6}  # left out: the default
     with pytest.raises(SystemExit, match="unknown deck"):
         style_for({"caption": {"shape": "callout", "callout": {"centre": {"watch": 0.5}}}}, {}, "iphone")
+
+
+def test_a_scaled_stacked_capture_sits_on_the_theme_background(app: project.App) -> None:
+    # A Mac window in the mac deck's canvas leaves room either side once the caption takes its
+    # share; that room is the theme's background, which a pad in the fill colour used to cover.
+    styled(app, captions={"mac": {"1": "One"}}, layout="stacked", fit="scale",
+           theme={"base": "parchment", "fill": "#FFFFFF", "background": "#B7966D"})
+    raw = project.DeckTree.for_deck(app, "mac").raw("en-US")
+    raw.mkdir(parents=True, exist_ok=True)
+    Image.new("RGB", (2880, 1800), "black").save(raw / "ss-01.png")
+    frame.frame_deck(app, "en-US", ["mac"])
+    with Image.open(project.DeckTree.for_deck(app, "mac").framed("en-US") / "ss-01.jpg") as out:
+        r, g, b = out.getpixel((10, out.height - 10))
+        assert abs(r - 0xB7) < 8 and abs(g - 0x96) < 8 and abs(b - 0x6D) < 8, (r, g, b)

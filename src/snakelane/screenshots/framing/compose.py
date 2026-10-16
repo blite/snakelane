@@ -85,10 +85,18 @@ def compose(app: App, style: Style, src: Path, caption: str, target: tuple[int, 
         note = f"fill-width from {shot.width}x{shot.height}"
         box = (0, start, board.width, board.height)
     elif style.layout == "stacked":  # scaled into the rest, so the caption covers no content
-        resized, note = resize_to(shot, (tw, th - depth), True, ink)
+        # Scaled, not padded: what is left around it is the theme's background, which a pad in the
+        # caption's fill used to cover.
+        area_h = th - depth
+        scale = min(tw / shot.width, area_h / shot.height)
+        resized = shot.resize((max(1, round(shot.width * scale)), max(1, round(shot.height * scale))), Image.LANCZOS)
+        note = f"from {shot.width}x{shot.height}" + ("  UPSCALED, will look soft" if scale > 1 else "")
+        if resized.size != (tw, area_h):
+            note += f"  on background {tw - resized.width}x{area_h - resized.height}px"
+        x, y = (tw - resized.width) // 2, start + (area_h - resized.height) // 2
         canvas = paint(app, theme.background, target, ink).convert("RGBA")
-        canvas.alpha_composite(resized.convert("RGBA"), ((tw - resized.width) // 2, start))
-        box = ((tw - resized.width) // 2, start, resized.width, resized.height)
+        canvas.alpha_composite(resized.convert("RGBA"), (x, y))
+        box = (x, y, resized.width, resized.height)
     else:
         canvas, note, box = device(app, style, shot, target, depth, ink)
     if callout:

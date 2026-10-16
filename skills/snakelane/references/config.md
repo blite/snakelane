@@ -72,7 +72,8 @@ screenshots:
   env: {}                        # extra TEST_RUNNER_ variables
   frame: test                    # test (UI test draws captions) | snakelane | none
   reframe_test: null             # UI test that re-frames raws on disk
-  mac: {}                        # present = enable --platform macos
+  mac: {}                        # present = enable --platform macos; {frame: snakelane} has
+                                 #   snakelane caption the Mac deck while the UI test draws iOS's
   framing: {…}                   # `snakelane frame`: captions ({"1": …}, or per locale
                                  #   {en-US: {"1": …}, de-DE: {…}}; a locale without one gets the
                                  #   primary's; a deck key, mac: {…}, gives that deck its own),

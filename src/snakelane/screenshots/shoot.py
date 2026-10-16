@@ -12,7 +12,8 @@ snakelane.yml "screenshots" (all optional; full reference in the skill's referen
     frame             who draws captions: "test" (default; reframe runs reframe_test) | "snakelane" | "none"
     reframe_test      -only-testing id of the UI test that re-frames raws on disk (frame "test")
     framing           `snakelane frame`'s settings — see screenshots/frame.py
-    mac               enables --platform macos: {} or {"scheme", "test", "reframe_test", "destination"}
+    mac               enables --platform macos: {} or {"scheme", "test", "reframe_test", "destination", "frame"};
+                      "frame" overrides the top-level one for the Mac deck
     check             `snakelane check` settings — see screenshots/check.py
 
 The runner gets TEST_RUNNER_SNAKELANE_{LOCALE, LANGUAGE, PLATFORM, DEVICE, REFRAME_LOCALE, BANNER}; an iOS
@@ -28,7 +29,7 @@ import json
 import re
 import shutil
 import subprocess
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field, fields, replace
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Annotated, Any
@@ -128,6 +129,8 @@ def load_config(app: App) -> ShotsConfig:
     mac = {} if mac is True else None if mac is False else mac
     if mac is not None and not isinstance(mac, dict):
         raise SystemExit('screenshots.mac is an object ({} for all defaults)')
+    if mac and (mac_frame := mac.get("frame")) not in (None, "test", "snakelane", "none"):
+        raise SystemExit(f'screenshots.mac.frame must be "test", "snakelane" or "none", not {mac_frame!r}')
     return ShotsConfig(
         scheme=raw.get("scheme") or app.scheme,
         test=raw["test"] if "test" in raw else f"{app.scheme}UITests/{app.scheme}UITestsScreenshotsUITests",
@@ -140,8 +143,12 @@ def load_config(app: App) -> ShotsConfig:
     )
 
 
-def frame_mode(screenshots: dict[str, Any]) -> str:
-    """Who draws the captions. Unset, it's snakelane when there is a framing block, else the UI test."""
+def frame_mode(screenshots: dict[str, Any], platform: str | None = None) -> str:
+    """Who draws the captions. Unset, it's snakelane when there is a framing block, else the UI test.
+    `mac.frame` overrides it for the Mac deck, so an app whose iOS banner is drawn by its UI test can
+    have snakelane caption a Mac deck that has no banner of its own."""
+    if platform == "macos" and isinstance(mac := screenshots.get("mac"), dict) and mac.get("frame"):
+        return mac["frame"]
     return screenshots.get("frame") or ("snakelane" if screenshots.get("framing") else "test")
 
 
@@ -402,6 +409,8 @@ def make_plan(app: App, config: ShotsConfig, args: SimpleNamespace) -> Plan:
         if unknown := [l for l in requested if l not in config.locales]:
             raise SystemExit(f"unknown locale(s): {', '.join(unknown)} — expected {', '.join(config.locales)}")
         locales = {l: config.locales[l] for l in requested}
+    if mac and config.mac.get("frame"):
+        config = replace(config, frame=config.mac["frame"])
     plan = Plan(app, config, "macos" if mac else "ios", locales, full_locales=not args.locales)
     if mac:
         plan.add_passes(DeckTree(app, "macos"), "Mac", "macos", None, config.mac.get("scheme", config.scheme),
