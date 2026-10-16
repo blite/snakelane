@@ -1,0 +1,11 @@
+$ snakelane frame --list-themes
+  felt       #1A7540 → #053D1F    Avenir Next Heavy  + lip, panel, shadow, text_shadow
+  ruby       #CC1A17 → #8F0508    Avenir Next Heavy  + lip, panel, shadow, text_shadow
+  evergreen  #0E281B              Rockwell Bold  + rule, shadow
+  parchment  #FAF5EB              NewYork Bold
+  indigo     #170F33              SFNSRounded Heavy
+  campfire   #16110B              Futura Condensed ExtraBold  + rule
+  azure      #2F6FED              SFNS Heavy  + shadow
+  dusk       #2F6BEA → #0B2352    HelveticaNeue Bold  + shadow
+
+Use one with framing.theme: <name>, or {base: <name>, …overrides}; try one with `snakelane frame --theme <name>`.
