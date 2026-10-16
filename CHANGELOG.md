@@ -4,7 +4,7 @@ All notable changes to snakelane. Versions follow [semver](https://semver.org); 
 major version is 0, a change that needs new `snakelane.yml` keys or changes a command's
 behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
-## Unreleased
+## 0.3.0
 
 - **A missing metadata folder stops every command that reads the listing**, naming the
   `metadata` key, instead of reading as an empty listing: `lint` reported clean for
