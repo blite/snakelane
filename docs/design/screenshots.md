@@ -171,7 +171,11 @@ Apple accepts 886x1920 for the 6.3", 6.5" and 6.9" preview slots alike, so a vid
 
 ### Video dimensions are read without ffprobe
 
-The MP4 reader is hand-rolled because Pillow reads images, not video, and shelling out to ffprobe would make an upload depend on a Homebrew install that only the encode step needs. It walks `moov > trak > tkhd` and reads the width and height. An audio track's `tkhd` carries zeros, which is how the video track is picked out. The re-encode hint looks for an `encode_app_preview.sh` script rather than naming one, because the old per-repo copies kept it in different places or not at all.
+The MP4 reader is hand-rolled because Pillow reads images, not video, and shelling out to ffprobe would make an upload depend on a Homebrew install that only the encode step needs. It walks `moov > trak` and reads, per track, the handler (`vide`/`soun`), `tkhd`'s width and height, `mdhd`'s length, `stts`'s frame count and the first `stsd` entry's codec, channels and sample rate. Only a track's first `hdlr` counts: a QuickTime `.mov` (what `simctl` writes) has a second inside `minf`, the data handler, which otherwise hid the video track (2026-10-16).
+
+### A preview is checked before it uploads
+
+Apple ingests a preview minutes after the upload "succeeds", and its rejections (too long, frame rate too high, unsupported audio) appear only in the web UI. Every one of them is readable from the file, so `store previews push` refuses a preview outside 15–30 s, above 30 fps, or with audio that isn't stereo AAC at 44.1 or 48 kHz, before it deletes anything live. A file with no audio track only warns: audio is allowed rather than required, but a silent-trackless preview was bounced once with "unsupported or corrupted audio", and the research of 2026-10-16 found tools shipping both ways. The re-encode hint looks for an `encode_app_preview.sh` script rather than naming one, because the old per-repo copies kept it in different places or not at all.
 
 ### Underscore-prefixed files are excluded
 
@@ -184,6 +188,48 @@ A deck is JPEG only ([ADR 0002](../adr/0002-jpeg-only-screenshot-decks.md)). A P
 ### iPhone and iPad share one tree
 
 Until 2026-10-02 the iPad deck was a separate `ipados/` tree pretending to be a platform. Now iPhone and iPad shots of one iOS version sit side by side in `iphone/` and `ipad/`. The folders only keep same-named shots apart; the slot each file fills is still read from its pixels. Files are uploaded in name order, because ASC shows a set in the order its files were added and the `ss-NN` names are the order.
+
+## Recording a preview
+
+`snakelane preview` replaced the per-app `record_gameplay_video.sh` and `encode_app_preview.sh` (Hearts' were about 450 lines of bash) on 2026-10-16. It builds the video test once per simulator, runs it, records while it plays, and encodes the deck's `ap-01.m4v`. The recordings (`master.mov`, `master.caf`, `master.json`) stay in `.snakelane/<slug>/previews/<deck>/<locale>/`, so `--encode-only` can change the overlay or the mix without recording again.
+
+### The masters are replaced together, and a long clip keeps its end
+
+A recording is written under `master.partial.*` and moved over the masters only when the test passes. The first failed run (Hearts, 2026-10-16) overwrote the video and the sound but left the previous run's `master.json`, and `--encode-only` would have cut the new video by the old run's marks. A clip longer than `max_seconds` loses its beginning rather than its end, because the test's "end" mark is where it put the payoff: Hearts' clip ends on "You win!".
+
+### A passed test is a pass even if xcodebuild hangs
+
+On Spades (2026-10-16) `xcodebuild test-without-building` logged XCTest's "Test Suite 'Selected tests' passed" and then did not exit for more than two minutes, and the run was reported as a failure with a good recording in hand. After the test's "end", snakelane waits two minutes for xcodebuild; if it is still running and its log already says the tests passed (that line, or "** TEST EXECUTE SUCCEEDED **"), it is stopped and the run counts as passed. A log with neither is still a failure.
+
+### The display stays awake while recording
+
+A simulated app plays its sound through the Mac's default output device. On a Mac whose output is a Studio Display's speakers, the speakers sleep with the display, and with nobody at the Mac every simulator audio start failed (Core Audio `StartIO` error 35, after a five-second wait). The recordings came out silent, and those blocked starts stalled the game's animation (Hearts, 2026-10-16, a run driven over Remote Control). `preview` wakes the display (`caffeinate -u`) and holds it awake (`caffeinate -d -i`) until it finishes recording.
+
+### A preview is recorded without a UI test attached
+
+Even a test that only slept while recording cost the app frames on the iPad: 6 to 14 stalls a take, where the same fixture launched by hand and recorded by `simctl` had none (Hearts, 2026-10-16). An attached UI test keeps the app under automation, with its accessibility tree live. So `previews.launch` records the app with no test at all: snakelane starts the recorder, launches the app with `simctl launch` and the fixture's arguments, taps its pid, and stops when the app marks "end". The app marks its own "start" (its scene is up) and "end" (its payoff has played). The `test` mode stays for an app that can't mark its own moments.
+
+### A stall in the recording is a warning
+
+Three of the first four previews (Hearts and Spades, 2026-10-16) each had one 165–263 ms hitch: a card skipping half its flight, a "Made it!" fade pausing. They were the simulator dropping frames on a busy Mac (other sessions building and testing), not the games: the same game hitched at different moments in two takes, and a take recorded with nothing else running was smooth. After encoding, `preview` reads the recording's frames as `simctl` wrote them and warns about any stall in the clip. simctl writes a frame only when the screen changes, so a gap alone is a still table; a stall is a gap of more than 50 ms with the picture moving on both sides and a bigger jump across the gap than the steps around it. It is a warning, not an error, because only a re-record fixes it and a person should judge whether it shows.
+
+Most of those stalls turned out to be the video test's own doing. It waited for the game-over dialog with `waitForExistence`, which snapshots the app's accessibility tree about once a second, on the app's main thread; recordings of the same autoplay without the test had no stalls at all. So a video test must not query the app while recording: the app marks its own moments in the events file (Hearts' and Spades' `PreviewMarks`) and the test waits on the file.
+
+### The test and the recorder shake hands
+
+Starting the recorder before the test caught minutes of home screen while the app built and launched, and a fixed `sleep` in the test never matched how long `simctl` took to attach. The test appends `{"event", "t"}` lines to `/tmp/<slug>-preview-events.jsonl`: "ready" when its scene is up. snakelane then starts the recorder, waits for `simctl`'s "Recording started", and writes `/tmp/<slug>-preview-rolling`; the test waits for that file before it lets the app play, then marks "start" and "end". The clip is what lies between the two marks, so black first frames and teardown are cut, and any other event name is a moment a caption can be timed to. The idea of a timeline the test writes came from lotti's `ios_preview.sh` and Snaptake. Files on the Mac's disk work because the simulator shares it: the screenshot locale already travelled that way (see "The locale travels in a file"), and writing from the test runner was confirmed on Hearts (2026-10-16). Events older than the run's start are ignored, since the file survives a killed run.
+
+### The recorder is simctl itself
+
+Stopping a recording means sending SIGINT, which is what makes `simctl` write the movie's index; SIGTERM leaves an unplayable file. Started through `xcrun`, or from a shell function, the signal lands on a wrapper and `simctl` records forever, which Hearts' script hit. snakelane resolves `xcrun --find simctl` and runs that binary.
+
+### A preview's sound is tapped from the app's process
+
+`simctl` records no audio. A simulated app is an ordinary Mac process with its own Core Audio process object (its bundle id shows up in `kAudioHardwarePropertyProcessObjectList`), so a Core Audio process tap (macOS 14.2+) on its pid records exactly its sound: not the Mac's, not another simulator's. Found on 2026-10-16 with Safari playing on the same Mac: the tap held only Hearts' card sounds. The tap API has no Python binding, so `audiotap.swift` ships in the package and is built with `swiftc` on first use, cached by its source's hash. The tap delivers nothing until the app first plays a sound, so the file's frame 0 is that moment (2.4 s after the start in the first test); the helper reports its wall-clock time and the encode shifts the audio by it. A gap in the app's output is written as silence, so the file stays on the wall clock. No permission prompt appeared on the development Mac; another Mac may ask for audio-capture access for the terminal.
+
+### The band is the screenshots' band
+
+The overlay is drawn by `frame`'s own `compose()`, so the preview's band matches the deck's look and any theme works. compose() draws a whole framed shot, not a layer, so it runs twice over a black and a white stand-in capture; where the two canvases differ is where the capture shows through, which gives the band's exact alpha, its arch and shadow included, without a second renderer to keep in step. A full-phone frame was tried first and rejected (2026-10-16): it shrank the game, where a thin band covers only the status bar and the edge of the top seat.
 
 ## Uploading
 

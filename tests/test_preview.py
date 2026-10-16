@@ -1,0 +1,204 @@
+"""`snakelane preview` offline: the MP4 reader, Apple's preview checks, the config, caption timing,
+the test's events and the band overlay. Recording needs a simulator and is not tested here."""
+
+from __future__ import annotations
+
+import json
+import struct
+from pathlib import Path
+
+import pytest
+from PIL import Image
+
+from snakelane import project
+from snakelane.screenshots import media, preview
+
+from .helpers import image, make_app
+
+
+def box(kind: bytes, *children: bytes) -> bytes:
+    body = b"".join(children)
+    return struct.pack(">I", 8 + len(body)) + kind + body
+
+
+def full(kind: bytes, payload: bytes) -> bytes:
+    return box(kind, b"\0\0\0\0" + payload)  # version 0, no flags
+
+
+def track(handler: bytes, codec: bytes, seconds: float, *, size=(0, 0), frames=0, channels=0, rate=0,
+          quicktime=False) -> bytes:
+    timescale = 600
+    # Version 0: times and ids (20), reserved (8), layer to volume (8), matrix (36), then width and height.
+    tkhd = full(b"tkhd", b"\0" * (20 + 8 + 8 + 36) + struct.pack(">II", size[0] << 16, size[1] << 16))
+    mdhd = full(b"mdhd", struct.pack(">IIII", 0, 0, timescale, round(seconds * timescale)) + b"\0" * 4)
+    hdlr = full(b"hdlr", b"mhlr" + handler + b"\0" * 12)
+    entry = codec + b"\0" * 6 + b"\0\x01"
+    if handler == b"soun":
+        entry += b"\0" * 8 + struct.pack(">HHHHI", channels, 16, 0, 0, rate << 16)
+    stsd = full(b"stsd", struct.pack(">I", 1) + struct.pack(">I", 8 + len(entry)) + entry)
+    stts = full(b"stts", struct.pack(">III", 1, frames, round(timescale / (frames / seconds))) if frames else
+                struct.pack(">I", 0))
+    # A QuickTime minf has its own data-handler hdlr, which must not overwrite the track's.
+    data_handler = full(b"hdlr", b"dhlr" + b"alis" + b"\0" * 12) if quicktime else b""
+    return box(b"trak", tkhd, box(b"mdia", mdhd, hdlr, box(b"minf", data_handler, box(b"stbl", stsd, stts))))
+
+
+def movie(path: Path, seconds=20.0, size=(886, 1920), fps=30, audio: tuple | None = (2, 48000),
+          codec=b"mp4a", quicktime=False) -> Path:
+    mvhd = full(b"mvhd", struct.pack(">IIII", 0, 0, 600, round(seconds * 600)) + b"\0" * 80)
+    tracks = [track(b"vide", b"avc1", seconds, size=size, frames=round(seconds * fps), quicktime=quicktime)]
+    if audio:
+        tracks.append(track(b"soun", codec, seconds, channels=audio[0], rate=audio[1], quicktime=quicktime))
+    path.write_bytes(box(b"ftyp", b"isom") + box(b"moov", mvhd, *tracks))
+    return path
+
+
+def test_the_reader_finds_size_length_rate_and_audio(tmp_path: Path) -> None:
+    m = media.read_movie(movie(tmp_path / "a.m4v", seconds=18, fps=30, audio=(2, 44100)))
+    assert m.dimensions == (886, 1920)
+    assert m.seconds == pytest.approx(18)
+    assert m.video.fps == pytest.approx(30, abs=0.1)
+    assert m.audio is not None and (m.audio.codec, m.audio.channels, m.audio.sample_rate) == (b"mp4a", 2, 44100)
+
+
+def test_a_quicktime_data_handler_does_not_hide_the_video_track(tmp_path: Path) -> None:
+    m = media.read_movie(movie(tmp_path / "raw.mov", size=(1206, 2622), fps=52, audio=None, quicktime=True))
+    assert m.dimensions == (1206, 2622) and m.audio is None
+
+
+@pytest.mark.parametrize("kwargs, problem", [
+    ({"seconds": 12}, "12.0s long"),
+    ({"seconds": 31}, "31.0s long"),
+    ({"fps": 60}, "60.0 fps"),
+    ({"audio": (1, 48000)}, "1ch"),
+    ({"audio": (2, 22050)}, "22050 Hz"),
+    ({"codec": b"lpcm"}, "lpcm"),
+])
+def test_what_apple_rejects_is_an_error(tmp_path: Path, kwargs: dict, problem: str) -> None:
+    errors, _ = media.preview_problems(media.read_movie(movie(tmp_path / "p.m4v", **kwargs)))
+    assert any(problem in e for e in errors), errors
+
+
+def test_a_good_preview_passes_and_a_silent_one_only_warns(tmp_path: Path) -> None:
+    assert media.preview_problems(media.read_movie(movie(tmp_path / "good.m4v"))) == ([], [])
+    errors, warnings = media.preview_problems(media.read_movie(movie(tmp_path / "silent.m4v", audio=None)))
+    assert errors == [] and "no audio track" in warnings[0]
+
+
+def test_the_push_refuses_a_preview_apple_would_bounce(tmp_path: Path) -> None:
+    deck = tmp_path / "iphone"
+    image(deck / "ss-01.jpg", 1206, 2622)
+    assert media.preview_type_for(movie(deck / "ap-01.m4v"), deck) == "IPHONE_61"
+    with pytest.raises(SystemExit, match=r"60\.0 fps"):
+        media.preview_type_for(movie(deck / "ap-01.m4v", fps=60), deck)
+
+
+@pytest.fixture
+def app(tmp_path: Path) -> project.App:
+    return make_app(tmp_path, scheme="Example", screenshots={"locales": ["en-US", "de-DE"]})
+
+
+def test_defaults_record_the_first_screenshot_locale_with_sound(app: project.App) -> None:
+    config = preview.load_preview_config(app)
+    assert config.test == "ExampleUITests/ExampleUITestsVideoPreviewUITests"
+    assert list(config.locales) == ["en-US"]
+    assert config.capture and config.bed is None and config.overlay is None
+    assert config.fit == "crop" and config.max_seconds == 29
+
+
+@pytest.mark.parametrize("previews, message", [
+    ({"tset": "x"}, "unknown key"),
+    ({"audio": {"bedd": "x"}}, "previews.audio"),
+    ({"overlay": {"style": "band"}}, "captions is empty"),
+    ({"overlay": {"style": "frame", "captions": "x"}}, '"band" or "none"'),
+    ({"audio": {"bed": "missing.wav"}}, "no file"),
+    ({"locales": ["fr-FR"]}, "not in screenshots.locales"),
+    ({"fit": "stretch"}, '"crop" or "pad"'),
+    ({"launch": "--ui-screenshot=video"}, "list of launch arguments"),
+    ({"launch": ["--video"], "test": "T/T"}, "both launch and test"),
+])
+def test_bad_preview_settings_say_which(tmp_path: Path, previews: dict, message: str) -> None:
+    app = make_app(tmp_path, scheme="Example", previews=previews)
+    with pytest.raises(SystemExit, match=message):
+        preview.load_preview_config(app)
+
+
+def test_captions_hold_until_the_next_and_take_moments(app: project.App) -> None:
+    timed = preview.caption_times([{"at": "trick", "text": "B"}, {"text": "A"}], {"trick": 6.5}, 20.0)
+    assert timed == [(0.0, 6.5, "A"), (6.5, 20.0, "B")]
+    with pytest.raises(SystemExit, match="never marked"):
+        preview.caption_times([{"at": "queen", "text": "Q"}], {"trick": 1.0}, 20.0)
+
+
+def test_captions_fall_back_to_the_primary_locale(tmp_path: Path) -> None:
+    app = make_app(tmp_path, scheme="Example", previews={"overlay": {
+        "style": "band", "captions": {"en-US": "No ads", "de-DE": [{"at": 0, "text": "Keine Werbung"}]}}})
+    config = preview.load_preview_config(app)
+    assert preview.captions_for(config, "de-DE", "en-US") == [{"at": 0, "text": "Keine Werbung"}]
+    assert preview.captions_for(config, "fr-FR", "en-US") == [{"at": 0, "text": "No ads"}]
+
+
+def test_events_before_this_run_are_ignored(tmp_path: Path) -> None:
+    path = tmp_path / "events.jsonl"
+    path.write_text("\n".join(json.dumps(e) for e in [
+        {"event": "ready", "t": 90.0}, {"event": "end", "t": 95.0},  # the last run's
+        {"event": "ready", "t": 101.0}, "not json", {"event": "ready", "t": 102.0}]) + "\nnot json\n")
+    assert preview.read_events(path, since=100.0) == {"ready": 101.0}
+
+
+def test_the_clip_runs_between_the_marks_and_a_long_one_keeps_its_end() -> None:
+    assert preview.clip_window({"start": 1.0, "end": 21.0}, 30.0, 29) == (1.0, 20.0)
+    assert preview.clip_window({"start": 1.0, "end": 41.0}, 45.0, 29) == (12.0, 29.0)
+    assert preview.clip_window({}, 25.0, 29) == (0.0, 25.0)  # no marks: the whole recording
+
+
+def test_the_preview_size_follows_the_slot_and_the_orientation(tmp_path: Path) -> None:
+    assert preview.preview_size((1206, 2622), tmp_path / "none") == (886, 1920)
+    assert preview.preview_size((2622, 1206), tmp_path / "none") == (1920, 886)
+    assert preview.preview_size((2064, 2752), tmp_path / "none") == (1200, 1600)
+    with pytest.raises(SystemExit, match="no App Preview slot"):
+        preview.preview_size((1000, 1000), tmp_path / "none")
+
+
+def test_the_band_is_opaque_at_the_top_and_clear_below(tmp_path: Path) -> None:
+    app = make_app(tmp_path, scheme="Example", previews={"overlay": {
+        "style": "band", "captions": "No ads", "framing": {"theme": "ruby", "caption": {"shape": "arch"}}}})
+    config = preview.load_preview_config(app)
+    png, (x, y) = preview.band_layer(app, config, "No ads", (1206, 2622), (886, 1920), tmp_path / "band.png")
+    band = Image.open(png)
+    assert (x, y) == (0, 0) and band.width == 886
+    assert 0.07 * 1920 < band.height < 0.14 * 1920, "a thin band: depth plus the arch's bow and shadow"
+    assert band.getpixel((443, 5))[3] == 255
+    assert band.getpixel((443, band.height - 1))[3] < 255
+
+
+def test_a_hung_xcodebuild_after_a_passing_test_is_a_pass(tmp_path: Path) -> None:
+    import subprocess
+    log = tmp_path / "test.log"
+    log.write_text("Test Suite 'Selected tests' passed at 2026-10-16 14:10:13.907.\n")
+    hung = subprocess.Popen(["sleep", "30"])
+    assert preview.finish(hung, log, timeout=0.5) == 0
+    log.write_text("Testing started\n")
+    with pytest.raises(SystemExit, match="did not finish"):
+        preview.finish(subprocess.Popen(["sleep", "30"]), log, timeout=0.5)
+    assert preview.finish(subprocess.Popen(["false"]), log, timeout=5) == 1
+
+
+def test_a_stall_is_a_gap_in_the_middle_of_motion() -> None:
+    times = [i / 60 for i in range(10)] + [10 / 60 + 0.2] + [10 / 60 + 0.2 + i / 60 for i in range(1, 10)]
+    moving = [0.0] + [1.0] * 9 + [4.0] + [1.0] * 9   # a card in flight, then a jump after a 200 ms gap
+    assert preview.find_stalls(times, moving, 0, 30) == [(pytest.approx(10 / 60 + 0.2), pytest.approx(0.2 + 1 / 60))]
+    still = [0.0] + [1.0] * 9 + [4.0] + [0.0] * 9    # the card lands and the table goes still: no stall
+    assert preview.find_stalls(times, still, 0, 30) == []
+    assert preview.find_stalls(times, moving, 1.0, 30) == [], "outside the clip window"
+
+
+def test_launch_mode_builds_the_app_and_runs_no_test(tmp_path: Path) -> None:
+    from types import SimpleNamespace
+    (tmp_path / "Example.xcodeproj").mkdir()
+    app = make_app(tmp_path, scheme="Example", previews={"launch": ["--ui-screenshot=video"]},
+                   screenshots={"devices": ["iPhone 17 Pro"]})
+    config = preview.load_preview_config(app)
+    plan = preview.make_plan(app, config, SimpleNamespace(locales=None, device=None, dry_run=True, encode_only=False))
+    assert config.launch == ["--ui-screenshot=video"]
+    assert plan.passes[0].build[-1] == "build" and plan.passes[0].test == []

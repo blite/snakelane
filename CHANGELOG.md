@@ -4,6 +4,30 @@ All notable changes to snakelane. Versions follow [semver](https://semver.org); 
 major version is 0, a change that needs new `snakelane.yml` keys or changes a command's
 behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
+## Unreleased
+
+- **`snakelane preview` records the App Preview** from the app's video UI test, with the app's own
+  sound, and encodes it into the deck as `ap-01.m4v` for `store previews push`. It replaces the
+  per-app `record_gameplay_video.sh` / `encode_app_preview.sh` pair. The test and snakelane shake
+  hands through `/tmp/<slug>-preview-events.jsonl` and `/tmp/<slug>-preview-rolling`; the sound
+  comes from a Core Audio tap on the app's process (macOS 14.2+), with an optional music bed
+  (`previews.audio.bed`), and `previews.overlay: {style: band}` draws the screenshots' caption band
+  as a thin strip over the top. New `previews` keys; see `references/config.md`. **An app must**
+  move its video test to the new handshake (`assets/ios/VideoPreviewUITests.swift.template`) and
+  add `previews.test` if its test isn't named `<Scheme>UITestsVideoPreviewUITests`;
+  `assets/ios/record_gameplay_video.sh.template` is gone.
+
+- **`previews.launch` records the app with no UI test attached**: snakelane launches it into its
+  video fixture and the app marks "start" and "end" itself (`assets/ios/PreviewMarks.swift.template`).
+  An attached UI test made the iPad recordings stutter. Prefer it to `previews.test`.
+
+- **`preview` warns when a recording stalls mid-motion** (a dropped-frame hitch from a busy
+  Mac), and when the app's sound tap heard nothing. Re-record the clip it names.
+
+- **`store previews push` checks what Apple's ingest rejects** before it deletes anything: length
+  outside 15–30 s, more than 30 fps, or audio that isn't stereo AAC at 44.1/48 kHz. A preview
+  with no audio track warns.
+
 ## 0.4.0
 
 - **`snakelane store creative push | show`: the product page header and the search-result asset**,

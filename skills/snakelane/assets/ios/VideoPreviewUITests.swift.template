@@ -1,89 +1,94 @@
-import XCTest
+// iOS only: the recorder is `simctl io recordVideo`, which has no Mac equivalent.
+#if os(iOS)
 
-/// App Preview video driver. This test class exists solely to park
-/// the app in a controlled auto-play state long enough for the
-/// host-side `scripts/record_gameplay_video.sh` orchestrator to
-/// capture a clean clip via `xcrun simctl io <udid> recordVideo`.
-///
-/// The video itself is written by the simulator's own display
-/// capture — this test is the *player*, not the recorder.
-///
-/// The handshake between this test and the host script is two files
-/// in the test runner's Documents directory:
-///
-///   hh-video-ready.marker   — "scene is up, safe to start recording"
-///   hh-video-done.marker    — "wrap up the recording before teardown"
-///
-/// The host script finds that Documents dir via
-/// `xcrun simctl get_app_container <udid> {{UI_TEST_BUNDLE_IDENTIFIER}}.xctrunner data`
-/// and polls for the marker files. That handshake is what keeps
-/// simulator springboard + app-launch + test-teardown frames out of
-/// the final clip.
-final class {{UI_TEST_TARGET_NAME}}VideoPreviewUITests: XCTestCase {
+    import XCTest
 
-    override func setUpWithError() throws {
-        continueAfterFailure = false
+    /// The App Preview's player, for `previews.test`. Prefer `previews.launch` with
+    /// `PreviewMarks.swift.template`: an attached UI test costs the app frames, and the
+    /// clip stutters (worst on iPad). Use this only when the app can't mark its own moments.
+    ///
+    /// `snakelane preview` records the simulator (and taps the app's sound) while this
+    /// test parks the app in a state that plays itself. It talks to snakelane through two
+    /// files on the Mac's disk, which the simulator shares:
+    ///
+    ///   /tmp/{{APP_SLUG}}-preview-events.jsonl   this test appends {"event", "t"} lines
+    ///   /tmp/{{APP_SLUG}}-preview-rolling        snakelane writes it once the recorder runs
+    ///
+    /// Events: "ready" when the scene is up (snakelane then starts recording), "start" and
+    /// "end" around the clip, and any other name as a moment an overlay caption can be timed to.
+    /// The clip is what lies between "start" and "end": keep it 15–30 s.
+    final class {{UI_TEST_TARGET_NAME}}VideoPreviewUITests: XCTestCase {
+
+        override func setUpWithError() throws {
+            continueAfterFailure = false
+        }
+
+        @MainActor
+        func test01AutoPlayDemo() throws {
+            let app = XCUIApplication()
+            // TODO (snakelane scaffold): a `video-demo` scenario in `UITestScreenshotScenario`
+            // that resumes the app into a state that plays itself forward (a game with every
+            // seat driven by AI, a slideshow that advances). Nothing here should drive the UI.
+            // Not a bare "UITests": on the Mac AppKit opens a dash-less argument as a file.
+            app.launchArguments += ["--ui-tests", "--ui-screenshot=video-demo"]
+            app.launch()
+
+            // TODO: an element that exists once the auto-playing scene is on screen.
+            XCTAssertTrue(app.otherElements["someIdentifier"].waitForExistence(timeout: 15),
+                          "Video-demo scene never rendered")
+
+            Preview.mark("ready")
+            XCTAssertTrue(Preview.waitUntilRolling(timeout: 30), "snakelane never started recording")
+            Preview.mark("start")
+            // TODO: let the app play. While recording, don't query the app (no
+            // waitForExistence, no element lookups): each query snapshots its
+            // accessibility tree on the main thread and the clip hitches. Let the app
+            // mark its own moments in the events file and wait on those instead:
+            // XCTAssertTrue(Preview.waitFor("won", timeout: 90))
+            sleep(24)
+            Preview.mark("end")
+        }
     }
 
-    @MainActor
-    func test01AutoPlayDemo() throws {
-        let app = XCUIApplication()
-        // TODO (snakelane scaffold): wire up a `video-demo`
-        // scenario in `UITestScreenshotScenario` that resumes your
-        // app into a state that will play itself forward — e.g., a
-        // game with all seats driven by AI, or a slideshow set to
-        // auto-advance. Nothing in this test should *drive* the UI;
-        // your app's own run loop should be doing that on its own
-        // once it resumes.
-        // Not a bare "UITests": on the Mac AppKit opens a dash-less argument as a file.
-        app.launchArguments.append("--ui-tests")
-        app.launchArguments.append("--ui-screenshot=video-demo")
-        app.launch()
+    /// The handshake with `snakelane preview`. Without it running (a test run from Xcode), the
+    /// marks go nowhere and the wait gives up after its timeout.
+    enum Preview {
+        static let events = URL(fileURLWithPath: "/tmp/{{APP_SLUG}}-preview-events.jsonl")
+        static let rolling = URL(fileURLWithPath: "/tmp/{{APP_SLUG}}-preview-rolling")
 
-        // TODO: wait for a signal that the scene is really up. The
-        // placeholder below polls on `someIdentifier` — replace it
-        // with a selector that exists in your auto-playing view (a
-        // toolbar button, a seat badge, a scoreboard cell, etc.).
-        let sceneReady = app.otherElements["someIdentifier"]
-        XCTAssertTrue(
-            sceneReady.waitForExistence(timeout: 15),
-            "Video-demo scene never rendered"
-        )
+        static func mark(_ event: String) {
+            let line = Data("{\"event\": \"\(event)\", \"t\": \(Date().timeIntervalSince1970)}\n".utf8)
+            if let handle = try? FileHandle(forWritingTo: events) {
+                handle.seekToEndOfFile()
+                handle.write(line)
+                try? handle.close()
+            } else {
+                try? line.write(to: events)
+            }
+        }
 
-        // Signal to the host orchestrator that it's safe to start
-        // the recorder. The `sleep(2)` below gives simctl io a beat
-        // to attach before the interesting animations start.
-        writeVideoMarker(.ready)
-        sleep(2)
+        /// An event the app (or this test) appended, without touching the app.
+        static func waitFor(_ event: String, timeout: TimeInterval) -> Bool {
+            let deadline = Date().addingTimeInterval(timeout)
+            while Date() < deadline {
+                if let text = try? String(contentsOf: events, encoding: .utf8),
+                    text.contains("\"event\": \"\(event)\"")
+                {
+                    return true
+                }
+                Thread.sleep(forTimeInterval: 0.1)
+            }
+            return false
+        }
 
-        // TODO: sit in this state for however long you want the clip
-        // to run. If your app drives itself (e.g. AI takes turns),
-        // you can literally just sleep. If you want narrative beats,
-        // insert them here — tap a score sheet button, swipe, etc.
-        //
-        // Keep the total wall time under ~30 s so App Store Connect
-        // accepts the result as an App Preview without further
-        // trimming.
-        sleep(24)
-
-        // Tell the orchestrator to stop recording before the test
-        // tears down — keeps a trailing second or two out of the clip.
-        writeVideoMarker(.done)
+        static func waitUntilRolling(timeout: TimeInterval) -> Bool {
+            let deadline = Date().addingTimeInterval(timeout)
+            while Date() < deadline {
+                if FileManager.default.fileExists(atPath: rolling.path) { return true }
+                Thread.sleep(forTimeInterval: 0.05)
+            }
+            return false
+        }
     }
 
-    // MARK: - Host handshake
-
-    private enum VideoMarker: String {
-        case ready = "hh-video-ready.marker"
-        case done  = "hh-video-done.marker"
-    }
-
-    private func writeVideoMarker(_ marker: VideoMarker) {
-        guard let dir = FileManager.default.urls(
-            for: .documentDirectory,
-            in: .userDomainMask
-        ).first else { return }
-        let url = dir.appendingPathComponent(marker.rawValue)
-        try? Data("ok".utf8).write(to: url)
-    }
-}
+#endif

@@ -199,12 +199,14 @@ the group requires explicit listing for sources.
 
 Raw `simctl io recordVideo` output can't be uploaded. It captures at the simulator's native
 pixel size, at its native frame rate (often 60 fps, sometimes 48 or 37), with no audio
-track, and Apple rejects all three. Every raw `.mov` needs an ffmpeg pass.
+track, and Apple rejects all three. Every raw `.mov` needs an ffmpeg pass: `snakelane preview`
+records and encodes in one go, and `store previews push` checks size, length, frame rate and
+audio format before it uploads anything.
 
 **Resolution must equal [Apple's canonical pair](https://developer.apple.com/help/app-store-connect/reference/app-information/app-preview-specifications) for the preview type.** Strict equality, not
 "close enough":
 
-| Preview type | Dimensions (portrait) |
+| Preview type | Dimensions (portrait; landscape is the same pair turned) |
 |---|---|
 | `IPHONE_67` / `IPHONE_65` / `IPHONE_61` / `IPHONE_58` | **886×1920** |
 | `IPHONE_55` / `IPHONE_40` | **1080×1920** |
@@ -221,8 +223,15 @@ transcode is a downscale plus pad. Pick the iPad token by generation as well as 
 **30 fps cap.** Above that, Apple's ingest rejects with "frame rate is too high", after the
 upload has succeeded. `recordVideo` does not honour `-r`; put `fps=30` first in the filter chain.
 
-**An audio track is mandatory**, even for a silent app: "preview contains unsupported or
-corrupted audio". Generate silence in the same pass.
+**Audio is allowed, and worth using**: previews autoplay muted, but a viewer who taps for sound
+hears it. If present it must be stereo AAC at 44.1 or 48 kHz (256 kbps is Apple's figure).
+`snakelane preview` taps the app's own sound and can lay a music bed (`previews.audio.bed`)
+under it. A preview with no audio track at all has been bounced as "preview contains unsupported
+or corrupted audio", so without sound, encode a silent stereo track (the push warns when there
+is none).
+
+**15–30 seconds.** The push refuses anything outside; `snakelane preview` cuts the clip at the
+test's "end" mark and at `previews.max_seconds` (29).
 
 **Prefer `.m4v` with `+faststart`** so the moov atom is at the head.
 
@@ -242,6 +251,21 @@ after every previews push, even one that reported success.
 
 **Three previews per locale per device type.** A fourth displaces the oldest.
 
+**Record on a simulator nothing else is using.** `preview` films whatever is on the screen: another
+session's test launched Golf Solitaire over Hearts' finale mid-recording, and a simulator that
+had been shut down under it refused the test runner ("Busy … failed preflight checks")
+(2026-10-16). A dedicated one (`xcrun simctl create "iPhone 17 Pro (previews)" iPhone-17-Pro`,
+then `preview --device <its UDID>`) avoids both. Watch the end of every clip before pushing. A busy
+Mac also drops frames: `preview` warns "the picture stalls … mid-motion" when a recording hitches;
+re-record that clip with nothing else running. Above all, **the video test must not query the app
+while recording**: `waitForExistence` and element lookups snapshot the accessibility tree on the
+app's main thread and hitch every second. Have the app append its own moments to the events file
+and wait on those (`Preview.waitFor` in the template).
+
+**An app that launches silent in the simulator records a silent preview.** `preview` warns when
+the tap heard nothing; give the video test a launch argument that turns the app's sound on, and
+keep any review prompt (`requestReview`) from firing under a UI-test launch.
+
 ## Simulators and UI tests
 
 **Run UI tests serially: `-parallel-testing-enabled NO`.** With parallel testing on (a
@@ -256,7 +280,7 @@ parallel" off in the screenshot scheme so a run from Xcode behaves the same.
 **Record the simulator the test runs on.** Run serially, that is the named simulator itself:
 resolve its UDID, boot it, test with `-destination id=<UDID>`, and `recordVideo` that UDID.
 Recording the named device while tests run on a clone captures a black screen or a 0-byte
-file. `assets/ios/record_gameplay_video.sh.template` does this.
+file. `snakelane preview` does this.
 
 **Sandbox StoreKit purchases leak into later test runs.** An app that seeds entitlements from
 `Transaction.currentEntitlements` will see packs a developer bought while debugging as owned

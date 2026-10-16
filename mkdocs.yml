@@ -71,7 +71,7 @@ nav:
       - Using it with a coding agent: agents.md
   - Commands:
       - store: commands/store.md
-      - shoot · frame · check: commands/screenshots.md
+      - shoot · frame · preview · check: commands/screenshots.md
       - gallery: commands/gallery.md
       - lint · translations: commands/lint.md
       - ship · bump · status: commands/release.md

@@ -1,0 +1,43 @@
+import Foundation
+
+/// Moments the app marks for `snakelane preview`'s recording, in the events
+/// file it reads: `/tmp/{{APP_SLUG}}-preview-events.jsonl`.
+///
+/// With `previews.launch` in snakelane.yml, snakelane starts recording, launches
+/// the app straight into its video fixture (no UI test attached: a UI test
+/// snapshots the app's accessibility tree on its main thread and the clip
+/// hitches), and cuts the clip between "start" and "end". Any other mark
+/// ("won", "first-trick") is a moment the overlay's captions can be timed to.
+///
+/// Only under the video fixture, and only in the simulator, whose processes
+/// share the Mac's /tmp: a device build never writes it.
+enum PreviewMarks {
+    /// Call when the auto-playing scene is on screen (e.g. the game view's
+    /// .onAppear). The clip starts a beat later, once the first render settles.
+    static func sceneUp() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { mark("start") }
+    }
+
+    /// Call at the payoff (a win dialog, a level cleared). The clip ends once
+    /// the celebration has played; tune the hold to the app's animation.
+    static func payoff(_ event: String = "won", holding seconds: Double = 4) {
+        mark(event)
+        DispatchQueue.main.asyncAfter(deadline: .now() + seconds) { mark("end") }
+    }
+
+    static func mark(_ event: String) {
+        #if targetEnvironment(simulator)
+            // TODO (snakelane scaffold): only under the video fixture's launch argument.
+            guard CommandLine.arguments.contains("--ui-screenshot=video-demo") else { return }
+            let url = URL(fileURLWithPath: "/tmp/{{APP_SLUG}}-preview-events.jsonl")
+            let line = Data("{\"event\": \"\(event)\", \"t\": \(Date().timeIntervalSince1970)}\n".utf8)
+            if let handle = try? FileHandle(forWritingTo: url) {
+                handle.seekToEndOfFile()
+                handle.write(line)
+                try? handle.close()
+            } else {
+                try? line.write(to: url)
+            }
+        #endif
+    }
+}

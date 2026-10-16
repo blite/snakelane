@@ -383,7 +383,8 @@ class Plan:
 
 
 def xcodebuild_test(app: App, scheme: str, destination: str, *, test: str | None, test_plan: str | None,
-                    xcresult: Path | None, mac: bool) -> list[str]:
+                    xcresult: Path | None, mac: bool, action: str = "test", retry: bool = True) -> list[str]:
+    """`retry=False` for a recording: a retried test would start the clip again mid-recording."""
     return [
         "xcodebuild", "-project", str(app.project), "-scheme", scheme,
         *(["-testPlan", test_plan] if test_plan else []),
@@ -393,8 +394,8 @@ def xcodebuild_test(app: App, scheme: str, destination: str, *, test: str | None
         *(["-resultBundlePath", str(xcresult)] if xcresult is not None else []),
         *(["-only-testing", test] if test else []),
         "-parallel-testing-enabled", "NO",  # serial: docs/design/screenshots.md#tests-run-serially
-        *SHOT_TIMEOUT_AND_RETRY,
-        "test",
+        *(SHOT_TIMEOUT_AND_RETRY if retry else ()),
+        action,
     ]
 
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from dataclasses import dataclass
 from pathlib import Path
 
 from PIL import Image
@@ -124,38 +125,129 @@ def display_type_for(path: Path, dimensions: tuple[int, int] | None = None) -> s
     return display_type
 
 
-def read_mp4_dimensions(path: Path) -> tuple[int, int]:
-    """Display size from the first video track's `moov > trak > tkhd` box (no ffprobe needed).
+@dataclass
+class Track:
+    handler: bytes = b""                    # b"vide" / b"soun"
+    dimensions: tuple[int, int] = (0, 0)    # tkhd's display size; zero on an audio track
+    seconds: float = 0.0                    # mdhd duration / timescale
+    samples: int = 0                        # stts: frames, for a video track
+    codec: bytes = b""                      # the first stsd entry's format, e.g. b"avc1", b"mp4a"
+    channels: int = 0
+    sample_rate: int = 0
 
-    Width and height are 16.16 fixed point; an audio track's are zero, which skips it."""
+    @property
+    def fps(self) -> float:
+        return self.samples / self.seconds if self.seconds else 0.0
 
-    def walk(data: bytes, offset: int, end: int) -> tuple[int, int] | None:
+
+@dataclass
+class Movie:
+    """What App Store Connect checks about an App Preview, read from the file's own boxes."""
+
+    video: Track
+    audio: Track | None
+    seconds: float
+
+    @property
+    def dimensions(self) -> tuple[int, int]:
+        return self.video.dimensions
+
+
+def read_movie(path: Path) -> Movie:
+    """Size, length, frame rate and audio format from the `moov` box, without ffprobe.
+
+    Why hand-rolled: docs/design/screenshots.md#video-dimensions-are-read-without-ffprobe"""
+    data = path.read_bytes()
+    u32 = lambda at: int.from_bytes(data[at:at + 4], "big")  # noqa: E731
+    u64 = lambda at: int.from_bytes(data[at:at + 8], "big")  # noqa: E731
+    tracks: list[Track] = []
+    movie_seconds = 0.0
+
+    def boxes(offset: int, end: int):
         while offset + 8 <= end:
-            size, kind, body = int.from_bytes(data[offset:offset + 4], "big"), data[offset + 4:offset + 8], offset + 8
+            size, kind, body = u32(offset), data[offset + 4:offset + 8], offset + 8
             if size == 0:
                 size = end - offset
             elif size == 1:  # 64-bit `largesize` follows the header
-                size = int.from_bytes(data[offset + 8:offset + 16], "big")
+                size, body = u64(offset + 8), offset + 16
             if size < 8 or offset + size > end:
-                return None
-            if kind in (b"moov", b"trak", b"mdia"):
-                if found := walk(data, body, offset + size):
-                    return found
+                return
+            yield kind, body, offset + size
+            offset += size
+
+    def scaled(body: int) -> float:
+        """mvhd/mdhd: a timescale and a duration, 32-bit in version 0 and 64-bit in version 1."""
+        if data[body] == 0:
+            return u32(body + 16) / (u32(body + 12) or 1)
+        return u64(body + 24) / (u32(body + 20) or 1)
+
+    def walk(offset: int, end: int, track: Track | None) -> None:
+        nonlocal movie_seconds
+        for kind, body, box_end in boxes(offset, end):
+            if kind == b"mvhd":
+                movie_seconds = scaled(body)
+            elif kind == b"trak":
+                tracks.append(track := Track())
+                walk(body, box_end, track)
+            elif kind in (b"mdia", b"minf", b"stbl") and track is not None:
+                walk(body, box_end, track)
+            elif track is None:
+                if kind == b"moov":
+                    walk(body, box_end, None)
             elif kind == b"tkhd":
                 # Version 1 widens creation/modification/duration to 64 bits: 12 more bytes.
                 matrix_end = body + (32 if data[body] == 0 else 44) + 8 + 36
-                if matrix_end + 8 > end:
-                    return None
-                width, height = (int.from_bytes(data[i:i + 4], "big") / 65536 for i in (matrix_end, matrix_end + 4))
-                if width and height:
-                    return round(width), round(height)
-            offset += size
-        return None
+                if matrix_end + 8 <= box_end:
+                    track.dimensions = (round(u32(matrix_end) / 65536), round(u32(matrix_end + 4) / 65536))
+            elif kind == b"hdlr" and not track.handler:  # a QuickTime minf holds a second, the data handler's
+                track.handler = data[body + 8:body + 12]
+            elif kind == b"mdhd":
+                track.seconds = scaled(body)
+            elif kind == b"stts":
+                track.samples = sum(u32(body + 8 + 8 * i) for i in range(u32(body + 4)))
+            elif kind == b"stsd" and u32(body + 4):
+                entry = body + 8
+                track.codec = data[entry + 4:entry + 8]
+                if track.handler == b"soun":  # AudioSampleEntry: 8 reserved bytes, then the version 0 fields
+                    track.channels = int.from_bytes(data[entry + 24:entry + 26], "big")
+                    track.sample_rate = u32(entry + 32) >> 16
 
-    data = path.read_bytes()
-    if (dimensions := walk(data, 0, len(data))) is None:
+    walk(0, len(data), None)
+    video = next((t for t in tracks if t.handler == b"vide" and all(t.dimensions)), None)
+    if video is None:
         raise ValueError(f"{path} has no readable video track")
-    return dimensions
+    return Movie(video, next((t for t in tracks if t.handler == b"soun"), None), movie_seconds or video.seconds)
+
+
+def read_mp4_dimensions(path: Path) -> tuple[int, int]:
+    """Display size of the first video track."""
+    return read_movie(path).dimensions
+
+
+# Apple's App Preview specification, checked here because its ingest rejects a file minutes after a
+# "successful" upload, visible only in the web UI.
+# Why: docs/design/screenshots.md#a-preview-is-checked-before-it-uploads
+PREVIEW_SECONDS = (15.0, 30.0)
+PREVIEW_MAX_FPS = 30.0
+PREVIEW_AUDIO_RATES = (44100, 48000)
+
+
+def preview_problems(movie: Movie) -> tuple[list[str], list[str]]:
+    """(errors, warnings) for a file against Apple's preview specification, size apart (that is the slot's)."""
+    errors, warnings = [], []
+    low, high = PREVIEW_SECONDS
+    # A clip trimmed to exactly 30 s can come out a frame long; Apple's own check rounds.
+    if not low <= round(movie.seconds, 1) <= high:
+        errors.append(f"{movie.seconds:.1f}s long; Apple takes {low:.0f}–{high:.0f}s")
+    if (fps := movie.video.fps) > PREVIEW_MAX_FPS + 0.05:
+        errors.append(f"{fps:.1f} fps; Apple's ceiling is {PREVIEW_MAX_FPS:.0f}")
+    if (audio := movie.audio) is None:
+        warnings.append("no audio track; Apple has rejected silent previews as \"unsupported or corrupted "
+                        "audio\", so a silent stereo track is the safe default")
+    elif audio.codec != b"mp4a" or audio.channels != 2 or audio.sample_rate not in PREVIEW_AUDIO_RATES:
+        errors.append(f"audio is {audio.codec.decode(errors='replace')} {audio.channels}ch {audio.sample_rate} Hz; "
+                      "Apple takes stereo AAC at 44.1 or 48 kHz")
+    return errors, warnings
 
 
 def preview_type_for(path: Path, deck: Path) -> str:
@@ -175,17 +267,28 @@ def preview_type_for(path: Path, deck: Path) -> str:
             f"{path.name} sits in a {display_type} deck, which has no App Preview slot in ACCEPTED_PREVIEW_SIZES. "
             "Add it, checking Apple's app preview specifications for the accepted resolutions."
         )
-    if (dimensions := read_mp4_dimensions(path)) not in accepted:
-        try:
-            root = project.find_root()
-        except SystemExit:
-            root = None
-        script = next(iter(sorted(root.glob("[Ss]cripts/**/encode_app_preview.sh"))), None) if root else None
-        hint = (f"Re-encode with {script.relative_to(root)}." if script else
-                "Re-encode it first: see App Previews in the snakelane skill's references/gotchas.md.")
-        raise SystemExit(f"{path.name} is {dimensions[0]}x{dimensions[1]}, which {preview_type} does not accept "
-                         f"({', '.join(f'{w}x{h}' for w, h in sorted(accepted))}). {hint}")
+    movie = read_movie(path)
+    errors, warnings = preview_problems(movie)
+    if (dimensions := movie.dimensions) not in accepted:
+        errors.insert(0, f"{dimensions[0]}x{dimensions[1]}, which {preview_type} does not accept "
+                         f"({', '.join(f'{w}x{h}' for w, h in sorted(accepted))})")
+    for warning in warnings:
+        print(f"  warning: {path.name}: {warning}")
+    if errors:
+        raise SystemExit(f"{path.name}: {'; '.join(errors)}. {reencode_hint()}")
     return preview_type
+
+
+def reencode_hint() -> str:
+    try:
+        root = project.find_root()
+    except SystemExit:
+        root = None
+    script = next(iter(sorted(root.glob("[Ss]cripts/**/encode_app_preview.sh"))), None) if root else None
+    if script:
+        return f"Re-encode with {script.relative_to(root)}, or record it with `snakelane preview`."
+    return ("Re-encode it with `snakelane preview --encode-only`, or see App Previews in the snakelane skill's "
+            "references/gotchas.md.")
 
 
 def deck_dirs(platform_dir: Path, locale: str) -> list[Path]:

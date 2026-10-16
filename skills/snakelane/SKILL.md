@@ -1,6 +1,6 @@
 ---
 name: snakelane
-description: Operate and set up snakelane, a fastlane-free App Store Connect CLI (`snakelane auth|store|gamecenter|ship|shots|bump|packs|check|frame`) that pushes listing text, screenshots, App Previews, in-app purchases and subscriptions from a plain-text `metadata/` tree, ships test → archive → TestFlight → review, and sets CFBundleVersion from an Archive post-action. Use when a user asks to push metadata, update the App Store listing, sync or create IAPs, upload Game Center achievement or leaderboard images, shoot or upload screenshots, push an App Preview, submit for review, upload to TestFlight, bump the build number, set up App Store automation or do a new app's first upload and submission; or names `snakelane`, `snakelane.yml`, `iap.yml`, or the old per-app `Metadata/scripts/*.py` it replaces. Also use when naming an IAP or asset pack (ids are permanent) and when an ASC push fails with a 409, an invalid field, a rejected screenshot size or a bounced preview. Never use fastlane.
+description: Operate and set up snakelane, a fastlane-free App Store Connect CLI (`snakelane auth|store|gamecenter|ship|shoot|preview|bump|packs|check|frame`) that pushes listing text, screenshots, App Previews, in-app purchases and subscriptions from a plain-text `metadata/` tree, ships test → archive → TestFlight → review, and sets CFBundleVersion from an Archive post-action. Use when a user asks to push metadata, update the App Store listing, sync or create IAPs, upload Game Center achievement or leaderboard images, shoot or upload screenshots, push an App Preview, submit for review, upload to TestFlight, bump the build number, set up App Store automation or do a new app's first upload and submission; or names `snakelane`, `snakelane.yml`, `iap.yml`, or the old per-app `Metadata/scripts/*.py` it replaces. Also use when naming an IAP or asset pack (ids are permanent) and when an ASC push fails with a 409, an invalid field, a rejected screenshot size or a bounced preview. Never use fastlane.
 ---
 
 # snakelane: App Store Connect without fastlane
@@ -92,6 +92,7 @@ snakelane store subs show | subs push [--dry-run] [--create]
 
 snakelane shoot [--dry-run]         # generate the deck from the UI test
 snakelane frame                   # redraw captions over raw/ without re-shooting
+snakelane preview [--dry-run] [--encode-only]   # record ap-01.m4v from the video UI test, with sound
 snakelane gallery --open                  # review page: decks, store mocks, lint, translations
 snakelane gallery --live | --git          # …each shot marked new/changed/unchanged vs ASC or HEAD
 snakelane gallery --bundle <dir>          # self-contained copy (CI artifact, sharing)
@@ -273,6 +274,11 @@ Don't mark `--reviewed` on your own translation without the user's go-ahead.
 - Screenshots are JPEG only: decks (`ss-NN.jpg`) and IAP `review_screenshot`s. ASC rejects alpha
   channels and HEIC. Captions must **overlay** or be
   **inset** into the final size — stacking changes the dimensions and every shot rejects.
+- `snakelane preview` records the App Preview: with `previews.launch` it launches the app into its
+  video fixture with no UI test attached (`assets/ios/PreviewMarks.swift.template` has the app mark
+  "start" and "end"; a UI test hitches the clip), on each simulator, records it, taps the app's own sound, lays `previews.audio.bed` under it and
+  draws the screenshots' caption band over the top (`previews.overlay`), into `ap-01.m4v`. Needs
+  ffmpeg. Change captions or the mix with `--encode-only`, which re-encodes the kept recording.
 - [App Previews](https://developer.apple.com/help/app-store-connect/reference/app-information/app-preview-specifications) are a separate resource. "Uploaded" is not "accepted": Apple transcodes for up
   to ~20 minutes and can reject afterwards, visible only in the web UI. Raw `simctl`
   recordings are not uploadable as-is.

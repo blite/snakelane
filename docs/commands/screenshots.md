@@ -1,4 +1,4 @@
-# shoot, frame, check: making the deck
+# shoot, frame, preview, check: making the deck
 
 ## Shooting from your UI test
 
@@ -92,6 +92,25 @@ The skill ships the Swift for both ends:
 
 Change `caption.depth` or the theme's lip, and the app's reserve follows on the next shoot.
 You don't keep two numbers in step by hand.
+
+## Recording the App Preview
+
+```bash
+snakelane preview --dry-run         # the plan: simulators, the test, audio, overlay captions
+snakelane preview                   # record and encode ap-01.m4v for every device
+snakelane preview --device "iPhone 17 Pro"
+snakelane preview --encode-only     # new captions or mix, from the kept recording
+```
+
+`preview` launches the app into its video fixture on each simulator (or runs a video UI test),
+records it while the app plays itself,
+and taps the app's own sound from its process (macOS 14.2+). It encodes the clip to the preview
+slot's size at 30 fps, optionally with a music bed under the app's sound and the screenshots'
+caption band as a thin strip across the top, and writes `ap-01.m4v` beside the deck's shots.
+Upload it with `snakelane store previews push`. The app marks "start" and "end" (and any moments
+captions should follow) in `/tmp/<slug>-preview-events.jsonl`; the template is the skill's
+`assets/ios/PreviewMarks.swift.template`. Needs ffmpeg. Settings: `previews` in
+[the config](../reference/config.md#previews-preview).
 
 ## Catching developer builds
 

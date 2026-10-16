@@ -96,6 +96,37 @@ with `frame: snakelane` the band depth through `/tmp/<slug>-screenshot-banner.js
 first sets aside every image in the deck and the `ss-*` shots in `raw/`, and puts them back if
 it fails.
 
+## Previews (`preview`)
+
+```yaml
+previews:
+  launch: ["--ui-screenshot=video-demo"]   # recommended: the app launched into its video fixture,
+                                 #   no UI test attached; it marks start/end itself (assets/ios/PreviewMarks)
+  test: AppUITests/AppUITestsVideoPreviewUITests   # instead of launch: a video UI test (assets/ios template)
+  scheme: null                   # default: screenshots.scheme; test_plan, env, devices likewise
+  locales: [en-US]               # default: the first screenshot locale only
+  fit: crop                      # crop (fill the frame) | pad
+  max_seconds: 29                # Apple takes 15–30 s; a longer clip loses its start, not its end
+  audio:
+    capture: true                # tap the app's process for its sound (macOS 14.2+, swiftc)
+    bed: App/Audio/music.wav     # a music file looped under it; default none
+    bed_gain: -14                # dB
+    loudness: -16                # the mix's integrated LUFS
+  overlay:
+    style: band                  # band | none (default)
+    depth: 0.085                 # the band's share of the height: the status bar and a little more
+    framing: {theme: …, caption: {shape: arch}}   # over screenshots.framing's theme and caption
+    captions:                    # a string, a list of {at, text}, or either keyed by locale
+      - {at: 0, text: "No ads, ever"}
+      - {at: first-trick, text: "Smart AI opponents"}   # at: seconds, or a moment the test marked
+```
+
+With `launch`, snakelane starts recording, launches the app, and cuts the clip between the
+"start" and "end" the app appends to `/tmp/<slug>-preview-events.jsonl` (`{"event", "t"}`; any
+other name is a moment captions can follow). With `test`, the test also marks "ready" and waits
+for `/tmp/<slug>-preview-rolling`, which snakelane writes once recording. Recordings are kept in
+`.snakelane/<slug>/previews/`; `preview --encode-only` re-encodes from them.
+
 ## Game Center (`gamecenter`)
 
 ```yaml
