@@ -358,7 +358,7 @@ def bump_command(
         raise
     with logging_to(located.log_path("bump-build")):
         try:
-            print(f"{_stamp_line()} ({located.folder.name}, {located.pbxproj})")
+            print(f"{_stamp_line()} ({located.name}, {located.pbxproj})")
             if archive is not None:
                 if not archive.strip():
                     raise SystemExit(

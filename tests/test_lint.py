@@ -222,3 +222,18 @@ def test_the_configured_gamekit_is_the_one_checked(tmp_path: Path) -> None:
 
 def test_an_app_without_a_gamekit_has_no_opinion(app: project.App) -> None:
     assert not [f for f in lint.run(app, "ios") if f.rule == "gamecenter-points"]
+
+
+def test_a_missing_metadata_folder_stops_instead_of_linting_clean(tmp_path: Path) -> None:
+    # TowerDefense, 2026-10-16: the files were still in Metadata/PicnicDefense/ and lint said "clean".
+    app = make_app(tmp_path)
+    (tmp_path / "metadata" / "default").rmdir()
+    (tmp_path / "metadata").rmdir()
+    with pytest.raises(SystemExit, match=r'no such folder.*"metadata" \(default \'metadata\'\)'):
+        lint.run(app, "ios")
+
+
+def test_a_misnamed_metadata_key_is_named(tmp_path: Path) -> None:
+    app = make_app(tmp_path, metadata="Metadata/Old")
+    with pytest.raises(SystemExit, match=r"Metadata/Old: no such folder"):
+        _ = app.folder

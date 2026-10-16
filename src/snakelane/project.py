@@ -93,7 +93,18 @@ class App:
     config_path: Path
     config: dict[str, Any] = field(repr=False)
 
-    folder = property(lambda self: self.root / self.config.get("metadata", "metadata"))
+    @property
+    def folder(self) -> Path:
+        """The metadata folder, which must exist: read from a missing one, every field is "no
+        opinion", so lint passed and a push had nothing to say instead of naming the mistake.
+        Why: docs/design/foundations.md#a-missing-metadata-folder-stops"""
+        folder = self.root / (named := self.config.get("metadata", "metadata"))
+        if not folder.is_dir():
+            raise SystemExit(f'{folder}: no such folder. {self.config_path.name}\'s "metadata" '
+                             f'({"default " if "metadata" not in self.config else ""}{named!r}) names the '
+                             "listing folder; point it at the one this app's metadata is in")
+        return folder
+
     name = property(lambda self: self.config.get("name") or self.key or self.root.name)
     slug = property(lambda self: re.sub(r"[^a-z0-9]+", "-", (self.key or self.name).lower()).strip("-"))
     locales = property(lambda self: list(self.config.get("locales", [])))

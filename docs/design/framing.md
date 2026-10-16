@@ -139,6 +139,16 @@ A slot with a callout, a turned capture, key art (a slot with a `bias`), or any 
 full-bleed gets `none`. In the other layouts the caption doesn't overlap the capture, so there
 is nothing to keep clear, and key art isn't a screen the app lays out.
 
+### A deck is framed at one size
+
+Without `targets`, a shot used to be framed at its own capture's size. That is right while a
+deck's captures agree, and they do when one device shoots them all. A slot fed something else
+breaks it: Picnic Defense's key art is 1456x816, so on 2026-10-16 slot 9 came out 1456x816 beside
+2622x1206 shots, a size App Store Connect takes in no slot, and nothing said so until the push.
+When a deck's captures differ, they are now all framed at the most common App Store size among
+them (else the most common size), and the files that differ are named. A deck whose target
+fits no App Store slot is a warning at frame time.
+
 ### Key art is a full-bleed slot, not a layout
 
 There was a `cover` layout for Picnic Defense's key art: fill the canvas, crop toward the

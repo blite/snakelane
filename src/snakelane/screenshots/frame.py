@@ -8,12 +8,14 @@ metadata/<platform>/screenshots/<locale>/<device>/ss-NN.jpg. Settings: snakelane
 A raw file's slot is its `ss-NN` name; a capture without a caption is an error. `framing.captions`
 is one {slot: caption} map for every locale, or {locale: {slot: caption}}; a locale without an
 entry gets the primary locale's. A deck key (iphone, ipad, mac) holds that deck's own captions in
-either form; a deck without one uses the rest.
+either form; a deck without one uses the rest. Without `framing.targets`, a deck is framed at its
+captures' size, or, when they differ, at the most common App Store size among them.
 """
 
 from __future__ import annotations
 
 import re
+from collections import Counter
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Annotated, Any
@@ -26,7 +28,7 @@ from .framing import decorate
 from .framing.draw import caption_band, ink_of, parse_caption
 from .framing.style import DECKS, check_framing, style_for, theme_of
 from .framing.themes import THEMES
-from .media import deck_files, save_jpeg
+from .media import SCREENSHOT_DISPLAY_TYPES, deck_files, save_jpeg, screenshot_dimensions
 
 # The canvas when "targets" names none: 6.3" iPhone, 13" iPad, the Mac. Only the handoff needs it.
 DECK_CANVAS = {"iphone": (1206, 2622), "ipad": (2064, 2752), "mac": (2880, 1800)}
@@ -199,7 +201,15 @@ def frame_deck(app: App, locale: str = "en-US", decks: list[str] | None = None, 
         group = caption_group(cfg, platform)
         framed_groups.add(group)
         target = targets.get(platform)
-        print(f"{platform:7s} -> " + (f"{target[0]}x{target[1]}" if target else "native size"))
+        if target is None and (odd := deck_canvas(shots)) is not None:
+            target, outliers = odd
+            print(f"{platform:7s} -> {target[0]}x{target[1]}, its captures' size ({', '.join(outliers)} "
+                  f"differ{'s' if len(outliers) == 1 else ''}; set framing.targets to choose)")
+        else:
+            print(f"{platform:7s} -> " + (f"{target[0]}x{target[1]}" if target else "native size"))
+        if target is not None and theme is None and tuple(target) not in SCREENSHOT_DISPLAY_TYPES:
+            print(f"          warning: {target[0]}x{target[1]} fits no App Store Connect slot; "
+                  "the screenshot push will refuse this deck")
         for src in shots:
             if (n := slot_of(src)) not in deck:
                 raise SystemExit(f"{src.name}: no caption for shot {n} in {CAPTIONS}")
@@ -239,6 +249,19 @@ def frame_deck(app: App, locale: str = "en-US", decks: list[str] | None = None, 
                              f"no capture in {group or 'any deck'} for {locale}; shoot them, or drop their captions")
     print(f"\n{total} framed.")
     return total
+
+
+def deck_canvas(shots: list[Path]) -> tuple[tuple[int, int], list[str]] | None:
+    """When a deck's captures differ in size and no target is set: the size to frame them all at
+    (the most common App Store size among them, else the most common) and the files that differ.
+    None when they agree, which frames each at its own size as before.
+    Why: docs/design/framing.md#a-deck-is-framed-at-one-size"""
+    sizes = {path: screenshot_dimensions(path) for path in shots}
+    if len(set(sizes.values())) < 2:
+        return None
+    counts = Counter(sizes.values())
+    canvas = max(counts, key=lambda size: (size in SCREENSHOT_DISPLAY_TYPES, counts[size]))
+    return canvas, [f"{path.name} {w}x{h}" for path, (w, h) in sizes.items() if (w, h) != canvas]
 
 
 cli = command_app("Caption and frame raw captures outside the UI test. Settings: the config's "

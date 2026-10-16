@@ -6,6 +6,16 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **A missing metadata folder stops every command that reads the listing**, naming the
+  `metadata` key, instead of reading as an empty listing: `lint` reported clean for
+  TowerDefense while its files were still in `Metadata/PicnicDefense/` (2026-10-16). `bump`'s log
+  line now names the app, not the folder, so it doesn't need one.
+
+- **`snakelane frame` frames a deck at one size.** Without `framing.targets`, a deck whose captures
+  differ in size (key art beside screen captures) is framed at its most common App Store size, and
+  the files that differ are named; it used to frame each at its own size, which left Picnic
+  Defense's slot 9 at 1456x816. A target that fits no App Store slot is now a warning.
+
 - **A hung screenshot test is cut off at three minutes and retried once** (`-test-timeouts-enabled
   YES`, a 180 s allowance, `-retry-tests-on-failure -test-iterations 2`). On a fresh simulator or a
   busy Mac a single XCUITest launch could hang for 13 minutes and fail the whole pass; Lamplight's

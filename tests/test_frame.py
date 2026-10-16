@@ -479,3 +479,38 @@ def test_a_scaled_stacked_capture_sits_on_the_theme_background(app: project.App)
     with Image.open(project.DeckTree.for_deck(app, "mac").framed("en-US") / "ss-01.jpg") as out:
         r, g, b = out.getpixel((10, out.height - 10))
         assert abs(r - 0xB7) < 8 and abs(g - 0x96) < 8 and abs(b - 0x6D) < 8, (r, g, b)
+
+
+def sized(app: project.App, deck: str, n: int, size: tuple[int, int]) -> None:
+    path = project.DeckTree.for_deck(app, deck).raw("en-US") / f"ss-{n:02}.png"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGB", size, "white").save(path)
+
+
+def test_a_deck_of_mixed_sizes_is_framed_at_its_captures_size(app: project.App,
+                                                              capsys: pytest.CaptureFixture[str]) -> None:
+    # TowerDefense, 2026-10-16: 1456x816 key art in slot 9 came out 1456x816 beside 2622x1206 shots.
+    sized(app, "iphone", 1, (2622, 1206))
+    sized(app, "iphone", 2, (2622, 1206))
+    sized(app, "iphone", 3, (1456, 816))
+    frame.frame_deck(app, "en-US")
+    framed = project.DeckTree.for_deck(app, "iphone").framed("en-US")
+    assert {Image.open(framed / f"ss-{n:02}.jpg").size for n in (1, 2, 3)} == {(2622, 1206)}
+    out = capsys.readouterr().out
+    assert "2622x1206, its captures' size (ss-03.png 1456x816 differs" in out
+
+
+def test_a_deck_of_one_size_is_framed_at_it_as_before(app: project.App, capsys: pytest.CaptureFixture[str]) -> None:
+    for n in (1, 2, 3):
+        capture(app, "iphone", n)
+    frame.frame_deck(app, "en-US")
+    out = capsys.readouterr().out
+    assert "-> native size" in out and "warning" not in out
+
+
+def test_a_target_no_slot_takes_is_a_warning(app: project.App, capsys: pytest.CaptureFixture[str]) -> None:
+    styled(app, captions={"1": "One", "2": "Two", "3": "Three"}, targets={"iphone": [1000, 2000]})
+    for n in (1, 2, 3):
+        capture(app, "iphone", n)
+    frame.frame_deck(app, "en-US")
+    assert "1000x2000 fits no App Store Connect slot" in capsys.readouterr().out
