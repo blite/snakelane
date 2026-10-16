@@ -25,17 +25,23 @@ NAME_RE = re.compile(r"^([0-9]{2})-[A-Za-z][A-Za-z0-9-]*(_framed)?_\d+_[0-9A-F-]
 def stage(attachments_dir: Path, dirs: dict[str, Path]) -> dict[str, int]:
     """Route each attachment into `dirs["raw"]` or `dirs["framed"]` by its `_framed` suffix."""
     stats = {"raw": 0, "framed": 0, "unknown": 0}
+    # A retried test leaves both attempts' captures: the newest of each slot is the passing one.
+    # Why: docs/design/screenshots.md#a-hung-shot-is-cut-off-and-retried
+    latest: dict[tuple[str, str], tuple[float, str]] = {}
     for node in json.loads((attachments_dir / "manifest.json").read_text()):
         for attachment in node.get("attachments", []):
             if not (match := NAME_RE.match(attachment.get("suggestedHumanReadableName", ""))):
                 stats["unknown"] += 1
                 continue
-            kind = "framed" if match[2] else "raw"
-            # JPEG, not the PNG it arrived as: ASC rejects the alpha channel captures carry.
-            # Named by slot only: docs/design/screenshots.md#files-are-named-by-slot-only
-            with Image.open(attachments_dir / attachment["exportedFileName"]) as image:
-                save_jpeg(image, dirs[kind] / f"ss-{match[1]}.jpg")
-            stats[kind] += 1
+            slot, when = ("framed" if match[2] else "raw", match[1]), attachment.get("timestamp") or 0.0
+            if slot not in latest or when >= latest[slot][0]:
+                latest[slot] = (when, attachment["exportedFileName"])
+    for (kind, number), (_, exported) in latest.items():
+        # JPEG, not the PNG it arrived as: ASC rejects the alpha channel captures carry.
+        # Named by slot only: docs/design/screenshots.md#files-are-named-by-slot-only
+        with Image.open(attachments_dir / exported) as image:
+            save_jpeg(image, dirs[kind] / f"ss-{number}.jpg")
+        stats[kind] += 1
     return stats
 
 

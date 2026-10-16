@@ -49,26 +49,29 @@ def sync_localizations(client: asc.Client, indent: str, label: str, kind: str,
             client.report(f"{indent}✓ {label} created [{locale}]")
         elif not (changed := {k: v for k, v in fields.items() if v != asc.attributes(current).get(k)}):
             print(f"{indent}= {label} [{locale}] already matches")
-        elif problems is not None and (asc.attributes(current).get("state") in FROZEN_STATES
-                                       or not _try_patch(client, kind, current["id"], changed)):
+        elif problems is not None and (refusal := _patch_unless_frozen(client, kind, current, changed)):
             wants = ", ".join(f"{k}={v!r}" for k, v in changed.items())
-            print(f"{indent}⚠ {label} [{locale}] is approved; App Store Connect only lets its website change it: {wants}")
-            problems.append(f"{owner or label} [{locale}]: approved, change it on App Store Connect's website: {wants}")
+            print(f"{indent}⚠ {label} [{locale}] {refusal}: {wants}")
+            problems.append(f"{owner or label} [{locale}]: {refusal}: {wants}")
         else:
             if problems is None:
                 client.patch(f"/v1/{kind}/{current['id']}", asc.resource_body(kind, changed, id_=current["id"]))
             client.report(f"{indent}✓ {label} updated [{locale}]: {', '.join(changed)}")
 
 
-def _try_patch(client: asc.Client, kind: str, resource_id: str, changed: dict[str, Any]) -> bool:
-    """PATCH, False when Apple refuses it as frozen (409) so the caller reports instead of aborting."""
+def _patch_unless_frozen(client: asc.Client, kind: str, current: dict[str, Any],
+                         changed: dict[str, Any]) -> str | None:
+    """PATCH unless the localization is approved; None when it went, else why not (a refusal is a
+    409 the caller reports instead of aborting on, with Apple's words when the state didn't say)."""
+    if asc.attributes(current).get("state") in FROZEN_STATES:
+        return "is approved; App Store Connect only lets its website change it"
     try:
-        client.patch(f"/v1/{kind}/{resource_id}", asc.resource_body(kind, changed, id_=resource_id))
+        client.patch(f"/v1/{kind}/{current['id']}", asc.resource_body(kind, changed, id_=current["id"]))
     except asc.ASCError as error:
         if error.status != 409:
             raise
-        return False
-    return True
+        return f"was refused by App Store Connect ({error})"
+    return None
 
 
 def ensure_availability(client: asc.Client, indent: str, existing: str, kind: str,

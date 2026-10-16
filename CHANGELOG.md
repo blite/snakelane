@@ -10,11 +10,13 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
   YES`, a 180 s allowance, `-retry-tests-on-failure -test-iterations 2`). On a fresh simulator or a
   busy Mac a single XCUITest launch could hang for 13 minutes and fail the whole pass; Lamplight's
   and FreeCell's iOS 27 decks lost half an hour each that way (2026-10-15). A shot that fails twice
-  still fails the shoot.
+  still fails the shoot. When a retried shot leaves captures from both attempts, the newest of
+  each slot, the passing attempt's, is the one filed into the deck.
 
 - **`screenshots.mac.frame`** sets who captions the Mac deck, overriding `screenshots.frame` for
   it: an app whose UI test draws its iOS banners (`frame: test`) can have snakelane frame its Mac
-  deck with `mac: {frame: snakelane}` and `snakelane frame --platform macos`. Jigsaw's Mac deck
+  deck with `mac: {frame: snakelane}` and `snakelane frame --platform macos` (or plain `snakelane
+  frame` for a Mac-only app). Jigsaw's Mac deck
   is captured by hand and had no captions at all (2026-10-15).
 
 - **Fixed: a `stacked` capture scaled to fit now sits on the theme's `background`.** It was
@@ -27,12 +29,14 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
   "Cannot edit InAppPurchaseLocalization when it is in ACTIVE state"); only its website changes
   one. The push used to die on the first, so nothing after it in the catalogue ran, new locales
   included. Now it skips each one, carries on, and ends with the list of changes to make on the
-  website. Jigsaw's first push stopped at one French name before reaching the Italian and Russian
+  website. A 409 on a localization that isn't approved is listed the same way, with Apple's
+  words rather than "approved". Jigsaw's first push stopped at one French name before reaching the Italian and Russian
   localizations of nine packs (2026-10-15). Subscriptions are unchanged.
 
 - **`asset_packs.source_under`** restricts `packs package` to pictures under one folder, e.g.
   `approved` when only reviewed content may ship: a pack whose `pictureSource` sits anywhere else
-  is refused before anything is staged. A pack's contents freeze at first upload, and Puzzle Reef
+  is refused before anything is staged; the path is normalised first, so `approved/../raw` is
+  refused too. A pack's contents freeze at first upload, and Puzzle Reef
   uploaded two packs from its pre-review folder before it had this gate (2026-09-12).
 
 - **`gamecenter submit`** adds every Game Center record waiting for review (achievements,
@@ -40,7 +44,10 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
   with the app version being prepared, in one run; `--dry-run` shows it and `--without-version`
   leaves the version out. It never submits. App Store Connect's web pages take them one page at
   a time, thirteen for Pyramid Solitaire's first release. **`ship release` now sends any records
-  still waiting with the version**, and no longer adds a version already in the draft.
+  still waiting with the version**, and no longer adds a version already in the draft. A record
+  App Store Connect refuses (409) is left out and named: `ship release` still submits the version
+  and lists it, `gamecenter submit` adds the rest and then stops with it. A version in Metadata
+  Rejected joins the draft too.
 
 - **`lint` checks Game Center achievement points** (`gamecenter-points`, an error): an
   achievement in the `.gamekit` worth more than 100, or more than 1,000 in all. App Store

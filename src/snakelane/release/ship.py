@@ -276,6 +276,13 @@ def submit_for_review(client: asc.Client, app_id: str, version_id: str, platform
     submission (or a new one) and submit it."""
     from ..gamecenter import review
 
+    # Read before the first write, so a failed read leaves no half-filled draft behind.
+    pending = []
+    if app_config is not None:
+        try:
+            pending = review.pending_items(client, app_config)
+        except SystemExit:  # Game Center isn't enabled for the app
+            pass
     submission = review.draft(client, app_id, platform)
     version = get_optional(client, f"/v1/appStoreVersions/{version_id}") or {}
     if asc.attributes(version).get("appStoreState") == "READY_FOR_REVIEW":
@@ -286,17 +293,16 @@ def submit_for_review(client: asc.Client, app_id: str, version_id: str, platform
             "appStoreVersion": asc.relationship("appStoreVersions", version_id),
         }}})
         print("  added the version to the submission")
-    if app_config is not None:
-        # A first achievement or leaderboard must go to review with an app version.
-        # Why: docs/design/gamecenter.md#game-center-records-go-to-review-in-one-call
-        try:
-            pending = review.pending_items(client, app_config)
-        except SystemExit:  # Game Center isn't enabled for the app
-            pending = []
-        review.add(client, submission["id"], pending)
+    # A first achievement or leaderboard must go to review with an app version. One App Store
+    # Connect refuses stays behind for `gamecenter submit`, rather than holding the release.
+    # Why: docs/design/gamecenter.md#game-center-records-go-to-review-in-one-call
+    refused = review.add(client, submission["id"], pending)
     client.patch(f"/v1/reviewSubmissions/{submission['id']}",
                  asc.resource_body("reviewSubmissions", {"submitted": True}, id_=submission["id"]))
     print("  SUBMITTED FOR REVIEW")
+    if refused:
+        print("  ⚠ left out, refused by App Store Connect (send later with `snakelane gamecenter submit`):\n    "
+              + "\n    ".join(refused))
 
 
 def app_marketing_version(app: App) -> str:

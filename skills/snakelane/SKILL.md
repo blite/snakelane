@@ -288,7 +288,8 @@ achievement and leaderboard image (1024×1024) per locale, and each activity's d
 - **Send the records to review with `snakelane gamecenter submit`** (`--dry-run` first): it adds
   every achievement, leaderboard, set, activity and challenge waiting for review, and the app
   version, to the draft review submission, and never submits. `ship release` sends any still
-  waiting with the version. Don't run it without the user's go-ahead: it writes to ASC.
+  waiting with the version. A record App Store Connect refuses is named and left out (finish it
+  in Xcode or on the website); `ship release` still submits the version without it. Don't run it without the user's go-ahead: it writes to ASC.
 - **Run `snakelane lint` before syncing.** Its `gamecenter-points` rule catches an achievement
   over 100 points or a total over 1,000: App Store Connect refuses either, and Xcode's sync then
   creates nothing and shows no error (Pyramid Solitaire, 2026-10-15).

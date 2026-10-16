@@ -115,7 +115,9 @@ def picture_source(theme: str, pack: dict[str, Any], source_under: str | None = 
     from that step's output, and says so here rather than trusting each pack.json."""
     if not (relative := pack.get("pictureSource")):
         raise SystemExit(f"{theme}/pack.json has no pictureSource, so there is no folder to package from")
-    if source_under and Path(relative).parts[:len(Path(source_under).parts)] != Path(source_under).parts:
+    # Normalised first, so "approved/../raw" is judged as the "raw" it names.
+    if source_under and (Path(os.path.normpath(relative)).parts[:len(Path(source_under).parts)]
+                         != Path(source_under).parts):
         raise SystemExit(
             f"{theme}: pictureSource is {relative}, not under {source_under}/; only pictures that "
             f"have been through {source_under}/ may be packaged (asset_packs.source_under)"

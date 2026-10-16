@@ -280,8 +280,8 @@ def frame_command(
     resolved = resolve_app(app)
     from .shoot import frame_mode, reframe_with_test
 
-    mode = frame_mode(resolved.config.get("screenshots") or {},
-                      resolve_platform(resolved.config, platform) if platform is not None else None)
+    # Resolved even without --platform: a Mac-only app's `mac.frame` applies to its only deck.
+    mode = frame_mode(resolved.config.get("screenshots") or {}, resolve_platform(resolved.config, platform))
     if mode != "snakelane" and not theme:
         reframe_with_test(SimpleNamespace(app=app, locale=locale, device=device, dry_run=dry_run,
                                           platform=resolve_platform(resolved.config, platform)))

@@ -118,6 +118,31 @@ def test_extraction_files_attachments_as_rgb_jpegs(tmp_path: Path) -> None:
         assert image.format == "JPEG" and image.mode == "RGB" and image.size == (1284, 2778)
 
 
+def test_a_retried_shot_keeps_the_passing_attempt(tmp_path: Path) -> None:
+    import json
+
+    from PIL import Image
+
+    from snakelane.screenshots import extract
+
+    attachments = tmp_path / "attachments"
+    attachments.mkdir()
+    manifest = []
+    # The passing retry is listed first; the hung first attempt's capture is older.
+    for file, colour, when in (("retry.png", (0, 200, 0, 255), 200.0), ("hung.png", (200, 0, 0, 255), 100.0)):
+        Image.new("RGBA", (1206, 2622), colour).save(attachments / file)
+        manifest.append({"attachments": [{"suggestedHumanReadableName":
+                                          f"01-Home_0_0123ABCD-0000-0000-0000-00000000000{len(manifest)}.png",
+                                          "exportedFileName": file, "timestamp": when}]})
+    (attachments / "manifest.json").write_text(json.dumps(manifest))
+    dirs = {"raw": tmp_path / "raw", "framed": tmp_path / "framed"}
+    for d in dirs.values():
+        d.mkdir()
+    assert extract.stage(attachments, dirs) == {"raw": 1, "framed": 0, "unknown": 0}
+    with Image.open(dirs["raw"] / "ss-01.jpg") as image:
+        assert image.getpixel((10, 10))[1] > 150
+
+
 def test_a_png_in_a_deck_is_refused_not_skipped(tmp_path: Path) -> None:
     image(tmp_path / "ss-01.jpg", 1284, 2778)
     image(tmp_path / "_ss-02.png", 1284, 2778)  # excluded files may be anything

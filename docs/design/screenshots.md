@@ -38,6 +38,11 @@ The device is booted first and `bootstatus -b` waits for the boot. `simctl statu
 
 Every shoot's `xcodebuild` gets a three-minute allowance per test (`-test-timeouts-enabled YES`, default and maximum 180 s) and one retry of a failed test (`-retry-tests-on-failure -test-iterations 2`). A screenshot test is a launch, a wait and a capture: under a minute when the simulator is well. On a freshly created simulator, or a Mac busy with other builds, XCUITest's launch spent four to nine minutes "Setting up automation session", and the accessibility server then died (`kAXErrorServerNotFound`) under a query with a 20-second timeout that hung for thirteen minutes (Lamplight's and FreeCell's iOS 27 decks, 2026-10). One such shot failed the pass, and with it the deck, after half an hour. Cut off at three minutes and run again, the same shot passes on a relaunch; a shot that fails twice is a real failure, reported as before. A test that needs longer than three minutes is not a screenshot test.
 
+A retried test leaves both attempts' attachments in the result bundle, and the hung attempt may
+already have captured a shot or two in a bad state. The extract keeps the newest capture of each
+slot (the attachment's `timestamp`), which is the passing attempt's; it used to keep whichever
+the manifest listed last.
+
 ### The Mac lane checks for developer mode and Automation Mode
 
 Both switches are administrator actions, so the shoot prints the commands rather than running them. They are once per machine, though an OS upgrade turns Automation Mode back off. Without developer mode the failure arrives after the whole project has built, as "The test runner failed to initialize for UI testing (Underlying Error: Authentication canceled…)", which names a dialog rather than the switch. Without Automation Mode every synthesized click and key is dropped after about five seconds with no error. The no-authentication setting is used because a run that asks for a password part-way through is a run nobody is watching.

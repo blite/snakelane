@@ -13,7 +13,8 @@ def test_source_under_accepts_its_own_folder():
     assert picture_source("animals", {"pictureSource": "approved/animals"}, "approved") == "approved/animals"
 
 
-@pytest.mark.parametrize("source", ["candidates/animals", "approved-old/animals", "wip/approved/animals"])
+@pytest.mark.parametrize("source", ["candidates/animals", "approved-old/animals", "wip/approved/animals",
+                                    "approved/../candidates/animals"])
 def test_source_under_refuses_anything_else(source):
     with pytest.raises(SystemExit, match="not under approved/"):
         picture_source("animals", {"pictureSource": source}, "approved")

@@ -118,3 +118,36 @@ def test_a_version_not_ready_for_review_says_what_to_push(tmp_path: Path, monkey
     monkeypatch.setattr(asc, "Client", lambda **_: client)
     with pytest.raises(SystemExit, match=r"store push"):
         review.cmd_submit(SimpleNamespace(app=None, platform=None, dry_run=False, yes=True, without_version=False))
+
+
+def test_a_metadata_rejected_version_joins_the_draft(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    make_app(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    client = app_store_connect(app_state="METADATA_REJECTED")
+    monkeypatch.setattr(asc, "Client", lambda **_: client)
+    review.cmd_submit(SimpleNamespace(app=None, platform=None, dry_run=False, yes=True, without_version=False))
+    assert ("appStoreVersion", "v1") in added(client)
+
+
+class RefusesLeaderboards(FakeClient):
+    def post(self, path: str, body: dict[str, Any]) -> dict[str, Any]:
+        if "gameCenterLeaderboardVersion" in body["data"].get("relationships", {}):
+            raise asc.ASCError("POST /v1/reviewSubmissionItems → HTTP 409: leaderboard incomplete", status=409)
+        return super().post(path, body)
+
+
+def test_ship_release_submits_without_a_record_app_store_connect_refuses(config: dict[str, Any]) -> None:
+    client = RefusesLeaderboards(app_store_connect().gets)
+    ship.submit_for_review(client, "42", "v1", "ios", config)
+    assert added(client) == [("appStoreVersion", "v1"), ("gameCenterAchievementVersion", "a1v1")]
+    assert client.writes[-1][:2] == ("PATCH", "/v1/reviewSubmissions/s1")
+
+
+def test_submit_names_a_record_app_store_connect_refuses(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    make_app(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    client = RefusesLeaderboards(app_store_connect().gets)
+    monkeypatch.setattr(asc, "Client", lambda **_: client)
+    with pytest.raises(SystemExit, match=r"lb\.redo"):
+        review.cmd_submit(SimpleNamespace(app=None, platform=None, dry_run=False, yes=True, without_version=False))
+    assert ("gameCenterAchievementVersion", "a1v1") in added(client)

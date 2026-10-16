@@ -33,6 +33,9 @@ from .images import newest, owner
 
 # A newest version in one of these is added; Apple's GameCenterVersionState.
 PENDING = {"PREPARE_FOR_SUBMISSION", "REJECTED", "DEVELOPER_REJECTED"}
+# An app version in one of these joins the draft; Apple's AppStoreVersionState, which also has a
+# metadata rejection that Game Center versions don't.
+VERSION_PENDING = PENDING | {"METADATA_REJECTED"}
 
 
 class Kind(NamedTuple):
@@ -106,21 +109,32 @@ def draft(client: asc.Client, app_id: str, platform: str) -> dict[str, Any]:
     return submission
 
 
-def add(client: asc.Client, submission_id: str, items: list[Item]) -> None:
+def add(client: asc.Client, submission_id: str, items: list[Item]) -> list[str]:
+    """Add each item; one App Store Connect refuses (409) is left out and returned, with why, so
+    the rest still go in."""
+    refused: list[str] = []
     for item in items:
         assert item.version is not None
-        client.post("/v1/reviewSubmissionItems", {"data": {"type": "reviewSubmissionItems", "relationships": {
-            "reviewSubmission": asc.relationship("reviewSubmissions", submission_id),
-            item.kind.item: asc.relationship(item.kind.version_type, item.version["id"]),
-        }}})
+        try:
+            client.post("/v1/reviewSubmissionItems", {"data": {"type": "reviewSubmissionItems", "relationships": {
+                "reviewSubmission": asc.relationship("reviewSubmissions", submission_id),
+                item.kind.item: asc.relationship(item.kind.version_type, item.version["id"]),
+            }}})
+        except asc.ASCError as error:
+            if error.status != 409:
+                raise
+            print(f"  ⚠ {item.kind.label} {item.vendor_id} refused: {error}")
+            refused.append(f"{item.kind.label} {item.vendor_id}: {error}")
+            continue
         print(f"  {'would add' if client.dry_run else 'added'} {item.kind.label} {item.vendor_id}")
+    return refused
 
 
 def preparing_version(client: asc.Client, app_id: str, platform: str) -> dict[str, Any] | None:
     """The app version still being prepared for `platform` (not yet in a submission)."""
     versions = client.get_all(f"/v1/apps/{app_id}/appStoreVersions",
                               {"filter[platform]": asc.platform_enum(platform)})
-    return next((v for v in versions if asc.attributes(v).get("appStoreState") in PENDING), None)
+    return next((v for v in versions if asc.attributes(v).get("appStoreState") in VERSION_PENDING), None)
 
 
 def cmd_submit(args: SimpleNamespace) -> None:
@@ -165,7 +179,9 @@ def cmd_submit(args: SimpleNamespace) -> None:
                 "the screenshots (`snakelane store screenshots push`) or a build. The draft submission is "
                 "kept and reused next run; no Game Center record was added.\n" + str(error)) from None
         print(f"  {'would add' if client.dry_run else 'added'} app version {asc.attributes(version).get('versionString')}")
-    add(client, submission["id"], todo)
+    if refused := add(client, submission["id"], todo):
+        raise SystemExit("App Store Connect refused these, so they are not in the draft; finish them on "
+                         "its website or in Xcode and run again:\n  " + "\n  ".join(refused))
     if client.dry_run:
         print("\n[dry-run] nothing was written to App Store Connect.")
         return

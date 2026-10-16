@@ -47,7 +47,7 @@ def test_a_409_on_a_state_we_did_not_know_was_frozen_is_reported_not_raised() ->
     sync_localizations(RefusingClient(), "  ", "localization", KIND, {},
                        {"de-DE": live("de-DE", "Tiere-Paket 1", "SOMETHING_NEW")},
                        {"de-DE": {"name": "Tier-Paket 1"}}, "com.example.animals", problems)
-    assert len(problems) == 1
+    assert len(problems) == 1 and "approved" not in problems[0] and "ACTIVE state" in problems[0]
 
 
 def test_without_a_problems_list_a_refusal_still_stops_the_push() -> None:
