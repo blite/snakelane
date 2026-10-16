@@ -1567,6 +1567,18 @@ behaviour bumps the minor version. Each release is tagged <code>vX.Y.Z</code>.</
 <h2 id="unreleased">Unreleased<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
 <ul>
 <li>
+<p><strong><code>screenshots.mac.frame</code></strong> sets who captions the Mac deck, overriding <code>screenshots.frame</code> for
+  it: an app whose UI test draws its iOS banners (<code>frame: test</code>) can have snakelane frame its Mac
+  deck with <code>mac: {frame: snakelane}</code> and <code>snakelane frame --platform macos</code>. Jigsaw's Mac deck
+  is captured by hand and had no captions at all (2026-10-15).</p>
+</li>
+<li>
+<p><strong>Fixed: a <code>stacked</code> capture scaled to fit now sits on the theme's <code>background</code>.</strong> It was
+  padded out to the full width in the caption's fill colour first, which covered the background
+  the docs promise behind a scaled capture, so a Mac window in a cream band's theme came out on
+  cream instead of the colour asked for.</p>
+</li>
+<li>
 <p><strong><code>store iap push</code> reports a change to an approved localization instead of stopping on it.</strong>
   App Store Connect refuses any API edit to an approved in-app purchase localization (HTTP 409,
   "Cannot edit InAppPurchaseLocalization when it is in ACTIVE state"); only its website changes
