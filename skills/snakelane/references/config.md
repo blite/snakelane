@@ -119,6 +119,8 @@ previews:
     captions:                    # a string, a list of {at, text}, or either keyed by locale
       - {at: 0, text: "No ads, ever"}
       - {at: first-trick, text: "Smart AI opponents"}   # at: seconds, or a moment the test marked
+  poster: won                    # the poster frame: a moment the app marks, or seconds into the clip;
+                                 #   default unset, Apple's choice. Fixed once the version is approved
 ```
 
 With `launch`, snakelane starts recording, launches the app, and cuts the clip between the
@@ -126,6 +128,14 @@ With `launch`, snakelane starts recording, launches the app, and cuts the clip b
 other name is a moment captions can follow). With `test`, the test also marks "ready" and waits
 for `/tmp/<slug>-preview-rolling`, which snakelane writes once recording. Recordings are kept in
 `.snakelane/<slug>/previews/`; `preview --encode-only` re-encodes from them.
+
+`preview` writes `ap-01.json` beside `ap-01.m4v`: the poster's `HH:MM:SS:FF` time code (30 fps)
+and the captions it drew. Commit it with the clip: `store previews push` sends the poster as the
+preview's `previewFrameTimeCode` when it reserves it, and leaves the frame to Apple without one.
+In search results a portrait preview plays beside ss-01 and ss-02, so `preview --dry-run` and the
+gallery's search-result mock warn when a preview caption repeats theirs: compared with
+`screenshots.framing.captions`, or, with `frame: test`, read off the framed shots with Vision
+(the `snakelane[check]` extra; without it they say they can't check).
 
 ## Game Center (`gamecenter`)
 

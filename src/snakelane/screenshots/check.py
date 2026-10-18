@@ -79,9 +79,7 @@ class UnreadableImage(RuntimeError):
     pass
 
 
-def hud_text_in(path: Path, settings: Settings | None = None) -> list[str]:
-    """The developer-chrome strings found in the corner of `path`."""
-    settings = settings or Settings()
+def _vision():
     try:  # imported here so `--help` works anywhere
         import Quartz
         import Vision
@@ -89,6 +87,11 @@ def hud_text_in(path: Path, settings: Settings | None = None) -> list[str]:
         # 3, not 1 or 2: those mean "developer chrome found" and "unreadable file".
         print(f"{INSTALL_HINT}\n({exc})", file=sys.stderr)
         raise SystemExit(3) from exc
+    return Quartz, Vision
+
+
+def _cg_image(path: Path):
+    Quartz, _ = _vision()
     from Foundation import NSURL
 
     source = Quartz.CGImageSourceCreateWithURL(NSURL.fileURLWithPath_(str(path)), None)
@@ -96,6 +99,33 @@ def hud_text_in(path: Path, settings: Settings | None = None) -> list[str]:
         if source is not None and Quartz.CGImageSourceGetCount(source) else None
     if image is None:
         raise UnreadableImage(f"not a readable image: {path}")
+    return image
+
+
+def _recognise(image, path: Path, custom_words: list[str], correct: bool) -> list[str]:
+    _, Vision = _vision()
+    handler = Vision.VNImageRequestHandler.alloc().initWithCGImage_options_(image, None)
+    request = Vision.VNRecognizeTextRequest.alloc().init()
+    request.setRecognitionLevel_(Vision.VNRequestTextRecognitionLevelAccurate)
+    request.setUsesLanguageCorrection_(correct)
+    request.setCustomWords_(custom_words)
+    ok, error = handler.performRequests_error_([request], None)
+    if not ok:
+        raise UnreadableImage(f"text recognition failed on {path}: {error}")
+    return [str(c[0].string()).strip() for o in (request.results() or []) if (c := o.topCandidates_(1))]
+
+
+def text_in(path: Path) -> list[str]:
+    """Every line of text Vision reads in `path`: a framed shot's caption, for the preview's
+    search-result check when the UI test drew it."""
+    return _recognise(_cg_image(path), path, [], correct=True)
+
+
+def hud_text_in(path: Path, settings: Settings | None = None) -> list[str]:
+    """The developer-chrome strings found in the corner of `path`."""
+    settings = settings or Settings()
+    Quartz, _ = _vision()
+    image = _cg_image(path)
     width, height = Quartz.CGImageGetWidth(image), Quartz.CGImageGetHeight(image)
     cw, ch = max(1, int(width * settings.corner[0])), max(1, int(height * settings.corner[1]))
     # CGImage's origin is top-left.
@@ -111,16 +141,9 @@ def hud_text_in(path: Path, settings: Settings | None = None) -> list[str]:
     Quartz.CGContextDrawImage(context, Quartz.CGRectMake(0, 0, zw, zh), corner)
     if (corner := Quartz.CGBitmapContextCreateImage(context)) is None:
         raise UnreadableImage(f"could not enlarge: {path}")
-    handler = Vision.VNImageRequestHandler.alloc().initWithCGImage_options_(corner, None)
-    request = Vision.VNRecognizeTextRequest.alloc().init()
-    request.setRecognitionLevel_(Vision.VNRequestTextRecognitionLevelAccurate)
-    request.setUsesLanguageCorrection_(False)  # it turns `nodes:107` into prose
-    request.setCustomWords_(settings.custom_words)
-    ok, error = handler.performRequests_error_([request], None)
-    if not ok:
-        raise UnreadableImage(f"text recognition failed on {path}: {error}")
-    texts = [str(c[0].string()) for o in (request.results() or []) if (c := o.topCandidates_(1))]
-    return [t.strip() for t in texts if any(p.search(t) for p in settings.patterns)]
+    # No language correction: it turns `nodes:107` into prose.
+    texts = _recognise(corner, path, settings.custom_words, correct=False)
+    return [t for t in texts if any(p.search(t) for p in settings.patterns)]
 
 
 def check(paths: list[Path], quiet: bool = False, settings: Settings | None = None) -> int:

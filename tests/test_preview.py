@@ -202,3 +202,183 @@ def test_launch_mode_builds_the_app_and_runs_no_test(tmp_path: Path) -> None:
     plan = preview.make_plan(app, config, SimpleNamespace(locales=None, device=None, dry_run=True, encode_only=False))
     assert config.launch == ["--ui-screenshot=video"]
     assert plan.passes[0].build[-1] == "build" and plan.passes[0].test == []
+
+
+# --- the poster frame -----------------------------------------------------------------------------
+
+def test_a_time_code_is_hours_minutes_seconds_frames_at_30_fps() -> None:
+    assert media.time_code(5) == "00:00:05:00"  # Apple's example
+    assert media.time_code(14.4) == "00:00:14:12"
+    assert media.time_code(3725.5) == "01:02:05:15"
+    assert media.time_code_seconds("00:00:14:12") == pytest.approx(14.4)
+    for bad in ("00:00:14.4", "0:00:14:12", "00:00:14:30"):
+        with pytest.raises(ValueError):
+            media.time_code_seconds(bad)
+
+
+@pytest.mark.parametrize("poster, message", [
+    (True, "moment the app marks"), (-1, "moment the app marks"), ("  ", "moment the app marks"),
+    (["won"], "moment the app marks"), (40, "at most 29"),
+])
+def test_a_bad_poster_says_what_it_takes(tmp_path: Path, poster: object, message: str) -> None:
+    with pytest.raises(SystemExit, match=message):
+        preview.load_preview_config(make_app(tmp_path, scheme="Example", previews={"poster": poster}))
+
+
+def test_the_poster_is_a_moment_or_seconds_and_unset_by_default(tmp_path: Path, app: project.App) -> None:
+    assert preview.load_preview_config(app).poster is None
+    assert preview.load_preview_config(make_app(tmp_path / "w", scheme="E", previews={"poster": "won"})).poster == "won"
+    assert preview.poster_time(None, {"won": 3.0}, 20.0) is None
+    assert preview.poster_time("won", {"won": 14.4}, 20.0) == pytest.approx(14.4)
+    assert preview.poster_time(12.5, {}, 20.0) == 12.5
+    assert preview.poster_time("end", {"end": 20.0}, 20.0) == pytest.approx(20.0 - 1 / 30), "the last frame"
+    with pytest.raises(SystemExit, match="never marked"):
+        preview.poster_time("won", {"start": 0.0}, 20.0)
+    with pytest.raises(SystemExit, match=r"25s into a 20\.0s clip"):
+        preview.poster_time(25, {}, 20.0)
+
+
+def sidecar(clip: Path, poster: dict | None, captions: list[dict] | None = None) -> None:
+    media.preview_sidecar(clip).write_text(json.dumps({"poster": poster, "captions": captions or []}))
+
+
+def test_the_push_reads_the_poster_from_the_sidecar(tmp_path: Path) -> None:
+    clip = movie(tmp_path / "ap-01.m4v", seconds=20)
+    assert media.poster_time_code(clip, 20.0) is None, "no sidecar: Apple's default"
+    sidecar(clip, {"seconds": 14.4, "time_code": "00:00:14:12", "from": "won"})
+    assert media.poster_time_code(clip, 20.0) == "00:00:14:12"
+    with pytest.raises(SystemExit, match="past the end"):
+        media.poster_time_code(clip, 12.0)
+    sidecar(clip, {"time_code": "14.4"})
+    with pytest.raises(SystemExit, match="not an HH:MM:SS:FF"):
+        media.poster_time_code(clip, 20.0)
+
+
+def test_previews_push_reserves_each_preview_with_its_poster(monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+                                                             capsys: pytest.CaptureFixture[str]) -> None:
+    from types import SimpleNamespace
+
+    from snakelane.connect import asc
+    from snakelane.screenshots import upload
+
+    from .fakes import FakeClient
+
+    app = make_app(tmp_path)
+    deck = app.folder / "ios" / "screenshots" / "en-US" / "iphone"
+    image(deck / "ss-01.jpg", 1206, 2622)
+    clip = movie(deck / "ap-01.m4v")
+    sidecar(clip, {"seconds": 14.4, "time_code": "00:00:14:12", "from": "won"})
+
+    class Client(FakeClient):
+        def post(self, path, body):
+            super().post(path, body)
+            return {"data": {**body["data"], "id": "new-1"}}
+
+    client = Client({"/v1/appStoreVersionLocalizations/L1/appPreviewSets": {
+        "data": [{"id": "S1", "attributes": {"previewType": "IPHONE_61"}}]}})
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(asc.Credentials, "available", staticmethod(lambda: True))
+    monkeypatch.setattr(upload.asc, "Client", lambda dry_run=False: client)
+    monkeypatch.setattr(upload, "find_app", lambda c, cfg: {"id": "A1"})
+    monkeypatch.setattr(upload, "find_editable_version", lambda c, app_id, platform: {"id": "V1"})
+    monkeypatch.setattr(upload, "keyed", lambda c, path: {"en-US": {"id": "L1"}})
+    monkeypatch.setattr(upload, "wait_for_asset_processing", lambda *a, **k: (["ok"], [], []))
+    upload.cmd_previews_push(SimpleNamespace(app=None, platform=None, dry_run=False))
+    [reserve] = [body for verb, path, body in client.writes if verb == "POST" and path == "/v1/appPreviews"]
+    assert reserve["data"]["attributes"]["previewFrameTimeCode"] == "00:00:14:12"
+    assert "en-US/iphone/ap-01.m4v: poster 00:00:14:12" in capsys.readouterr().out
+
+    media.preview_sidecar(clip).unlink()
+    client.writes.clear()
+    upload.cmd_previews_push(SimpleNamespace(app=None, platform=None, dry_run=False))
+    [reserve] = [body for verb, path, body in client.writes if verb == "POST" and path == "/v1/appPreviews"]
+    assert "previewFrameTimeCode" not in reserve["data"]["attributes"], "unset: never sent"
+    assert "poster Apple's default" in capsys.readouterr().out
+
+
+# --- search results -------------------------------------------------------------------------------
+
+def test_a_repeat_is_the_same_words_whatever_the_case() -> None:
+    assert preview.repeats("SHOOT THE MOON", "Shoot the moon!")
+    assert preview.repeats("No ads", "NO ADS\nNO ACCOUNTS"), "a caption inside the shot's text"
+    assert not preview.repeats("Beat the bots", "Shoot the moon")
+    assert not preview.repeats("ads", "No roads"), "whole words only"
+
+
+def test_a_caption_repeating_ss_02_warns(tmp_path: Path) -> None:
+    app = make_app(tmp_path, screenshots={"frame": "snakelane", "framing": {"captions": {
+        "1": "No ads, ever", "2": ["Shoot", "the moon"], "3": "Beat the bots"}}})
+    framed = tmp_path / "deck"
+    [warning] = preview.search_result_repeats(app, "iphone", "en-US", framed, ["SHOOT THE MOON", "Beat the bots"])
+    assert '"SHOOT THE MOON" repeats ss-02' in warning, "ss-03 isn't beside the preview"
+
+
+def test_with_frame_test_the_captions_are_read_off_the_shots(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    from snakelane.screenshots import check, upload
+
+    app = make_app(tmp_path, screenshots={"frame": "test"})
+    framed = app.folder / "ios" / "screenshots" / "en-US" / "iphone"
+    assert "has no ss-01/ss-02" in preview.search_result_repeats(app, "iphone", "en-US", framed, ["X"])[0]
+    for n in (1, 2, 3):
+        image(framed / f"ss-{n:02d}.jpg", 1206, 2622)
+    monkeypatch.setattr(upload, "developer_chrome_check_available", lambda: False)
+    [warning] = preview.search_result_repeats(app, "iphone", "en-US", framed, ["SHOOT THE MOON"])
+    assert warning.startswith("can't check") and "snakelane[check]" in warning
+    monkeypatch.setattr(upload, "developer_chrome_check_available", lambda: True)
+    read = {"ss-01.jpg": ["NO ADS EVER"], "ss-02.jpg": ["SHOOT", "THE MOON", "12"]}
+    monkeypatch.setattr(check, "text_in", lambda path: read[path.name])
+    [warning] = preview.search_result_repeats(app, "iphone", "en-US", framed, ["SHOOT THE MOON", "BEAT THE BOTS"])
+    assert '"SHOOT THE MOON" repeats ss-02' in warning
+
+
+def test_the_gallery_mock_puts_the_poster_beside_ss_01_and_ss_02(tmp_path: Path) -> None:
+    from snakelane.screenshots import gallery
+
+    app = make_app(tmp_path, screenshots={"frame": "snakelane", "framing": {"captions": {
+        "1": "No ads", "2": "Shoot the moon", "3": "Beat the bots"}}})
+    folder = app.folder / "ios" / "screenshots" / "en-US" / "iphone"
+    shots = [gallery.Shot(image(folder / f"ss-{n:02d}.jpg", 1206, 2622)) for n in (1, 2, 3)]
+    clip = movie(folder / "ap-01.m4v")
+    sidecar(clip, {"seconds": 14.4, "time_code": "00:00:14:12", "from": "won"},
+            [{"from": 0, "to": 14, "text": "SHOOT THE MOON"}, {"from": 14, "to": 20, "text": "BEAT THE BOTS"}])
+    deck = gallery.Deck("iPhone", "ios", folder, shots, [clip])
+    tiles, warnings = gallery.search_strip(app, deck, "en-US", gallery.Assets(None))
+    assert len(tiles) == 3 and "poster 00:00:14:12" in tiles[0]
+    assert "ss-01.jpg" in tiles[1] and "ss-02.jpg" in tiles[2]
+    assert len(warnings) == 1 and "repeats ss-02" in warnings[0]
+    tiles, _ = gallery.search_strip(app, gallery.Deck("iPhone", "ios", folder, shots, []), "en-US", gallery.Assets(None))
+    assert ["ss-01.jpg" in tiles[0], "ss-03.jpg" in tiles[2]] == [True, True], "no preview: three shots"
+
+
+def test_the_dry_run_shows_the_poster_and_the_repeats(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    from types import SimpleNamespace
+    (tmp_path / "Example.xcodeproj").mkdir()
+    app = make_app(tmp_path, scheme="Example", screenshots={
+        "devices": [{"name": "iPhone 17 Pro", "id": "UDID-1", "deck": "iphone"}], "frame": "snakelane",
+        "framing": {"captions": {"1": "No ads", "2": "Shoot the moon"}}},
+        previews={"launch": ["--video"], "poster": "won", "overlay": {"style": "band", "captions": [
+            {"at": 0, "text": "SHOOT THE MOON"}, {"at": "won", "text": "BEAT THE BOTS"}]}})
+    config = preview.load_preview_config(app)
+    plan = preview.make_plan(app, config, SimpleNamespace(locales=None, device=None, dry_run=True, encode_only=True))
+    clip = plan.passes[0].clip
+    clip.parent.mkdir(parents=True)
+    sidecar(clip, {"seconds": 14.4, "time_code": "00:00:14:12", "from": "won"},
+            [{"from": 0, "to": 14, "text": "SHOOT THE MOON"}, {"from": 14, "to": 20, "text": "BEAT THE BOTS"}])
+    preview.print_plan(plan, encode_only=True)
+    out = capsys.readouterr().out
+    assert "poster     'won' (a moment the app marks)" in out
+    assert 'poster   00:00:14:12 in the encoded clip, under "BEAT THE BOTS"' in out
+    assert 'warning: preview caption "SHOOT THE MOON" repeats ss-02' in out
+
+
+def test_a_clip_encoded_before_the_sidecar_is_checked_against_the_config(tmp_path: Path) -> None:
+    from snakelane.screenshots import gallery
+
+    app = make_app(tmp_path, scheme="Example",
+                   screenshots={"frame": "snakelane", "framing": {"captions": {"1": "No ads", "2": "Shoot the moon"}}},
+                   previews={"overlay": {"style": "band", "captions": "SHOOT THE MOON"}})
+    folder = app.folder / "ios" / "screenshots" / "en-US" / "iphone"
+    shots = [gallery.Shot(image(folder / f"ss-{n:02d}.jpg", 1206, 2622)) for n in (1, 2)]
+    deck = gallery.Deck("iPhone", "ios", folder, shots, [movie(folder / "ap-01.m4v")])
+    tiles, warnings = gallery.search_strip(app, deck, "en-US", gallery.Assets(None))
+    assert "poster: Apple&#x27;s default" in tiles[0] and "repeats ss-02" in warnings[0]

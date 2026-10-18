@@ -28,6 +28,18 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
   outside 15–30 s, more than 30 fps, or audio that isn't stereo AAC at 44.1/48 kHz. A preview
   with no audio track warns.
 
+- **`previews.poster` sets the App Preview's poster frame**: a moment the app marks (`won`) or
+  seconds into the clip. `preview` writes it beside the clip in `ap-01.json` (with the captions it
+  drew) and `store previews push` sends it as `previewFrameTimeCode` when it reserves the preview;
+  the dry runs show it. Unset, the frame stays Apple's. **An app should** set it and commit
+  `ap-01.json` with `ap-01.m4v`: the poster can't be changed after the version is approved.
+
+- **`preview` warns when a preview caption repeats ss-01's or ss-02's**, which a portrait preview
+  plays beside in search results, in the dry run, after each encode and in the gallery's
+  search-result mock (which now shows the preview's poster beside ss-01 and ss-02). With
+  `frame: test` the shots' captions are read with Vision (`snakelane[check]`); without it the check
+  says it can't run.
+
 ## 0.4.0
 
 - **`snakelane store creative push | show`: the product page header and the search-result asset**,

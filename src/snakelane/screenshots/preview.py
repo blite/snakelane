@@ -20,6 +20,16 @@ snakelane.yml "previews" (all optional; full reference in the skill's references
                   drawn by `snakelane frame`'s code from "screenshots.framing" with "framing" on top.
                   captions: one string, a list of {"at", "text"}, or either keyed by locale; "at" is
                   seconds into the clip or the name of a moment the test marked
+    poster        the poster frame: a moment the app marks ("won") or seconds into the clip; default
+                  unset, Apple's own choice. Written to the clip's sidecar (ap-01.json) as an HH:MM:SS:FF
+                  time code, which `store previews push` sends as the preview's previewFrameTimeCode.
+                  It is all a viewer sees with autoplay off, and fixed once the version is approved.
+                  Why: docs/design/screenshots.md#the-poster-frame-is-chosen-not-left-to-apple
+
+In App Store search results a portrait preview plays beside ss-01 and ss-02, so --dry-run warns when a
+preview caption repeats theirs: from "screenshots.framing.captions", or read off the framed shots with
+Vision (the snakelane[check] extra) when the UI test draws them (frame "test").
+Why: docs/design/screenshots.md#in-search-results-the-preview-sits-beside-ss-01-and-ss-02
 
 The app (or its test) and snakelane talk through files on the Mac's disk, which the simulator shares:
     /tmp/<slug>-preview-events.jsonl   appended {"event": name, "t": epoch seconds}: "start" / "end"
@@ -36,6 +46,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import signal
 import subprocess
@@ -57,6 +68,7 @@ from . import media
 from .shoot import (
     DeviceSpec,
     Simulator,
+    frame_mode,
     load_config,
     locale_file,
     pin_status_bar,
@@ -65,7 +77,7 @@ from .shoot import (
 )
 
 KNOWN_KEYS = {"launch", "test", "scheme", "test_plan", "env", "devices", "locales", "fit", "max_seconds", "audio",
-              "overlay", "_comment"}
+              "overlay", "poster", "_comment"}
 AUDIO_KEYS = {"capture", "bed", "bed_gain", "loudness", "_comment"}
 OVERLAY_KEYS = {"style", "captions", "depth", "framing", "_comment"}
 CLIP = "ap-01.m4v"
@@ -93,6 +105,7 @@ class PreviewConfig:  # snakelane.yml's "previews", defaults applied
     captions: Any
     depth: float
     framing: dict[str, Any]
+    poster: str | float | None = None
 
 
 def load_preview_config(app: App) -> PreviewConfig:
@@ -125,6 +138,12 @@ def load_preview_config(app: App) -> PreviewConfig:
             raise SystemExit('previews.launch is a list of launch arguments, e.g. ["--ui-screenshot=video"]')
         if "test" in raw:
             raise SystemExit("previews has both launch and test: launch records the app with no test")
+    poster = raw.get("poster")
+    if isinstance(poster, bool) or not (poster is None or (isinstance(poster, str) and poster.strip())
+                                        or (isinstance(poster, (int, float)) and poster >= 0)):
+        raise SystemExit(f'previews.poster is a moment the app marks ("won") or seconds into the clip, not {poster!r}')
+    if isinstance(poster, (int, float)) and poster >= float(raw.get("max_seconds", 29)):
+        raise SystemExit(f"previews.poster is {poster}s into a clip of at most {raw.get('max_seconds', 29)}s")
     bed = None
     if audio.get("bed"):
         if not (bed := app.root / audio["bed"]).is_file():
@@ -148,6 +167,7 @@ def load_preview_config(app: App) -> PreviewConfig:
         captions=overlay.get("captions"),
         depth=float(overlay.get("depth", 0.085)),
         framing=overlay.get("framing") or {},
+        poster=poster.strip() if isinstance(poster, str) else poster,
     )
 
 
@@ -188,6 +208,88 @@ def caption_times(entries: list[dict[str, Any]], moments: dict[str, float], leng
         timed.append((max(0.0, float(at)), str(entry["text"])))
     timed.sort()
     return [(at, timed[i + 1][0] if i + 1 < len(timed) else length, text) for i, (at, text) in enumerate(timed)]
+
+
+# --- the poster ----------------------------------------------------------------------------------
+
+def poster_time(poster: str | float | None, moments: dict[str, float], length: float) -> float | None:
+    """The poster frame in clip seconds, on a frame inside the clip; None leaves it to Apple."""
+    if poster is None:
+        return None
+    if isinstance(poster, str):
+        if poster not in moments:
+            raise SystemExit(f"previews.poster is moment {poster!r}, which the app never marked "
+                             f"(it marked: {', '.join(sorted(moments)) or 'nothing'})")
+        at = moments[poster]
+    elif (at := float(poster)) >= length:
+        raise SystemExit(f"previews.poster is {at:g}s into a {length:.1f}s clip")
+    last = (round(length * media.PREVIEW_FPS) - 1) / media.PREVIEW_FPS
+    if not 0 <= at <= last:  # "end", or a moment the clip lost to max_seconds
+        print(f"  note: the poster moment {poster!r} is at {at:.2f}s, outside the clip; using {min(max(at, 0), last):.2f}s")
+    return min(max(at, 0.0), last)
+
+
+def poster_line(info: dict[str, Any]) -> str | None:
+    """The encoded clip's poster, for the plan: its time code and the caption over it."""
+    if not (poster := info.get("poster")):
+        return None
+    under = next((c["text"] for c in info.get("captions") or []
+                  if c.get("from", 0) <= poster.get("seconds", 0) < c.get("to", float("inf"))), None)
+    return f"{poster.get('time_code')} in the encoded clip" + (f', under "{under}"' if under else "")
+
+
+# --- search results -------------------------------------------------------------------------------
+
+SEARCH_SLOTS = (1, 2)  # the shots a portrait preview plays beside in search results
+
+
+def words(text: str) -> str:
+    return " ".join(re.findall(r"\w+", text.casefold()))
+
+
+def repeats(caption: str, shot: str) -> bool:
+    """Whether a preview caption says what a shot's caption (or the text read off the shot) says."""
+    a, b = words(caption), words(shot)
+    return bool(a and b) and (f" {a} " in f" {b} " or f" {b} " in f" {a} ")
+
+
+def shot_captions(app: App, deck: str, locale: str, framed: Path) -> tuple[dict[int, str], str | None]:
+    """ss-01's and ss-02's captions in `deck`, and why they couldn't be read when they couldn't."""
+    mode = frame_mode(app.config.get("screenshots") or {})
+    if mode == "none":
+        return {}, None
+    if mode == "snakelane":
+        from .frame import captions, framing
+        try:
+            found = captions(app, framing(app), locale, deck)
+        except SystemExit as error:
+            return {}, str(error)
+        return {slot: found[slot] for slot in SEARCH_SLOTS if slot in found}, None
+    # frame "test": the UI test drew them, so they are read off the framed shots.
+    shots = {int(m[1]): f for f in (media.deck_files([framed], media.DECK_SUFFIXES, "screenshot", quiet=True)
+                                    if framed.is_dir() else [])
+             if (m := re.fullmatch(r"ss-(\d+)", f.stem)) and int(m[1]) in SEARCH_SLOTS}
+    if not shots:
+        return {}, f"the UI test draws their captions (frame: test) and {framed.relative_to(app.root)} has no ss-01/ss-02"
+    from .upload import developer_chrome_check_available
+    if not developer_chrome_check_available():
+        return {}, ("the UI test draws their captions (frame: test); reading them off the shots needs macOS "
+                    "and the snakelane[check] extra")
+    from .check import UnreadableImage, text_in
+    try:
+        return {slot: " ".join(text_in(path)) for slot, path in sorted(shots.items())}, None
+    except UnreadableImage as error:
+        return {}, str(error)
+
+
+def search_result_repeats(app: App, deck: str, locale: str, framed: Path, texts: list[str]) -> list[str]:
+    """A warning for each preview caption that repeats ss-01's or ss-02's: in search results they play
+    side by side. Why: docs/design/screenshots.md#in-search-results-the-preview-sits-beside-ss-01-and-ss-02"""
+    found, reason = shot_captions(app, deck, locale, framed)
+    if reason:
+        return [f"can't check the preview's captions against ss-01/ss-02 (search results): {reason}"]
+    return [f'preview caption "{text}" repeats ss-{slot:02d}\'s, which plays beside it in search results'
+            for text in dict.fromkeys(texts) for slot, shot in sorted(found.items()) if repeats(text, shot)]
 
 
 # --- the band -------------------------------------------------------------------------------------
@@ -313,6 +415,11 @@ def print_plan(plan: Plan, encode_only: bool) -> None:
     print(f"audio      {', '.join(audio)}; {config.loudness:g} LUFS")
     print(f"overlay    {config.overlay or 'none'}" + (f" (depth {config.depth:g})" if config.overlay else ""))
     print(f"clip       ≤{config.max_seconds:g}s, fit {config.fit}")
+    if config.poster is None:
+        print("poster     Apple's default (previews.poster unset)")
+    else:
+        print(f"poster     {config.poster!r} (a moment the app marks)" if isinstance(config.poster, str)
+              else f"poster     {config.poster:g}s into the clip")
     for p in plan.passes:
         where = f"{p.sim.udid} ({p.sim.runtime})" if p.sim.udid else f"UNRESOLVED — {p.sim.problem}"
         print(f"[{p.sim.name} {p.locale}] {where}")
@@ -322,9 +429,16 @@ def print_plan(plan: Plan, encode_only: bool) -> None:
             print(f"  $ {show(p.build)}")
             if p.test:
                 print(f"  $ {show(p.test, config.env)}")
+        texts = []
         if config.overlay:
             for entry in captions_for(config, p.locale, app.primary_locale):
                 print(f"  caption  at {entry.get('at', 0)}: {entry['text']}")
+                texts.append(str(entry["text"]))
+        if line := poster_line(media.preview_info(p.clip)):
+            print(f"  poster   {line}")
+        if texts:
+            for warning in search_result_repeats(app, p.sim.deck, p.locale, p.clip.parent, texts):
+                print(f"  warning: {warning}")
     if plan.problems:
         print("problems" + "".join(f"\n  ! {problem}" for problem in plan.problems))
 
@@ -630,6 +744,7 @@ def encode(plan: Plan, p: Pass) -> Path:
         raise SystemExit(f"the clip is {length:.1f}s between the test's start and end; Apple needs at least "
                          f"{media.PREVIEW_SECONDS[0]:.0f}s — make the video test play longer")
     clip_moments = {name: t - start for name, t in moments.items()}
+    poster = poster_time(config.poster, clip_moments, length)
 
     inputs: list[str] = ["-ss", f"{start:.3f}", "-t", f"{length:.3f}", "-i", str(mov)]
     tw, th = target
@@ -637,12 +752,13 @@ def encode(plan: Plan, p: Pass) -> Path:
         fit = f"scale={tw}:{th}:force_original_aspect_ratio=decrease,pad={tw}:{th}:(ow-iw)/2:(oh-ih)/2:black"
     else:
         fit = f"scale={tw}:{th}:force_original_aspect_ratio=increase,crop={tw}:{th}"
-    graph = [f"[0:v]fps=30,{fit},setsar=1[v0]"]  # fps first: simctl records at whatever rate the screen ran
+    graph = [f"[0:v]fps={media.PREVIEW_FPS},{fit},setsar=1[v0]"]  # fps first: simctl records at whatever rate the screen ran
     label, n = "[v0]", 1
+    timed: list[tuple[float, float, str]] = []
     with tempfile.TemporaryDirectory(prefix="snakelane-preview-") as tmp:
         if config.overlay == "band":
-            for i, (frm, to, text) in enumerate(caption_times(
-                    captions_for(config, p.locale, app.primary_locale), clip_moments, length)):
+            timed = caption_times(captions_for(config, p.locale, app.primary_locale), clip_moments, length)
+            for i, (frm, to, text) in enumerate(timed):
                 png, (x, y) = band_layer(app, config, text, capture.dimensions, target, Path(tmp) / f"band-{i}.png")
                 inputs += ["-loop", "1", "-t", f"{length:.3f}", "-i", str(png)]
                 graph.append(f"{label}[{n}:v]overlay={x}:{y}:enable='between(t,{frm:.3f},{to:.3f})'[v{i + 1}]")
@@ -697,8 +813,18 @@ def encode(plan: Plan, p: Pass) -> Path:
     for warning in warnings:
         print(f"  warning: {warning}")
     partial.replace(p.clip)
+    info = {
+        # Sent by `store previews push` as previewFrameTimeCode; null leaves the frame to Apple.
+        "poster": None if poster is None else {"seconds": round(poster, 3), "time_code": media.time_code(poster),
+                                                "from": config.poster},
+        "captions": [{"from": round(frm, 3), "to": round(to, 3), "text": text} for frm, to, text in timed],
+        "seconds": round(movie.seconds, 3),
+    }
+    media.preview_sidecar(p.clip).write_text(json.dumps(info, indent=2, ensure_ascii=False) + "\n")
     print(f"  {p.clip.relative_to(app.root)}  {tw}x{th}  {movie.seconds:.1f}s  {movie.video.fps:.0f} fps  "
-          f"{p.clip.stat().st_size / 1e6:.1f} MB")
+          f"{p.clip.stat().st_size / 1e6:.1f} MB" + (f"  poster {media.time_code(poster)}" if poster is not None else ""))
+    for warning in search_result_repeats(app, p.sim.deck, p.locale, p.clip.parent, [t for _, _, t in timed]):
+        print(f"  warning: {warning}")
     return p.clip
 
 

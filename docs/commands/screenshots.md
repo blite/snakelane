@@ -112,6 +112,11 @@ captions should follow) in `/tmp/<slug>-preview-events.jsonl`; the template is t
 `assets/ios/PreviewMarks.swift.template`. Needs ffmpeg. Settings: `previews` in
 [the config](../reference/config.md#previews-preview).
 
+`previews.poster` picks the poster frame, which `store previews push` sends with the preview; it
+is all a viewer sees with autoplay off, and it can't be changed once the version is approved. The
+dry run and each encode warn when a preview caption repeats ss-01's or ss-02's, which a portrait
+preview plays beside in search results.
+
 ## Catching developer builds
 
 ```bash

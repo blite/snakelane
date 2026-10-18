@@ -107,13 +107,16 @@ def source_checksum(data: bytes) -> str:
 
 
 def upload_asset_resource(client: asc.Client, resource_type: str, path: Path, relationships: dict[str, Any],
-                          api: str = "v1", checksum: bool = True) -> str:
+                          api: str = "v1", checksum: bool = True, attributes: dict[str, Any] | None = None) -> str:
     """Reserve, upload each byte range to its presigned URL, commit (with the MD5 unless `checksum` is
     False: Game Center images take `uploaded` alone); returns the resource id. `api` is the path's
-    version, "v2" for some Game Center resources. Apple can still reject it: see `wait_for_asset_processing`."""
+    version, "v2" for some Game Center resources; `attributes` go in the reservation beside the file's
+    name and size (an App Preview's previewFrameTimeCode). Apple can still reject it: see
+    `wait_for_asset_processing`."""
     data = path.read_bytes()
     resource = client.post(f"/{api}/{resource_type}", asc.resource_body(
-        resource_type, {"fileName": path.name, "fileSize": len(data)}, relationships=relationships))["data"]
+        resource_type, {"fileName": path.name, "fileSize": len(data), **(attributes or {})},
+        relationships=relationships))["data"]
     for op in asc.attributes(resource).get("uploadOperations", []):
         client.upload_part(op, data)
     commit = {"uploaded": True, **({"sourceFileChecksum": source_checksum(data)} if checksum else {})}

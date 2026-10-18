@@ -7,6 +7,7 @@ from __future__ import annotations
 import importlib.util
 import subprocess
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, NamedTuple
@@ -30,7 +31,9 @@ from .media import (
     deck_files,
     display_type_for,
     oversized_sets,
+    poster_time_code,
     preview_type_for,
+    read_movie,
     refuse_png_in_deck,
     screenshot_dimensions,
     size_warnings,
@@ -70,9 +73,10 @@ def offline_dry_run(plan: Plan, noun: str) -> bool:
     return True
 
 
-def mirror(client: asc.Client, app_config: dict[str, Any], platform: str, plan: Plan,
-           kind: Kind) -> list[dict[str, Any]]:
+def mirror(client: asc.Client, app_config: dict[str, Any], platform: str, plan: Plan, kind: Kind,
+           attributes: Callable[[Path], dict[str, Any]] = lambda _: {}) -> list[dict[str, Any]]:
     """Make each locale's live sets match `plan`; returns the uploads for the processing wait.
+    `attributes(file)` go into each file's reservation (a preview's poster frame).
 
     ASC has no replace-in-place, so a kept set is emptied and refilled, and a set for a slot the
     deck no longer fills is deleted. Why: docs/design/screenshots.md#remote-mirrors-local"""
@@ -104,8 +108,10 @@ def mirror(client: asc.Client, app_config: dict[str, Any], platform: str, plan: 
                 client.report(f"  created {kind.sets[:-1]} {locale}/{slot} ({set_id})")
             for file in group:
                 relationships = {kind.sets[:-1]: asc.relationship(kind.sets, set_id)}
-                resource_id = upload_asset_resource(client, kind.items, file, relationships)
-                client.report(f"  uploaded {file.name} -> {locale}/{slot}")
+                extra = attributes(file)
+                resource_id = upload_asset_resource(client, kind.items, file, relationships, attributes=extra)
+                client.report(f"  uploaded {file.name} -> {locale}/{slot}"
+                              + "".join(f"  {k}={v}" for k, v in extra.items()))
                 uploads.append({"id": resource_id, "path": file, "relationships": relationships,
                                 "label": f"{locale}/{slot}/{file.name}"})
     return uploads
@@ -119,6 +125,7 @@ def cmd_previews_push(args: SimpleNamespace) -> None:
     platform = resolve_platform(app_config, args.platform)
     # The whole local plan first, so a bad encode fails before any live preview is deleted.
     plan: Plan = {}
+    posters: dict[Path, str | None] = {}
     for locale in app_config["locales"]:
         if not (dirs := deck_dirs(folder / platform, locale)):
             print(f"  (no deck directory for {locale} — skipping)")
@@ -129,12 +136,18 @@ def cmd_previews_push(args: SimpleNamespace) -> None:
         plan[locale] = by_type = {}
         for file in deck_files(dirs, PREVIEW_SUFFIXES, "preview"):
             by_type.setdefault(preview_type_for(file, file.parent), []).append(file)
+            # Set when the preview is reserved: once the version is approved it can't be changed.
+            # Why: docs/design/screenshots.md#the-poster-frame-is-chosen-not-left-to-apple
+            posters[file] = code = poster_time_code(file, read_movie(file).seconds)
+            print(f"  {locale}/{file.parent.name}/{file.name}: poster "
+                  + (code or "Apple's default (no previews.poster when it was encoded)"))
         if not by_type:
             print(f"  (no App Previews for {locale} — removing any that are live)")
     if args.dry_run and offline_dry_run(plan, "preview"):
         return
     client = asc.Client(dry_run=args.dry_run)
-    uploads = mirror(client, app_config, platform, plan, PREVIEWS)
+    uploads = mirror(client, app_config, platform, plan, PREVIEWS,
+                     lambda file: {"previewFrameTimeCode": code} if (code := posters.get(file)) else {})
     if client.dry_run:
         print("\n[dry-run] no App Previews were changed.")
         return

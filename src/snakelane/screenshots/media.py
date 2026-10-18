@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import json
+import re
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from PIL import Image
 
@@ -277,6 +280,59 @@ def preview_type_for(path: Path, deck: Path) -> str:
     if errors:
         raise SystemExit(f"{path.name}: {'; '.join(errors)}. {reencode_hint()}")
     return preview_type
+
+
+# --- the clip's sidecar ---------------------------------------------------------------------------
+# `snakelane preview` writes ap-01.json beside ap-01.m4v: the poster frame it chose and the captions it
+# drew. The push sends the poster; the gallery and the search-result check read the captions.
+
+PREVIEW_FPS = 30  # what `snakelane preview` encodes at, and the frame rate of a poster time code
+TIME_CODE = re.compile(r"(\d\d):([0-5]\d):([0-5]\d):(\d\d)")
+
+
+def time_code(seconds: float, fps: int = PREVIEW_FPS) -> str:
+    """`previewFrameTimeCode`'s HH:MM:SS:FF (Apple's examples: "00:00:05:00"), rounded to a frame."""
+    frames = round(seconds * fps)
+    whole, frame = divmod(frames, fps)
+    return f"{whole // 3600:02d}:{whole // 60 % 60:02d}:{whole % 60:02d}:{frame:02d}"
+
+
+def time_code_seconds(code: str, fps: int = PREVIEW_FPS) -> float:
+    if not (match := TIME_CODE.fullmatch(code)) or int(match[4]) >= fps:
+        raise ValueError(f"{code!r} is not an HH:MM:SS:FF time code at {fps} fps")
+    h, m, s, f = map(int, match.groups())
+    return h * 3600 + m * 60 + s + f / fps
+
+
+def preview_sidecar(clip: Path) -> Path:
+    return clip.with_suffix(".json")
+
+
+def preview_info(clip: Path) -> dict[str, Any]:
+    """What `snakelane preview` recorded about `clip`: {} for a preview made some other way."""
+    if not (path := preview_sidecar(clip)).is_file():
+        return {}
+    try:
+        info = json.loads(path.read_text())
+    except ValueError as error:
+        raise SystemExit(f"{path}: not JSON ({error}); re-encode with `snakelane preview --encode-only`") from None
+    return info if isinstance(info, dict) else {}
+
+
+def poster_time_code(clip: Path, seconds: float | None = None) -> str | None:
+    """The poster frame to send for `clip`, None for Apple's default; refused when it falls outside a
+    clip of `seconds` (a sidecar left beside a clip encoded since)."""
+    if not (poster := preview_info(clip).get("poster")):
+        return None
+    code = poster.get("time_code") if isinstance(poster, dict) else None
+    try:
+        at = time_code_seconds(str(code))
+    except ValueError as error:
+        raise SystemExit(f"{preview_sidecar(clip)}: poster {error}") from None
+    if seconds is not None and at >= seconds:
+        raise SystemExit(f"{preview_sidecar(clip)}: the poster is at {code}, past the end of the "
+                         f"{seconds:.1f}s {clip.name}; re-encode with `snakelane preview --encode-only`")
+    return code
 
 
 def reencode_hint() -> str:

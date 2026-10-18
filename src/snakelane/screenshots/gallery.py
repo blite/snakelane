@@ -7,6 +7,8 @@
 
 Writes `/tmp/snakelane-<app>-gallery.html`: per locale, store mocks, lint and translation status,
 every deck in upload order, and each shot's new/changed/unchanged/removed. Why: docs/design/framing.md#the-gallery.
+The search-result mock shows what the store does with a portrait App Preview: its poster frame
+(previews.poster, from the clip's sidecar) beside ss-01 and ss-02, and warns when a caption repeats.
 
 snakelane.yml:
     "gallery": {"icon": "App/…/icon.png"}   repo-relative mock icon (default: AppIcon.appiconset, store, DerivedData)
@@ -237,9 +239,51 @@ def esc(value: object) -> str:
     return html.escape(str(value), quote=True)
 
 
-def mocks(text: dict[str, str | None], icon_tag: str, strip: list[str], note: str) -> str:
+def poster_tile(path: Path, assets: Assets) -> str:
+    """A preview as search results show it before it plays (or with autoplay off): its poster frame."""
+    poster = media.preview_info(path).get("poster") or {}
+    label = f"poster {poster['time_code']}" if poster.get("time_code") else "poster: Apple's default"
+    image = None
+    if poster.get("seconds") is not None and shutil.which("ffmpeg"):
+        key = hashlib.sha1(f"{path.resolve()}:{path.stat().st_mtime_ns}:{poster['seconds']}".encode()).hexdigest()[:10]
+        if not (image := assets.scratch(f"poster-{key}.jpg")).exists():
+            subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", f"{poster['seconds']:.3f}", "-i", str(path),
+                            "-frames:v", "1", "-q:v", "3", str(image)], check=False)
+    still = (f'<img src="{esc(assets.url(image))}" alt="">' if image is not None and image.exists()
+             else f'<video src="{esc(assets.url(path))}" muted preload="metadata"></video>')
+    return f'<div class="poster">{still}<span>▶ {esc(label)}</span></div>'
+
+
+def search_strip(app: project.App, deck: Deck, locale: str, assets: Assets) -> tuple[list[str], list[str]]:
+    """The search result's three tiles and any warnings: a portrait preview takes the first, beside ss-01
+    and ss-02. Why: docs/design/screenshots.md#in-search-results-the-preview-sits-beside-ss-01-and-ss-02"""
+    shots = [f'<img src="{esc(assets.url(s.path))}" alt="">' for s in deck.shots]
+    if not deck.previews:
+        return shots[:3], []
+    clip = deck.previews[0]
+    try:
+        width, height = media.read_movie(clip).dimensions
+    except (ValueError, OSError):
+        return shots[:3], []
+    if width > height:  # a landscape preview fills the row by itself
+        return [poster_tile(clip, assets)], []
+    from .preview import captions_for, load_preview_config, search_result_repeats
+    texts = [str(c.get("text")) for c in media.preview_info(clip).get("captions") or [] if c.get("text")]
+    if not texts and "captions" not in media.preview_info(clip):  # encoded before the sidecar: the config's
+        try:
+            config = load_preview_config(app)
+            texts = [str(c["text"]) for c in captions_for(config, locale, app.primary_locale)] if config.overlay else []
+        except SystemExit:
+            texts = []
+    warnings = search_result_repeats(app, "iphone", locale, deck.folder, texts) if texts else []
+    return [poster_tile(clip, assets), *shots[:2]], warnings
+
+
+def mocks(text: dict[str, str | None], icon_tag: str, strip: list[str], note: str,
+          warnings: list[str] | None = None) -> str:
     name, subtitle = text.get("name"), text.get("subtitle")
-    shots = "".join(f'<img src="{esc(u)}" alt="">' for u in strip[:3])
+    shots = "".join(strip[:3])
+    warned = "".join(f'<div class="muted notice">{esc(w)}</div>' for w in warnings or [])
 
     def block(title: str, body: str | None, cls: str = "") -> str:
         return f'<h4>{title}</h4><p class="clamp {cls}">{esc(body)}</p><span class="more">more</span>' if body else ""
@@ -253,7 +297,7 @@ def mocks(text: dict[str, str | None], icon_tag: str, strip: list[str], note: st
     <div class="subtitle">{esc(subtitle or "")}</div><div class="stars">★★★★★ <span>1.2K</span></div></div>
    <div class="get">Get</div></div>
   <div class="strip">{shots or '<div class="muted">no iPhone shots</div>'}</div>
-  <div class="muted">{esc(note)} · name {len(name or "")}/{LISTING["name"].limit} · subtitle {len(subtitle or "")}/{LISTING["subtitle"].limit}</div>
+  <div class="muted">{esc(note)} · name {len(name or "")}/{LISTING["name"].limit} · subtitle {len(subtitle or "")}/{LISTING["subtitle"].limit}</div>{warned}
  </div>
  <div class="phone page">
   <div class="label">Product page</div>
@@ -326,9 +370,9 @@ def build(app: project.App, platform: str = "ios", assets: Assets | None = None,
         elif compare_git_head:
             compare_git(app, decks, assets)
 
-    def iphone_urls(locale: str) -> list[str] | None:
+    def iphone_strip(locale: str) -> tuple[list[str], list[str]] | None:
         deck = next((d for d in decks_by_locale.get(locale, []) if d.family == "iPhone"), None)
-        return [assets.url(s.path) for s in deck.shots] if deck else None
+        return search_strip(app, deck, locale, assets) if deck else None
 
     notices = []
     if live and live.primary_locale and live.primary_locale != configured_primary:
@@ -336,10 +380,11 @@ def build(app: project.App, platform: str = "ios", assets: Assets | None = None,
                        f'{configured_primary}: set "primary_locale": "{live.primary_locale}".')
     sections = []
     for locale in locales:
-        if (own_strip := iphone_urls(locale)) is None and locale != primary:
-            strip, note = iphone_urls(primary) or [], f"no deck — shows {primary}'s"
+        if (own := iphone_strip(locale)) is None and locale != primary:
+            (strip, warnings), note = iphone_strip(primary) or ([], []), f"no deck — shows {primary}'s"
         else:
-            strip = own_strip or []
+            strip, warnings = own or ([], [])
+            own_strip = strip if own is not None else None
             note = ("own deck" if own_strip else "no iPhone deck" if own_strip is None
                     else "empty iPhone folder — the push deletes the live iPhone shots")
         text = {f: read_field(app.folder / platform, locale, f) for f in TEXT_FIELDS if f != "keywords"}
@@ -349,7 +394,7 @@ def build(app: project.App, platform: str = "ios", assets: Assets | None = None,
         sections.append(
             f'<section id="{esc(locale)}"><h2>{esc(locale)}{" · primary" if locale == primary else ""}</h2>'
             f'{review_panel([f for f in findings if f.where.startswith(f"{locale}/")], translation.get(locale, {}))}'
-            f'{mocks(text, tag, strip, note)}{body}</section>')
+            f'{mocks(text, tag, strip, note, warnings)}{body}</section>')
     if unlisted := [loc for loc in decks_by_locale if loc not in locales and decks_by_locale[loc]]:
         body = "".join(f'<h3>{esc(loc)}</h3>' + "".join(deck_html(d, assets, comparing) for d in decks_by_locale[loc])
                        for loc in unlisted)
@@ -402,7 +447,8 @@ h4 { margin:12px 0 2px; font-size:15px; }
 .name { font-weight:600; } .subtitle, .stars span { color:var(--muted); font-size:13px; } .stars { font-size:12px; color:var(--muted); }
 .get { background:var(--line); color:var(--accent); font-weight:700; border-radius:999px; padding:5px 18px; }
 .strip { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:12px; }
-.strip img { width:100%; border-radius:8px; border:1px solid var(--line); }
+.strip img, .strip video { width:100%; border-radius:8px; border:1px solid var(--line); display:block; }
+.poster { position:relative; } .poster span { position:absolute; left:4px; bottom:4px; font-size:10px; padding:1px 6px; border-radius:999px; background:rgba(0,0,0,.6); color:#fff; }
 .promo { margin:12px 0 0; }
 .clamp { margin:0; white-space:pre-line; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
 .clamp.two { -webkit-line-clamp:2; } .more { color:var(--accent); font-size:13px; }

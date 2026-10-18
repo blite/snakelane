@@ -279,6 +279,11 @@ Don't mark `--reviewed` on your own translation without the user's go-ahead.
   "start" and "end"; a UI test hitches the clip), on each simulator, records it, taps the app's own sound, lays `previews.audio.bed` under it and
   draws the screenshots' caption band over the top (`previews.overlay`), into `ap-01.m4v`. Needs
   ffmpeg. Change captions or the mix with `--encode-only`, which re-encodes the kept recording.
+- Set `previews.poster` (a moment the app marks, e.g. `won`, or seconds): the poster is all most
+  viewers see, and **it can't be changed once the version is approved**. `preview` writes it to
+  `ap-01.json` beside the clip (commit both); `store previews push` sends it as
+  `previewFrameTimeCode`. In search results a portrait preview plays beside ss-01 and ss-02, so
+  don't repeat their captions: `preview --dry-run` and the gallery warn when a caption does.
 - [App Previews](https://developer.apple.com/help/app-store-connect/reference/app-information/app-preview-specifications) are a separate resource. "Uploaded" is not "accepted": Apple transcodes for up
   to ~20 minutes and can reject afterwards, visible only in the web UI. Raw `simctl`
   recordings are not uploadable as-is.
