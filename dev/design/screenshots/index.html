@@ -1709,6 +1709,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#creative-assets-are-checked-against-apples-reference-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creative assets are checked against Apple's reference data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creative-assets-are-found-by-content" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creative assets are found by content
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#screenshots-show" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2614,6 +2636,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#creative-assets-are-checked-against-apples-reference-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creative assets are checked against Apple's reference data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creative-assets-are-found-by-content" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creative assets are found by content
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#screenshots-show" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2766,6 +2810,10 @@ the staging code in the app doesn't change.</p>
 <p>App Previews are separate ASC resources (<code>appPreviewSets</code> and <code>appPreviews</code>, with their own slot enum), so they have their own command. They share the deck folder so one folder is everything a device class needs. Apple transcodes a preview and can reject it after the bytes land, so the push waits for processing with a 20-minute budget instead of the 10 minutes used for images.</p>
 <h3 id="processing-is-verified-and-rejects-are-retried-once">Processing is verified, and rejects are retried once<a class="headerlink" href="#processing-is-verified-and-rejects-are-retried-once" title="Permanent link">&para;</a></h3>
 <p>Without waiting for Apple's ingest, "push complete" only means the bytes arrived. A rejected screenshot is deleted and re-uploaded once: transient ingest failures are real, and deterministic rejects fail again immediately. Uploads are tracked by Apple's resource id, never the file name. Every locale and device has an <code>ss-01.jpg</code>, and matching by name once retried an English rejection with the German file into the German set (found in review, 2026-10-02).</p>
+<h3 id="creative-assets-are-checked-against-apples-reference-data">Creative assets are checked against Apple's reference data<a class="headerlink" href="#creative-assets-are-checked-against-apples-reference-data" title="Permanent link">&para;</a></h3>
+<p>The product page header and search-result asset (October 2026) have exact sizes, a no-alpha rule and per-format limits that App Store Connect enforces after upload. Apple's guide to the App Asset Library asks integrations to read them from <code>GET /v1/appAssetLibraryRefData</code> instead of hard-coding them, and the two sources already disagree: the help page lists JPEG for the 21:9 header, and the reference data takes PNG only (2026-10-18). So <code>creative push</code> reads the specs on every run and checks each file against them before the first write; a file Apple would refuse stops the push with the spec it missed.</p>
+<h3 id="creative-assets-are-found-by-content">Creative assets are found by content<a class="headerlink" href="#creative-assets-are-found-by-content" title="Permanent link">&para;</a></h3>
+<p>A placement doesn't say which asset backs it, and the library takes no checksum, so neither side can tell whether a slot already shows the local file. Each upload's <code>referenceName</code> carries a hash of its bytes: a re-run finds the asset in the library, asks it which placements it backs, and writes nothing when the slot's placement is among them. The same file in two slots or locales is uploaded once. A slot holds one placement per localization, so a changed file's old placement is deleted before the new one is made.</p>
 <h3 id="screenshots-show"><code>screenshots show</code><a class="headerlink" href="#screenshots-show" title="Permanent link">&para;</a></h3>
 <p>The fastlane migration tables mapped <code>show_screenshots</code> to this command before any copy implemented it. It answers the question the stale-set sweep raises: which display classes ASC holds right now, and how many files are in each.</p>
 

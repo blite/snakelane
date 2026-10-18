@@ -741,6 +741,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#creative-assets-the-product-page-header-and-the-search-result" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creative assets: the product page header and the search result
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#in-app-purchases-and-subscriptions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1525,6 +1536,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#creative-assets-the-product-page-header-and-the-search-result" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creative assets: the product page header and the search result
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#in-app-purchases-and-subscriptions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1615,6 +1637,34 @@ delete:</p>
 
 [dry-run] no API key set up (`snakelane auth setup`), so the live screenshot sets were not read: the plan above is local only (what would be uploaded, not what would be deleted first). Nothing was written.
 </code></pre></div>
+<h2 id="creative-assets-the-product-page-header-and-the-search-result">Creative assets: the product page header and the search result<a class="headerlink" href="#creative-assets-the-product-page-header-and-the-search-result" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>snakelane<span class="w"> </span>store<span class="w"> </span>creative<span class="w"> </span>push<span class="w"> </span>--dry-run
+snakelane<span class="w"> </span>store<span class="w"> </span>creative<span class="w"> </span>push
+snakelane<span class="w"> </span>store<span class="w"> </span>creative<span class="w"> </span>show
+</code></pre></div>
+<p>The two <a href="https://developer.apple.com/help/app-store-connect/reference/app-information/creative-assets-specifications">creative assets</a>
+App Store Connect added in October 2026 for iOS 27 and iPadOS 27: the image or video across the top
+of the product page, and the one at the top of a search result. Each App Store version localization
+holds at most one of each. They go through the App Asset Library: uploaded once, then placed on the
+editable version, and reviewed with it.</p>
+<div class="highlight"><pre><span></span><code>metadata/creative/&lt;locale&gt;/            this locale, every platform
+metadata/creative/default/             every locale without a folder of its own
+metadata/&lt;platform&gt;/creative/&lt;locale&gt;/ and metadata/&lt;platform&gt;/creative/default/   per-platform overrides
+
+search-result.{jpg,jpeg,png,mov,m4v,mp4}   the search result (3:2)
+product-page-header.{png,mov,m4v,mp4}      the product page header (21:9)
+universal.png                              both (16:9, 5244x2950), where a slot has no file of its own
+</code></pre></div>
+<p>The most specific folder with a file for a slot wins, and a slot's own file outranks
+<code>universal.png</code> at any depth. A slot with no file is left as it is live: removing one is done in
+App Store Connect.</p>
+<p>Every file is checked against Apple's reference data before anything is written (dimensions,
+proportion, format, alpha channel, size, and for video the length and frame rate when <code>ffprobe</code> is
+installed), so a file Apple would refuse stops the push instead of failing after upload. The specs
+are read on every run rather than copied in: Apple's help page lists JPEG for the header, which the
+API refuses. An unchanged file is found in the library by a hash of its bytes and placed without
+uploading again, and a slot already showing it is left alone. App Store Connect has no API for the
+crop preview: check it in App Store Connect's product page preview tool before submitting.</p>
 <h2 id="in-app-purchases-and-subscriptions">In-app purchases and subscriptions<a class="headerlink" href="#in-app-purchases-and-subscriptions" title="Permanent link">&para;</a></h2>
 <p><code>metadata/iap.yml</code> holds everything the app sells: one-time purchases under
 <code>products</code> and <a href="https://developer.apple.com/help/app-store-connect/manage-subscriptions/offer-auto-renewable-subscriptions">subscriptions</a> under <code>subscription_groups</code>.</p>
