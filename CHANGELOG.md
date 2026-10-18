@@ -4,7 +4,7 @@ All notable changes to snakelane. Versions follow [semver](https://semver.org); 
 major version is 0, a change that needs new `snakelane.yml` keys or changes a command's
 behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
-## Unreleased
+## 0.4.0
 
 - **`snakelane store creative push | show`: the product page header and the search-result asset**,
   App Store Connect's creative assets for iOS 27 and iPadOS 27 (October 2026), through the App
