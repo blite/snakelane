@@ -61,6 +61,42 @@ delete:
 --8<-- "docs/assets/terminal/screenshots-push-dry-run.txt"
 ```
 
+## Creative assets: the product page header and the search result
+
+```bash
+snakelane store creative push --dry-run
+snakelane store creative push
+snakelane store creative show
+```
+
+The two [creative assets](https://developer.apple.com/help/app-store-connect/reference/app-information/creative-assets-specifications)
+App Store Connect added in October 2026 for iOS 27 and iPadOS 27: the image or video across the top
+of the product page, and the one at the top of a search result. Each App Store version localization
+holds at most one of each. They go through the App Asset Library: uploaded once, then placed on the
+editable version, and reviewed with it.
+
+```text
+metadata/creative/<locale>/            this locale, every platform
+metadata/creative/default/             every locale without a folder of its own
+metadata/<platform>/creative/<locale>/ and metadata/<platform>/creative/default/   per-platform overrides
+
+search-result.{jpg,jpeg,png,mov,m4v,mp4}   the search result (3:2)
+product-page-header.{png,mov,m4v,mp4}      the product page header (21:9)
+universal.png                              both (16:9, 5244x2950), where a slot has no file of its own
+```
+
+The most specific folder with a file for a slot wins, and a slot's own file outranks
+`universal.png` at any depth. A slot with no file is left as it is live: removing one is done in
+App Store Connect.
+
+Every file is checked against Apple's reference data before anything is written (dimensions,
+proportion, format, alpha channel, size, and for video the length and frame rate when `ffprobe` is
+installed), so a file Apple would refuse stops the push instead of failing after upload. The specs
+are read on every run rather than copied in: Apple's help page lists JPEG for the header, which the
+API refuses. An unchanged file is found in the library by a hash of its bytes and placed without
+uploading again, and a slot already showing it is left alone. App Store Connect has no API for the
+crop preview: check it in App Store Connect's product page preview tool before submitting.
+
 ## In-app purchases and subscriptions
 
 `metadata/iap.yml` holds everything the app sells: one-time purchases under

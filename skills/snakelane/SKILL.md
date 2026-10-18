@@ -49,8 +49,11 @@ overrides that. `--app <name>` picks among several configs; with one it is not n
     │                        purchases (`products`) and subscriptions (`subscription_groups`)
     ├── iap/                 their review screenshots
     ├── translations.json    what each translation was made from
+    ├── creative/<locale>/, creative/default/   `store creative push`: search-result.*,
+    │                        product-page-header.*, universal.png (one file per slot)
     └── ios/  macos/         only what differs per platform, plus screenshots:
         ├── default/, <locale>/       version-level overrides (a Mac description, say)
+        ├── creative/                 per-platform creative assets, same layout as above
         └── screenshots/<locale>/     the deck: ss-NN.jpg + ap-NN.m4v previews — in iphone/
                                       and ipad/ for iOS, directly in the locale folder for Mac
 ```
@@ -83,6 +86,7 @@ snakelane store push                      # diff vs live, confirm (--yes), write
 snakelane store show | pull
 snakelane store screenshots push [--dry-run]
 snakelane store previews push [--dry-run]
+snakelane store creative push [--dry-run] | creative show   # product page header + search-result asset
 snakelane store iap show | iap push [--dry-run] [--create] [--product ID]
 snakelane store subs show | subs push [--dry-run] [--create]
 

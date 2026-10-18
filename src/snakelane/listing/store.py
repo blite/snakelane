@@ -12,6 +12,8 @@ skipped, never pushed blank. Why: docs/design/foundations.md#blank-local-text-me
     <platform>/default/, <platform>/<locale>/   version-field overrides (app-level fields refused here)
     <platform>/copyright.txt, <platform>/review/   platform overrides, per file / per field
     <platform>/screenshots/<locale>/      ss-NN.jpg/png and ap-NN.m4v; in iphone/ and ipad/ for iOS
+    creative/<locale>/, creative/default/  search-result.*, product-page-header.*, universal.png
+                                          (store creative; <platform>/creative/ overrides)
 
 Every command takes `--app` and, except `subs show`, `--platform`. Every `--dry-run` reads App Store
 Connect and shows what would change when a key is set up, and the local plan when none is.
@@ -42,17 +44,21 @@ from ..args import AppOption, PlatformOption, command_app, run
 from ..connect import asc
 from ..purchases.iap import cmd_iap_push, cmd_iap_show
 from ..purchases.subscriptions import cmd_subs_pull, cmd_subs_push, cmd_subs_show
+from ..screenshots.creative import cmd_creative_push, cmd_creative_show
 from ..screenshots.upload import cmd_previews_push, cmd_screenshots_push, cmd_screenshots_show
 from .push import cmd_pull, cmd_push, cmd_show
 
-cli = command_app("Push, pull and show the listing, screenshots, App Previews, in-app purchases and "
-                  "subscriptions.")
+cli = command_app("Push, pull and show the listing, screenshots, App Previews, creative assets, in-app "
+                  "purchases and subscriptions.")
 screenshots = command_app("Screenshot decks.")
 previews = command_app("App Previews: their own App Store Connect resource, though the files share "
                        "the deck folders.")
 iap = command_app("One-time in-app purchases (iap.yml's products).")
 subs = command_app("Auto-renewable subscriptions (iap.yml's subscription_groups).")
-for sub_app, sub_name in ((screenshots, "screenshots"), (previews, "previews"), (iap, "iap"), (subs, "subs")):
+creative = command_app("Creative assets: the product page header and the search-result image or video, "
+                       "through the App Asset Library.")
+for sub_app, sub_name in ((screenshots, "screenshots"), (previews, "previews"), (iap, "iap"), (subs, "subs"),
+                          (creative, "creative")):
     cli.add_typer(sub_app, name=sub_name)
 
 DRY_RUN = Annotated[bool, typer.Option("--dry-run", help="print the plan; write nothing")]
@@ -118,6 +124,18 @@ def screenshots_show(app: AppOption = None, platform: PlatformOption = None) -> 
 def previews_push(app: AppOption = None, platform: PlatformOption = None, dry_run: DRY_RUN = False) -> None:
     """Upload App Previews from the deck folders, replacing what's live."""
     call(cmd_previews_push, locals())
+
+
+@creative.command("push")
+def creative_push(app: AppOption = None, platform: PlatformOption = None, dry_run: DRY_RUN = False) -> None:
+    """Upload each locale's header and search-result assets and place them on the editable version."""
+    call(cmd_creative_push, locals())
+
+
+@creative.command("show")
+def creative_show(app: AppOption = None, platform: PlatformOption = None) -> None:
+    """List the live header and search-result placements per locale (read-only)."""
+    call(cmd_creative_show, locals())
 
 
 @iap.command("show")

@@ -4,6 +4,17 @@ All notable changes to snakelane. Versions follow [semver](https://semver.org); 
 major version is 0, a change that needs new `snakelane.yml` keys or changes a command's
 behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
+## Unreleased
+
+- **`snakelane store creative push | show`: the product page header and the search-result asset**,
+  App Store Connect's creative assets for iOS 27 and iPadOS 27 (October 2026), through the App
+  Asset Library (API 4.5.1). Files go in `metadata/creative/<locale>/` or `creative/default/`
+  (`<platform>/creative/` overrides): `search-result.*`, `product-page-header.*`, or a
+  `universal.png` for both. Each file is checked against Apple's live reference data before
+  anything is written; an unchanged file is reused from the library rather than uploaded again;
+  a slot with no file is left as it is. No `snakelane.yml` keys; nothing changes for an app
+  without a `creative/` folder.
+
 ## 0.3.0
 
 - **A missing metadata folder stops every command that reads the listing**, naming the

@@ -215,6 +215,14 @@ App Previews are separate ASC resources (`appPreviewSets` and `appPreviews`, wit
 
 Without waiting for Apple's ingest, "push complete" only means the bytes arrived. A rejected screenshot is deleted and re-uploaded once: transient ingest failures are real, and deterministic rejects fail again immediately. Uploads are tracked by Apple's resource id, never the file name. Every locale and device has an `ss-01.jpg`, and matching by name once retried an English rejection with the German file into the German set (found in review, 2026-10-02).
 
+### Creative assets are checked against Apple's reference data
+
+The product page header and search-result asset (October 2026) have exact sizes, a no-alpha rule and per-format limits that App Store Connect enforces after upload. Apple's guide to the App Asset Library asks integrations to read them from `GET /v1/appAssetLibraryRefData` instead of hard-coding them, and the two sources already disagree: the help page lists JPEG for the 21:9 header, and the reference data takes PNG only (2026-10-18). So `creative push` reads the specs on every run and checks each file against them before the first write; a file Apple would refuse stops the push with the spec it missed.
+
+### Creative assets are found by content
+
+A placement doesn't say which asset backs it, and the library takes no checksum, so neither side can tell whether a slot already shows the local file. Each upload's `referenceName` carries a hash of its bytes: a re-run finds the asset in the library, asks it which placements it backs, and writes nothing when the slot's placement is among them. The same file in two slots or locales is uploaded once. A slot holds one placement per localization, so a changed file's old placement is deleted before the new one is made.
+
 ### `screenshots show`
 
 The fastlane migration tables mapped `show_screenshots` to this command before any copy implemented it. It answers the question the stale-set sweep raises: which display classes ASC holds right now, and how many files are in each.
