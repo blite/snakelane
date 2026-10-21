@@ -259,7 +259,7 @@ snakelane auth check
 ```
 
 `setup` moves the key to `~/.appstoreconnect/private_keys/` (readable only by you) and writes
-the key id and issuer id to `~/.config/snakelane/credentials.json`. Every command reads those
+the issuer id and which key snakelane uses to `~/.appstoreconnect/config.json`. Every command reads those
 two files and nothing else, whether it runs in a terminal, in Xcode's Archive post-action or
 in CI.
 There are no environment variables to set, and no Apple ID sign-in. Without a key, `--dry-run`

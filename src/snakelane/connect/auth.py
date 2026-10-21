@@ -1,7 +1,10 @@
 """`snakelane auth setup --issuer-id <uuid> --key <AuthKey_<id>.p8 | - [--key-id <id>]>` and `auth check`.
 
 `setup` is the only writer of the key's place (see connect/asc.py): it checks the key is EC, moves
-rather than copies it, and never overwrites a different key.
+rather than copies it, and never overwrites a different key. It merges the issuer id and
+"snakelane": {"key_id"} into ~/.appstoreconnect/config.json, keeping what other tools put there;
+naming the key even when it is the only one stops a key another tool installs later from making
+snakelane's choice ambiguous.
 Why: docs/design/foundations.md#auth-setup-moves-the-key-and-never-overwrites-one
 """
 
@@ -91,9 +94,14 @@ def setup(
         previous = json.loads(config.read_text()) if config.exists() else None
     except ValueError:
         previous = None
-    write_private(config, (json.dumps({"key_id": key_id, "issuer_id": issuer_id}, indent=2) + "\n").encode())
-    if previous and previous.get("key_id") not in (None, key_id):
-        print(f"switched {config} from key {previous.get('key_id')} to {key_id}")
+    if not isinstance(previous, dict):
+        previous = None
+    ours = (previous or {}).get(asc.TOOL)
+    ours = ours if isinstance(ours, dict) else {}
+    merged = {**(previous or {}), "issuer_id": issuer_id, asc.TOOL: {**ours, "key_id": key_id}}
+    write_private(config, (json.dumps(merged, indent=2) + "\n").encode())
+    if ours.get("key_id") not in (None, key_id):
+        print(f"switched snakelane in {config} from key {ours.get('key_id')} to {key_id}")
     else:
         print(f"wrote {config}")
     print("\nnext: `snakelane auth check` makes one read-only request to confirm Apple accepts it")

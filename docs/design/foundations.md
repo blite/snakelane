@@ -42,6 +42,12 @@ Before snakelane, the key came from three `APP_STORE_CONNECT_API_KEY_*` environm
 
 The key lives in `~/.appstoreconnect/private_keys/AuthKey_<key_id>.p8` because `altool` will not take a path to a .p8. It searches fixed directories for that file name, and this is one of them, so `xcodebuild`, `altool` and the client share one copy. The Keychain was ruled out because `xcodebuild -exportArchive` and `altool` both need the key as a file, so it would be written back to disk on every upload.
 
+### The ids live beside the key, for every tool
+
+Until 2026-10-19 the key id and issuer id were in `~/.config/snakelane/credentials.json`, and ASCStats, which needs the same team key, read snakelane's private config path to find them. They moved to `~/.appstoreconnect/config.json`, next to `private_keys/`, under a name that belongs to no tool: Apple's tools only search `private_keys/`, so the file confuses nothing. It is called `config.json` rather than `credentials.json` because the secret is the .p8, not this file. Other tools may keep their own settings in it, so `auth setup` merges rather than replacing the file, and readers ignore entries they don't know.
+
+The key id is not stored on its own: Apple's filename, `AuthKey_<key_id>.p8`, already says it, and a second copy in the config can disagree with the file on disk. Tools do not have to share a key, though: ASCStats got its own key on 2026-10-19, so `private_keys/` gained a second .p8. Each tool therefore names its key under its own entry (`"snakelane": {"key_id": …}`), and only `issuer_id`, which is the team's, sits at the top. With no entry, a tool uses the only .p8 there and refuses to guess between several. `auth setup` always writes snakelane's entry, even for a lone key, so a key another tool installs later cannot make snakelane's choice ambiguous.
+
 ### auth setup moves the key and never overwrites one
 
 Apple lets you download a .p8 exactly once, so the copy in `~/Downloads` is usually the only one, and a second copy left lying around is how keys leak. `setup` therefore moves the key rather than copying it, into a 0700 directory with mode 0600. It never overwrites a different existing key, because losing the only copy means revoking it. The file must parse as an EC private key before anything moves, so a truncated paste fails at setup rather than as an opaque 401 mid-upload. `--key -` reads stdin so CI can install from a secret without a temporary file. `check` warns about a key inside a git work tree because a dotfiles repo rooted at `$HOME` would publish it.

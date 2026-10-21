@@ -6,6 +6,12 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **The credential config moved to `~/.appstoreconnect/config.json`**, beside the key, and is
+  shared with other tools (ASCStats): `{"issuer_id": …, "snakelane": {"key_id": …}}`, with each
+  tool choosing its own key under its own name. The key id is the `AuthKey_<id>.p8` filename;
+  without a `snakelane.key_id` the only key in `private_keys/` is used. `auth setup` merges into
+  the file, keeping other tools' entries. **A machine set up before this must** re-run
+  `snakelane auth setup` (or write the file by hand); `~/.config/snakelane/` is no longer read.
 - **`snakelane preview` records the App Preview** from the app's video UI test, with the app's own
   sound, and encodes it into the deck as `ap-01.m4v` for `store previews push`. It replaces the
   per-app `record_gameplay_video.sh` / `encode_app_preview.sh` pair. The test and snakelane shake

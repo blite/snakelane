@@ -1,14 +1,23 @@
 """App Store Connect REST API core: token signing and a thin JSON:API client.
 
 One team API key (App Manager), written by `snakelane auth setup`, serves every app: the .p8 at
-~/.appstoreconnect/private_keys/AuthKey_<key_id>.p8 (0600) and {"key_id", "issuer_id"} in
-~/.config/snakelane/credentials.json. No env vars, XDG_CONFIG_HOME or Keychain.
+~/.appstoreconnect/private_keys/AuthKey_<key_id>.p8 (0600), and ~/.appstoreconnect/config.json
+(0600):
+
+    {"issuer_id": "<uuid>", "snakelane": {"key_id": "<key_id>"}}
+
+The key id is the .p8's filename. "snakelane.key_id" picks one when private_keys/ holds several
+(other tools of ours keep their own keys there and their own "<tool>" entry in config.json);
+without it the only .p8 there is used. Readers ignore entries they don't know, and `auth setup`
+merges into the file. No env vars, XDG_CONFIG_HOME or Keychain.
 Why: docs/design/foundations.md#credentials-are-files-at-fixed-paths
+Why: docs/design/foundations.md#the-ids-live-beside-the-key-for-every-tool
 """
 
 from __future__ import annotations
 
 import json
+import re
 import time
 from collections.abc import Iterator
 from dataclasses import dataclass
@@ -23,6 +32,7 @@ from urllib3.util.retry import Retry
 from ..terminal import truncate
 
 BASE_URL = "https://api.appstoreconnect.apple.com"
+TOOL = "snakelane"  # our entry in config.json, beside other tools'
 PLANNED = "planned-"  # the id a dry run's create hands back; nothing exists under it
 
 
@@ -44,7 +54,17 @@ class TransientNetworkError(ASCError):
 
 
 def config_path() -> Path:
-    return Path.home() / ".config" / "snakelane" / "credentials.json"
+    return Path.home() / ".appstoreconnect" / "config.json"
+
+
+def private_keys_dir() -> Path:
+    return Path.home() / ".appstoreconnect" / "private_keys"
+
+
+def installed_key_ids() -> list[str]:
+    return sorted(m.group(1) for p in private_keys_dir().glob("AuthKey_*.p8")
+                  if (m := re.fullmatch(r"AuthKey_([A-Z0-9]+)\.p8", p.name)))
+
 
 
 @dataclass
@@ -54,7 +74,7 @@ class Credentials:
 
     @property
     def key_path(self) -> Path:
-        return Path.home() / ".appstoreconnect" / "private_keys" / f"AuthKey_{self.key_id}.p8"
+        return private_keys_dir() / f"AuthKey_{self.key_id}.p8"
 
     @classmethod
     def load(cls) -> Credentials:
@@ -70,13 +90,24 @@ class Credentials:
             raise ASCError(f"cannot read {path}: {error} — {redo}") from None
         if not isinstance(data, dict):
             raise ASCError(f"{path} is not a JSON object — {redo}")
-        key_id, issuer_id = (str(data.get(k) or "").strip() for k in ("key_id", "issuer_id"))
-        if not key_id or not issuer_id:
-            raise ASCError(f"{path} needs both \"key_id\" and \"issuer_id\" — {redo}")
-        credentials = cls(key_id=key_id, issuer_id=issuer_id)
-        if not credentials.key_path.is_file():
-            raise ASCError(f"{path} names key {key_id}, but {credentials.key_path} is missing — {redo} with the .p8")
-        return credentials
+        if not (issuer_id := str(data.get("issuer_id") or "").strip()):
+            raise ASCError(f"{path} needs \"issuer_id\" — {redo}")
+        if not isinstance(ours := data.get(TOOL) or {}, dict):
+            raise ASCError(f"\"{TOOL}\" in {path} must be an object like {{\"key_id\": \"<id>\"}}")
+        if key_id := str(ours.get("key_id") or "").strip():
+            credentials = cls(key_id=key_id, issuer_id=issuer_id)
+            if not credentials.key_path.is_file():
+                raise ASCError(f"{path} names key {key_id}, but {credentials.key_path} is missing — "
+                               f"{redo} with the .p8")
+            return credentials
+        match installed_key_ids():
+            case [only]:
+                return cls(key_id=only, issuer_id=issuer_id)
+            case []:
+                raise ASCError(f"no AuthKey_<id>.p8 in {private_keys_dir()} — {redo} with the .p8")
+            case several:
+                raise ASCError(f"{private_keys_dir()} holds several keys ({', '.join(several)}); choose one "
+                               f"with \"{TOOL}\": {{\"key_id\": \"<id>\"}} in {path}, or {redo}")
 
     @staticmethod
     def available() -> bool:

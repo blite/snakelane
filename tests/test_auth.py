@@ -59,7 +59,7 @@ def test_setup_moves_key_and_writes_config(home: Path) -> None:
     assert mode(credentials.key_path) == 0o600
     assert mode(credentials.key_path.parent) == 0o700
     assert mode(asc.config_path()) == 0o600
-    assert json.loads(asc.config_path().read_text()) == {"key_id": KEY_ID, "issuer_id": ISSUER}
+    assert json.loads(asc.config_path().read_text()) == {"issuer_id": ISSUER, "snakelane": {"key_id": KEY_ID}}
 
 
 def test_setup_from_stdin_needs_key_id(home: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -141,3 +141,50 @@ def test_check_reports_a_network_failure_as_one(home: Path, monkeypatch: pytest.
     with pytest.raises(SystemExit, match="could not reach App Store Connect") as raised:
         auth.main(["check"])
     assert "rejected" not in str(raised.value)
+
+
+def test_config_sits_beside_the_key_for_every_tool(home: Path) -> None:
+    assert asc.config_path() == home / ".appstoreconnect" / "config.json"
+
+
+def test_setup_keeps_keys_other_tools_wrote(home: Path) -> None:
+    path = asc.config_path()
+    path.parent.mkdir(parents=True)
+    path.write_text(json.dumps({"ascstats": {"key_id": "OTHER12345"}, "snakelane": {"note": "kept"}}))
+    auth.main(["setup", "--key", str(download(home)), "--issuer-id", ISSUER])
+    assert json.loads(path.read_text()) == {
+        "ascstats": {"key_id": "OTHER12345"}, "issuer_id": ISSUER, "snakelane": {"note": "kept", "key_id": KEY_ID}}
+    assert mode(path) == 0o600
+
+
+def install(home: Path, key_id: str) -> None:
+    path = home / ".appstoreconnect" / "private_keys" / f"AuthKey_{key_id}.p8"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(p8())
+
+
+def configure(config: dict) -> None:
+    asc.config_path().parent.mkdir(parents=True, exist_ok=True)
+    asc.config_path().write_text(json.dumps(config))
+
+
+def test_key_id_comes_from_the_only_p8(home: Path) -> None:
+    install(home, KEY_ID)
+    configure({"issuer_id": ISSUER})
+    assert asc.Credentials.load().key_id == KEY_ID
+
+
+def test_several_keys_need_a_choice(home: Path) -> None:
+    install(home, KEY_ID)
+    install(home, "OTHER12345")
+    configure({"issuer_id": ISSUER, "ascstats": {"key_id": "OTHER12345"}})
+    with pytest.raises(asc.ASCError, match="several keys"):
+        asc.Credentials.load()
+    configure({"issuer_id": ISSUER, "snakelane": {"key_id": KEY_ID}, "ascstats": {"key_id": "OTHER12345"}})
+    assert asc.Credentials.load().key_id == KEY_ID
+
+
+def test_no_p8_is_unavailable(home: Path) -> None:
+    configure({"issuer_id": ISSUER})
+    with pytest.raises(asc.ASCError, match="no AuthKey"):
+        asc.Credentials.load()

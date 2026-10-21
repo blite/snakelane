@@ -391,9 +391,10 @@ snakelane auth setup --issuer-id <uuid> --key ~/Downloads/AuthKey_<KEYID>.p8
 snakelane auth check            # read-only request proving Apple accepts it
 ```
 
-The key lands at `~/.appstoreconnect/private_keys/AuthKey_<KEYID>.p8` (0600) and the ids in
-`~/.config/snakelane/credentials.json`. Team-scoped: one key serves every app. Dry runs need
-none of it.
+The key lands at `~/.appstoreconnect/private_keys/AuthKey_<KEYID>.p8` (0600); its filename is
+the key id. `~/.appstoreconnect/config.json` holds `issuer_id` and `"snakelane": {"key_id"}`,
+which picks snakelane's key when other tools keep theirs in `private_keys/` too. Leave other
+tools' entries alone. Team-scoped: one key serves every app. Dry runs need none of it.
 
 - **No environment variables.** `APP_STORE_CONNECT_API_KEY_*` are ignored. Do
   not add them back or read them in an app's scripts: Xcode launched from the Dock never sees
