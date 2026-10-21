@@ -4,7 +4,7 @@ All notable changes to snakelane. Versions follow [semver](https://semver.org); 
 major version is 0, a change that needs new `snakelane.yml` keys or changes a command's
 behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
-## Unreleased
+## 0.5.0
 
 - **The credential config moved to `~/.appstoreconnect/config.json`**, beside the key, and is
   shared with other tools (ASCStats): `{"issuer_id": …, "snakelane": {"key_id": …}}`, with each
