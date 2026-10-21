@@ -1,0 +1,23 @@
+$ snakelane store push --app pro --dry-run
+→ Trailhead Pro (com.example.trailhead.pro), platform=ios, locales=['en-US']
+lint: clean
+-- AppInfo categories --
+  (none set in snakelane.yml — skipped)
+-- AppStoreVersion --
+  copyright: (no file, or empty — skipped)
+-- en-US: AppInfoLocalization --
+  name = 'Trailhead Pro'
+  subtitle = 'Every map, offline, no ads'
+  privacy_url: (no file, or empty — skipped)
+  privacy_choices_url: (no file, or empty — skipped)
+-- en-US: AppStoreVersionLocalization --
+  description: (no file, or empty — skipped)
+  keywords: (no file, or empty — skipped)
+  promotional_text: (no file, or empty — skipped)
+  marketing_url: (no file, or empty — skipped)
+  support_url: (no file, or empty — skipped)
+  release_notes: (no file, or empty — skipped)
+-- App Review information (appStoreReviewDetail) --
+  (no review/ files — skipped)
+
+[dry-run] no network calls made — nothing above was written to App Store Connect.

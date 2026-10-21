@@ -1,0 +1,8 @@
+$ snakelane lint
+✗ de-DE/promotional_text  [other-platform]  mentions "Android"; App Review rejects listings naming other platforms (2.3.10)
+      > …jede Wanderung. Bald auch für Android.
+! en-AU/keywords  [keyword-format]  already indexed from the name/subtitle: trail
+✗ en-AU/subtitle  [field-length]  39 characters (limit 30)
+! en-US/keywords  [keyword-format]  already indexed from the name/subtitle: trail
+✗ en-US/subtitle  [field-length]  39 characters (limit 30)
+lint: 3 error(s), 2 warning(s)
