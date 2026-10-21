@@ -150,3 +150,73 @@ def test_a_png_in_a_deck_is_refused_not_skipped(tmp_path: Path) -> None:
     image(tmp_path / "ss-03.png", 1284, 2778)
     with pytest.raises(SystemExit, match="JPEG only"):
         media.refuse_png_in_deck([tmp_path])
+
+
+@pytest.fixture
+def media_run(monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    """`store media push` with each kind's plan and push stubbed; returns the steps in the order they ran."""
+    from snakelane.connect import asc
+    from snakelane.screenshots import creative, upload
+
+    steps: list[str] = []
+    monkeypatch.setattr(upload, "media_app", lambda args, media: (Path("metadata"), {}, "ios"))
+    deck = {"en-US": {"slot": [Path("file")]}}
+    monkeypatch.setattr(upload, "screenshots_plan", lambda *a, **k: steps.append("plan screenshots") or deck)
+    monkeypatch.setattr(upload, "previews_plan", lambda *a: steps.append("plan previews") or (deck, {}))
+    monkeypatch.setattr(creative, "creative_plan", lambda *a: steps.append("plan creative") or {"en-US": {}})
+    monkeypatch.setattr(creative, "check_plan", lambda *a: steps.append("check creative"))
+    monkeypatch.setattr(upload, "push_screenshots", lambda *a: steps.append("push screenshots"))
+    monkeypatch.setattr(upload, "push_previews", lambda *a: steps.append("push previews"))
+    monkeypatch.setattr(creative, "push_creative", lambda *a: steps.append("push creative"))
+    monkeypatch.setattr(asc.Credentials, "available", staticmethod(lambda: True))
+    monkeypatch.setattr(asc, "Client", lambda dry_run=False: object())
+    return steps
+
+
+def run_media(only: list[str] | None = None) -> None:
+    from types import SimpleNamespace
+
+    from snakelane.screenshots import upload
+
+    upload.cmd_media_push(SimpleNamespace(app=None, platform=None, only=only, dry_run=False,
+                                          allow_developer_chrome=False))
+
+
+def test_media_push_plans_and_checks_everything_before_the_first_write(media_run: list[str]) -> None:
+    run_media()
+    assert media_run == ["plan screenshots", "plan previews", "plan creative", "check creative",
+                         "push screenshots", "push previews", "push creative"]
+
+
+def test_media_push_only_runs_the_kinds_asked_for_in_push_order(media_run: list[str]) -> None:
+    run_media(["creative", "previews"])
+    assert media_run == ["plan previews", "plan creative", "check creative", "push previews", "push creative"]
+
+
+def test_a_failed_media_push_names_what_was_not_pushed(media_run: list[str], monkeypatch: pytest.MonkeyPatch,
+                                                       capsys: pytest.CaptureFixture) -> None:
+    from snakelane.screenshots import upload
+
+    def fail(*args: object) -> None:
+        raise SystemExit("Screenshots push finished WITH FAILURES — see above.")
+
+    monkeypatch.setattr(upload, "push_screenshots", fail)
+    with pytest.raises(SystemExit):
+        run_media()
+    assert "push previews" not in media_run
+    assert "snakelane store media push --only previews --only creative" in capsys.readouterr().err
+
+
+def test_a_default_media_push_leaves_a_kind_with_no_files_anywhere_alone(
+        media_run: list[str], monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture) -> None:
+    from snakelane.screenshots import upload
+
+    shots = {"en-US": {"APP_IPHONE_61": [Path("ss-01.jpg")]}, "de-DE": None}
+    monkeypatch.setattr(upload, "screenshots_plan", lambda *a, **k: shots)
+    monkeypatch.setattr(upload, "previews_plan", lambda *a: ({"en-US": {}, "de-DE": None}, {}))
+    run_media()
+    assert "push screenshots" in media_run and "push previews" not in media_run
+    assert "no previews in any deck, so the live ones stay" in capsys.readouterr().out
+    media_run.clear()
+    run_media(["previews"])
+    assert media_run == ["push previews"], "named, an empty deck is mirrored (and deletes what's live)"

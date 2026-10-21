@@ -24,7 +24,7 @@ snakelane store push --dry-run     # the diff against live, nothing written
 snakelane store push               # diff against live, confirm, write, verify
 snakelane shoot                    # the screenshot deck, from your UI test
 snakelane gallery --live --open    # every deck beside what's live
-snakelane store screenshots push
+snakelane store media push         # screenshots, App Previews, creative
 snakelane ship beta                # test → archive → TestFlight
 ```
 

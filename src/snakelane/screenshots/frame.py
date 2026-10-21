@@ -318,7 +318,7 @@ def frame_command(
         deck = list(PLATFORM_DECKS[resolve_platform(resolved.config, platform)])
     frame_deck(resolved, locale, deck, theme=theme)
     print("A preview: the deck is unchanged. Set framing.theme to keep it." if theme
-          else "Upload with:  snakelane store screenshots push")
+          else "Upload with:  snakelane store media push")
 
 
 def main(argv: list[str] | None = None) -> None:

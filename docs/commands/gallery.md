@@ -25,4 +25,4 @@ images where they are, so it opens instantly but only on your Mac. `--bundle` co
 images in.
 
 Use the gallery to review anything an agent changed, translated captions in particular,
-before `store screenshots push`.
+before `store media push`.

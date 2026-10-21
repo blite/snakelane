@@ -46,6 +46,14 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
   `frame: test` the shots' captions are read with Vision (`snakelane[check]`); without it the check
   says it can't run.
 
+- **`store media push | show` uploads screenshots, App Previews and creative assets in one run**,
+  with `--only screenshots|previews|creative` (repeatable) to pick some. Every kind's files, and the
+  creative assets against Apple's specs, are checked before the first write, so a bad preview stops
+  the run before any screenshot is replaced. A failure partway prints the `--only` command for what
+  wasn't pushed. Without `--only`, a kind with no files in any deck is left alone live (previews
+  kept only in App Store Connect survive a screenshot push); `--only previews` clears them. `store screenshots push | show`, `store previews push` and `store creative
+  push | show` still work but no longer appear in `--help`; nothing in an app has to change.
+
 ## 0.4.0
 
 - **`snakelane store creative push | show`: the product page header and the search-result asset**,

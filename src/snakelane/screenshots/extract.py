@@ -1,4 +1,4 @@
-"""File an .xcresult's screenshot attachments into the deck tree `store screenshots push` uploads from.
+"""File an .xcresult's screenshot attachments into the deck tree `store media push` uploads from.
 
 `shoot` calls `extract_deck()` after every pass. The UI test attaches `NN-Name` (raw, to `.snakelane/<app>/raw/…`) and optionally `NN-Name_framed`
 (to `metadata/<platform>/screenshots/<locale>/<device>/`, what ships).

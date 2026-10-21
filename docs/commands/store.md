@@ -1,4 +1,4 @@
-# store: listing, screenshots, purchases
+# store: listing, media, purchases
 
 Everything on the App Store page, pushed from `metadata/` and checked afterwards.
 
@@ -33,14 +33,25 @@ Fields: `name`, `subtitle`, `description`, `keywords`, `promotional_text`, `rele
 `support_url`, `marketing_url`, `privacy_url`, `privacy_choices_url`, plus
 `<platform>/copyright.txt` and the App Review card in `<platform>/review/`.
 
-## Screenshots and App Previews
+## Screenshots, App Previews and creative assets
 
 ```bash
-snakelane store screenshots push --dry-run
-snakelane store screenshots push
-snakelane store previews push
-snakelane store screenshots show
+snakelane store media push --dry-run
+snakelane store media push                          # screenshots, then previews, then creative
+snakelane store media push --only previews          # repeatable: --only screenshots --only creative
+snakelane store media show [--only …]
 ```
+
+`media push` reads every file it would upload, and checks the creative assets against Apple's
+specs, before its first write, so a bad preview encode or an oversized header stops the run before
+any screenshot is replaced. If one kind fails partway, the run stops and prints the
+`--only` command that pushes the rest. Without `--only`, a kind with no file in any deck is
+skipped, so pushing screenshots never deletes previews kept only in App Store Connect; name it
+(`--only previews`) to clear them. The older `store screenshots push | show`,
+`store previews push` and `store creative push | show` still work, and are the same as
+`media` with one `--only`.
+
+### Screenshots and App Previews
 
 The deck is `metadata/<platform>/screenshots/<locale>/` (in `iphone/` and `ipad/` for iOS),
 uploaded in file-name order. The slot each image fills is worked out from its pixel size. 6.3" iPhone and 13" iPad are the
@@ -61,13 +72,9 @@ delete:
 --8<-- "docs/assets/terminal/screenshots-push-dry-run.txt"
 ```
 
-## Creative assets: the product page header and the search result
+### Creative assets: the product page header and the search result
 
-```bash
-snakelane store creative push --dry-run
-snakelane store creative push
-snakelane store creative show
-```
+`snakelane store media push --only creative` pushes just these.
 
 The two [creative assets](https://developer.apple.com/help/app-store-connect/reference/app-information/creative-assets-specifications)
 App Store Connect added in October 2026 for iOS 27 and iPadOS 27: the image or video across the top

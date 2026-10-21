@@ -1,4 +1,6 @@
-"""`snakelane store`: routes listing, screenshot, preview, IAP and subscription commands to their modules.
+"""`snakelane store`: routes listing, media (screenshots, previews, creative), IAP and subscription commands
+to their modules. `store screenshots|previews|creative` are the older, hidden spellings of `store media
+--only …`, kept because apps' docs and scripts call them.
 
 The metadata folder (default `metadata/`) is written once for every platform; a platform folder holds only
 what differs, plus its screenshots. Each field comes from the most specific non-blank file, else it is
@@ -27,7 +29,7 @@ Connect and shows what would change when a key is set up, and the local plan whe
     "platforms"     which `--platform` values are legal
     "categories"    primary / secondary and their _subcategory_one / _two: Apple's ids, null = unset
     "aliases"       (project.py) extra names `--app` accepts
-    "developer_chrome_check"  `screenshots push` OCRs for a debug HUD: true = required, false = never,
+    "developer_chrome_check"  `media push` OCRs for a debug HUD: true = required, false = never,
                     absent = when the `snakelane[check]` extra is installed
 """
 
@@ -35,6 +37,7 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Callable
+from enum import Enum
 from types import SimpleNamespace
 from typing import Annotated, Any
 
@@ -45,11 +48,20 @@ from ..connect import asc
 from ..purchases.iap import cmd_iap_push, cmd_iap_show
 from ..purchases.subscriptions import cmd_subs_pull, cmd_subs_push, cmd_subs_show
 from ..screenshots.creative import cmd_creative_push, cmd_creative_show
-from ..screenshots.upload import cmd_previews_push, cmd_screenshots_push, cmd_screenshots_show
+from ..screenshots.upload import (
+    MEDIA,
+    cmd_media_push,
+    cmd_media_show,
+    cmd_previews_push,
+    cmd_screenshots_push,
+    cmd_screenshots_show,
+)
 from .push import cmd_pull, cmd_push, cmd_show
 
 cli = command_app("Push, pull and show the listing, screenshots, App Previews, creative assets, in-app "
                   "purchases and subscriptions.")
+media = command_app("Screenshots, App Previews and creative assets (the product page header and search-result "
+                    "asset), pushed together; --only picks some.")
 screenshots = command_app("Screenshot decks.")
 previews = command_app("App Previews: their own App Store Connect resource, though the files share "
                        "the deck folders.")
@@ -57,11 +69,16 @@ iap = command_app("One-time in-app purchases (iap.yml's products).")
 subs = command_app("Auto-renewable subscriptions (iap.yml's subscription_groups).")
 creative = command_app("Creative assets: the product page header and the search-result image or video, "
                        "through the App Asset Library.")
-for sub_app, sub_name in ((screenshots, "screenshots"), (previews, "previews"), (iap, "iap"), (subs, "subs"),
-                          (creative, "creative")):
+for sub_app, sub_name in ((media, "media"), (iap, "iap"), (subs, "subs")):
     cli.add_typer(sub_app, name=sub_name)
+for sub_app, sub_name in ((screenshots, "screenshots"), (previews, "previews"), (creative, "creative")):
+    cli.add_typer(sub_app, name=sub_name, hidden=True)
 
 DRY_RUN = Annotated[bool, typer.Option("--dry-run", help="print the plan; write nothing")]
+Media = Enum("Media", {name: name for name in MEDIA}, type=str)
+ONLY = Annotated[list[Media] | None, typer.Option("--only", help="only these (repeatable); default: all three")]
+ALLOW_DEVELOPER_CHROME = Annotated[bool, typer.Option("--allow-developer-chrome",
+                                                      help="upload even if a shot carries a debug HUD")]
 CREATE = Annotated[bool, typer.Option("--create", help="allow creating products that don't exist yet: "
                                                         "product ids are permanent")]
 
@@ -105,36 +122,49 @@ def show(app: AppOption = None, platform: PlatformOption = None,
     call(cmd_show, locals())
 
 
+@media.command("push")
+def media_push(app: AppOption = None, platform: PlatformOption = None, only: ONLY = None, dry_run: DRY_RUN = False,
+               allow_developer_chrome: ALLOW_DEVELOPER_CHROME = False) -> None:
+    """Upload each locale's deck and previews, replacing what's live, then place the creative assets."""
+    only = [m.value for m in only] if only else None
+    call(cmd_media_push, locals())
+
+
+@media.command("show")
+def media_show(app: AppOption = None, platform: PlatformOption = None, only: ONLY = None) -> None:
+    """List the live screenshot and preview sets and creative placements per locale (read-only)."""
+    only = [m.value for m in only] if only else None
+    call(cmd_media_show, locals())
+
+
 @screenshots.command("push")
 def screenshots_push(app: AppOption = None, platform: PlatformOption = None, dry_run: DRY_RUN = False,
-                     allow_developer_chrome: Annotated[bool, typer.Option(
-                         "--allow-developer-chrome", help="upload even if a shot carries a debug HUD")] = False,
-                     ) -> None:
-    """Upload each locale's deck, replacing what's live."""
+                     allow_developer_chrome: ALLOW_DEVELOPER_CHROME = False) -> None:
+    """Same as `store media push --only screenshots`."""
     call(cmd_screenshots_push, locals())
 
 
 @screenshots.command("show")
 def screenshots_show(app: AppOption = None, platform: PlatformOption = None) -> None:
-    """List the live screenshot and App Preview sets per locale (read-only)."""
+    """Same as `store media show --only screenshots --only previews`."""
     call(cmd_screenshots_show, locals())
 
 
 @previews.command("push")
 def previews_push(app: AppOption = None, platform: PlatformOption = None, dry_run: DRY_RUN = False) -> None:
-    """Upload App Previews from the deck folders, replacing what's live."""
+    """Same as `store media push --only previews`."""
     call(cmd_previews_push, locals())
 
 
 @creative.command("push")
 def creative_push(app: AppOption = None, platform: PlatformOption = None, dry_run: DRY_RUN = False) -> None:
-    """Upload each locale's header and search-result assets and place them on the editable version."""
+    """Same as `store media push --only creative`."""
     call(cmd_creative_push, locals())
 
 
 @creative.command("show")
 def creative_show(app: AppOption = None, platform: PlatformOption = None) -> None:
-    """List the live header and search-result placements per locale (read-only)."""
+    """Same as `store media show --only creative`."""
     call(cmd_creative_show, locals())
 
 

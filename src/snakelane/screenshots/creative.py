@@ -1,4 +1,4 @@
-"""`store creative push|show`: the product page header and the search-result asset, the two
+"""`store media push|show --only creative`: the product page header and the search-result asset, the two
 "creative assets" App Store Connect added in October 2026, through the App Asset Library.
 
 Each slot holds at most one image or video per App Store version localization:
@@ -334,28 +334,37 @@ def print_plan(plan: dict[str, dict[str, Path]], folder: Path) -> None:
             print(f"  {locale:<8} {SLOT_NAMES[kind]:<20} {path.relative_to(folder)}")
 
 
-def cmd_creative_push(args: SimpleNamespace) -> None:
-    """Upload each locale's creative assets to the App Asset Library and place them on the editable version."""
-    folder, app_config = load_app(args.app)
-    platform = resolve_platform(app_config, args.platform)
-    plan = build_plan(folder, platform, app_config["locales"])
-    if not plan:
+def creative_plan(folder: Path, app_config: dict[str, Any], platform: str) -> dict[str, dict[str, Path]]:
+    """Each locale's slot files, printed; empty when there are none (nothing to do)."""
+    if not (plan := build_plan(folder, platform, app_config["locales"])):
         print(f"no creative assets for {platform} under {folder.name}/creative/ or {folder.name}/{platform}/creative/ "
               "— nothing to do (a slot without a file is left as it is live)")
-        return
+        return plan
     print(f"creative assets for {app_config.get('name', app_config['bundle_id'])} ({platform}):")
     print_plan(plan, folder)
-    if args.dry_run and not asc.Credentials.available():
-        print("\n[dry-run] no API key set up (`snakelane auth setup`): the files above were not checked against "
-              "Apple's specs and nothing was read or written.")
-        return
-    client = asc.Client(dry_run=args.dry_run)
+    return plan
+
+
+def offline_dry_run(plan: dict[str, dict[str, Path]]) -> bool:
+    if asc.Credentials.available():
+        return False
+    print("\n[dry-run] no API key set up (`snakelane auth setup`): the creative assets above were not checked "
+          "against Apple's specs and nothing was read or written.")
+    return True
+
+
+def check_plan(client: asc.Client, plan: dict[str, dict[str, Path]]) -> RefData:
+    """Every file against Apple's specs, before the first write; returns the specs for `push_creative`."""
     ref = parse_ref_data(client.get("/v1/appAssetLibraryRefData"))
-    # Every file against the specs before the first write.
     for slots in plan.values():
         for kind, path in slots.items():
             spec = check_file(path, kind, ref)
             print(dim(f"  {path.name} meets {spec.short_name} for the {SLOT_NAMES[kind]}"))
+    return ref
+
+
+def push_creative(client: asc.Client, app_config: dict[str, Any], platform: str, plan: dict[str, dict[str, Path]],
+                  ref: RefData) -> None:
     app = find_app(client, app_config)
     version = find_editable_version(client, app["id"], platform)
     changed = apply_plan(client, app["id"], version, plan, ref)
@@ -363,6 +372,16 @@ def cmd_creative_push(args: SimpleNamespace) -> None:
         print("\n[dry-run] nothing was uploaded or placed.")
     else:
         print(f"\n{changed} placement(s) changed. They go to App Review with version {version_string(version)}.")
+
+
+def cmd_creative_push(args: SimpleNamespace) -> None:
+    """Upload each locale's creative assets to the App Asset Library and place them on the editable version."""
+    folder, app_config = load_app(args.app)
+    platform = resolve_platform(app_config, args.platform)
+    if not (plan := creative_plan(folder, app_config, platform)) or (args.dry_run and offline_dry_run(plan)):
+        return
+    client = asc.Client(dry_run=args.dry_run)
+    push_creative(client, app_config, platform, plan, check_plan(client, plan))
 
 
 def apply_plan(client: asc.Client, app_id: str, version: dict[str, Any], plan: dict[str, dict[str, Path]],
@@ -421,9 +440,12 @@ def version_string(version: dict[str, Any]) -> str:
 
 
 def cmd_creative_show(args: SimpleNamespace) -> None:
-    """The live creative placements per locale on the editable version, and the files behind them."""
     _folder, app_config = load_app(args.app)
-    platform = resolve_platform(app_config, args.platform)
+    show(app_config, resolve_platform(app_config, args.platform))
+
+
+def show(app_config: dict[str, Any], platform: str) -> None:
+    """The live creative placements per locale on the editable version, and the files behind them."""
     client = asc.Client()
     app = find_app(client, app_config)
     version = find_editable_version(client, app["id"], platform)

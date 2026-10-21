@@ -31,7 +31,7 @@ works renamed.
 | `terms_url` | The Terms of Use URL an app that sells subscriptions must link in every description (`lint`'s `subscription-links`). Default: Apple's [standard EULA](https://www.apple.com/legal/internet-services/itunes/dev/stdeula/) |
 | `lint` | `ignore: [test-word, …]`: `lint` rules to skip for this app, so a heuristic's false positive never forces a code change. `allow: ["half price books", …]`: phrases `price-reference` passes over, for a name that only looks like a price |
 | `gallery` | `icon: path/to/icon.png`: repo-relative icon for `gallery`'s mocks. Default: the repo's `AppIcon.appiconset`, else (with `--live`) the App Store's icon, else a DerivedData build's |
-| `developer_chrome_check` | `true`: `screenshots push` must OCR the deck for a DEBUG HUD (refuses if the `[check]` extra is missing). `false`: never. Absent: run if available |
+| `developer_chrome_check` | `true`: `store media push` must OCR the deck for a DEBUG HUD (refuses if the `[check]` extra is missing). `false`: never. Absent: run if available |
 
 ## Release (`ship`, `bump`)
 
@@ -130,7 +130,7 @@ for `/tmp/<slug>-preview-rolling`, which snakelane writes once recording. Record
 `.snakelane/<slug>/previews/`; `preview --encode-only` re-encodes from them.
 
 `preview` writes `ap-01.json` beside `ap-01.m4v`: the poster's `HH:MM:SS:FF` time code (30 fps)
-and the captions it drew. Commit it with the clip: `store previews push` sends the poster as the
+and the captions it drew. Commit it with the clip: `store media push` sends the poster as the
 preview's `previewFrameTimeCode` when it reserves it, and leaves the frame to Apple without one.
 In search results a portrait preview plays beside ss-01 and ss-02, so `preview --dry-run` and the
 gallery's search-result mock warn when a preview caption repeats theirs: compared with

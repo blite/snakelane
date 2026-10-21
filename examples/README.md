@@ -48,7 +48,7 @@ Try it from the snakelane checkout:
 ```bash
 snakelane -C examples/trailhead lint
 snakelane -C examples/trailhead store push --dry-run
-snakelane -C examples/trailhead store screenshots push --dry-run
+snakelane -C examples/trailhead store media push --dry-run
 snakelane -C examples/trailhead store iap push --dry-run
 snakelane -C examples/trailhead translations status
 snakelane -C examples/trailhead gallery --open

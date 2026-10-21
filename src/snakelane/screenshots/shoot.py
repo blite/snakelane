@@ -1,5 +1,5 @@
 """`snakelane shoot`: run the app's screenshot UI test per simulator (or this Mac) and locale, and file
-the captures as JPEGs into the deck `store screenshots push` uploads.
+the captures as JPEGs into the deck `store media push` uploads.
 A failed shoot deletes the test-clone simulators it leaked. Design notes: docs/design/screenshots.md#shooting
 
 snakelane.yml "screenshots" (all optional; full reference in the skill's references/config.md):
@@ -486,7 +486,7 @@ def print_plan(plan: Plan) -> None:
 
 
 def upload_hint(platform: str) -> str:
-    return "upload with:  snakelane store screenshots push" + (" --platform macos" if platform == "macos" else "")
+    return "upload with:  snakelane store media push" + (" --platform macos" if platform == "macos" else "")
 
 
 def execute(plan: Plan) -> None:

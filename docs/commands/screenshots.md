@@ -107,12 +107,12 @@ records it while the app plays itself,
 and taps the app's own sound from its process (macOS 14.2+). It encodes the clip to the preview
 slot's size at 30 fps, optionally with a music bed under the app's sound and the screenshots'
 caption band as a thin strip across the top, and writes `ap-01.m4v` beside the deck's shots.
-Upload it with `snakelane store previews push`. The app marks "start" and "end" (and any moments
+Upload it with `snakelane store media push --only previews`. The app marks "start" and "end" (and any moments
 captions should follow) in `/tmp/<slug>-preview-events.jsonl`; the template is the skill's
 `assets/ios/PreviewMarks.swift.template`. Needs ffmpeg. Settings: `previews` in
 [the config](../reference/config.md#previews-preview).
 
-`previews.poster` picks the poster frame, which `store previews push` sends with the preview; it
+`previews.poster` picks the poster frame, which `store media push` sends with the preview; it
 is all a viewer sees with autoplay off, and it can't be changed once the version is approved. The
 dry run and each encode warn when a preview caption repeats ss-01's or ss-02's, which a portrait
 preview plays beside in search results.
@@ -125,6 +125,6 @@ snakelane check
 
 OCRs every framed shot's corner for debug overlays (a SpriteKit `nodes … fps` HUD, developer
 buttons) and exits non-zero if it finds one. macOS only, with the `[check]` extra.
-`store screenshots push` runs it too; set `developer_chrome_check: true` to make the push
+`store media push` runs it too; set `developer_chrome_check: true` to make the push
 refuse when the check can't run.
 

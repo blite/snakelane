@@ -95,7 +95,7 @@ dropping the paywall shot. So:
 - Coin balances and in-game currency are fine: they are not money.
 - `snakelane lint` (and so `store push`) catches price wording, "free" included, in the
   listing fields and in `framing.captions`. It cannot read a caption the UI test draws (`frame: test`) or what a
-  screen shows, so look at every framed shot before `store screenshots push`.
+  screen shows, so look at every framed shot before `store media push`.
 
 **Reviewers want privacy and terms links inside `description.txt`.** Populating ASC's
 `privacyPolicyUrl` attribute is not the whole obligation. [Guideline 3.1.2](https://developer.apple.com/app-store/review/guidelines/#3.1.2) requires functional
@@ -200,7 +200,7 @@ the group requires explicit listing for sources.
 Raw `simctl io recordVideo` output can't be uploaded. It captures at the simulator's native
 pixel size, at its native frame rate (often 60 fps, sometimes 48 or 37), with no audio
 track, and Apple rejects all three. Every raw `.mov` needs an ffmpeg pass: `snakelane preview`
-records and encodes in one go, and `store previews push` checks size, length, frame rate and
+records and encodes in one go, and `store media push` checks size, length, frame rate and
 audio format before it uploads anything.
 
 **Resolution must equal [Apple's canonical pair](https://developer.apple.com/help/app-store-connect/reference/app-information/app-preview-specifications) for the preview type.** Strict equality, not
@@ -247,7 +247,7 @@ ffmpeg -y -f lavfi -i "anullsrc=channel_layout=stereo:sample_rate=44100" \
 **Apple ingests asynchronously and rejects after the fact.** A successful upload means the
 bytes arrived, not that Apple accepted them. Ingest runs 5–25 minutes later, and its failures
 appear only in the ASC web UI, never in the push log. Check App Information → Preview status
-after every previews push, even one that reported success.
+after every preview push, even one that reported success.
 
 **Three previews per locale per device type.** A fourth displaces the oldest.
 

@@ -1,5 +1,5 @@
 """`snakelane preview`: record the app's App Preview from its video UI test on each simulator, with
-the app's own sound, and encode it into the deck as `ap-01.m4v`, which `store previews push` uploads.
+the app's own sound, and encode it into the deck as `ap-01.m4v`, which `store media push` uploads.
 Design notes: docs/design/screenshots.md#recording-a-preview
 
 snakelane.yml "previews" (all optional; full reference in the skill's references/config.md):
@@ -22,7 +22,7 @@ snakelane.yml "previews" (all optional; full reference in the skill's references
                   seconds into the clip or the name of a moment the test marked
     poster        the poster frame: a moment the app marks ("won") or seconds into the clip; default
                   unset, Apple's own choice. Written to the clip's sidecar (ap-01.json) as an HH:MM:SS:FF
-                  time code, which `store previews push` sends as the preview's previewFrameTimeCode.
+                  time code, which `store media push` sends as the preview's previewFrameTimeCode.
                   It is all a viewer sees with autoplay off, and fixed once the version is approved.
                   Why: docs/design/screenshots.md#the-poster-frame-is-chosen-not-left-to-apple
 
@@ -814,7 +814,7 @@ def encode(plan: Plan, p: Pass) -> Path:
         print(f"  warning: {warning}")
     partial.replace(p.clip)
     info = {
-        # Sent by `store previews push` as previewFrameTimeCode; null leaves the frame to Apple.
+        # Sent by `store media push` as previewFrameTimeCode; null leaves the frame to Apple.
         "poster": None if poster is None else {"seconds": round(poster, 3), "time_code": media.time_code(poster),
                                                 "from": config.poster},
         "captions": [{"from": round(frm, 3), "to": round(to, 3), "text": text} for frm, to, text in timed],
@@ -876,7 +876,7 @@ def cmd_preview(args: SimpleNamespace) -> None:
                 (record_launched if config.launch is not None else record)(plan, p)
     for p in plan.passes:
         encode(plan, p)
-    print("upload with:  snakelane store previews push")
+    print("upload with:  snakelane store media push --only previews")
 
 
 cli = command_app("Record the App Preview from the app's video UI test and encode it into the deck. "

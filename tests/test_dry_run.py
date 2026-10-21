@@ -88,6 +88,7 @@ def test_the_client_plans_writes_and_reads_nothing_under_a_planned_id(live: list
     ("purchases.iap", "cmd_iap_push", {"platform": None, "create": True, "product": None}),
     ("purchases.subscriptions", "cmd_subs_push", {"platform": None, "create": True}),
     ("screenshots.upload", "cmd_screenshots_push", {"platform": None, "allow_developer_chrome": False}),
+    ("screenshots.upload", "cmd_media_push", {"platform": None, "only": None, "allow_developer_chrome": False}),
 ])
 def test_every_push_dry_run_reads_but_never_writes(live: list[str], monkeypatch: pytest.MonkeyPatch,
                                                    capsys: pytest.CaptureFixture, module: str, command: str,

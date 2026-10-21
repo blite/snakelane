@@ -49,7 +49,7 @@ overrides that. `--app <name>` picks among several configs; with one it is not n
     │                        purchases (`products`) and subscriptions (`subscription_groups`)
     ├── iap/                 their review screenshots
     ├── translations.json    what each translation was made from
-    ├── creative/<locale>/, creative/default/   `store creative push`: search-result.*,
+    ├── creative/<locale>/, creative/default/   `store media push`: search-result.*,
     │                        product-page-header.*, universal.png (one file per slot)
     └── ios/  macos/         only what differs per platform, plus screenshots:
         ├── default/, <locale>/       version-level overrides (a Mac description, say)
@@ -84,9 +84,9 @@ snakelane lint [--check-urls]         # lint the listing for App Review rejectio
 snakelane store push --dry-run            # the diff vs live, nothing written (no key: the local plan)
 snakelane store push                      # diff vs live, confirm (--yes), write, re-read
 snakelane store show | pull
-snakelane store screenshots push [--dry-run]
-snakelane store previews push [--dry-run]
-snakelane store creative push [--dry-run] | creative show   # product page header + search-result asset
+snakelane store media push [--dry-run] [--only screenshots|previews|creative]   # repeatable --only;
+                                          # creative = product page header + search-result asset
+snakelane store media show [--only …]   # no --only: a kind with no local files is left alone live
 snakelane store iap show | iap push [--dry-run] [--create] [--product ID]
 snakelane store subs show | subs push [--dry-run] [--create]
 
@@ -118,7 +118,7 @@ Every command has `--help`. Everything app-specific is a key in `snakelane.yml`;
 ## What this skill must not do
 
 - **Do not run anything that writes to App Store Connect without being asked** — `store push`,
-  `screenshots push`, `previews push`, `iap push`, `subs push`, `gamecenter images push`,
+  `media push`, `iap push`, `subs push`, `gamecenter images push`,
   `ship beta|release`. They
   mutate a live listing, and `iap push --create` makes identifiers that are permanent.
   `--dry-run`, `show` and `shoot --dry-run` are always safe.
@@ -265,7 +265,7 @@ Don't mark `--reviewed` on your own translation without the user's go-ahead.
 - iOS UI-test runners do not reliably see `TEST_RUNNER_*` variables or `-testLanguage`; the
   locale goes through a host file (`/tmp/<slug>-screenshot-locale`), and tests find their tree via `#filePath`.
 - Shoot from a Release/Screenshots scheme. A DEBUG build's SpriteKit `nodes/fps` HUD once
-  shipped in a whole deck; `snakelane check` OCRs for it and `screenshots push` runs it when
+  shipped in a whole deck; `snakelane check` OCRs for it and `media push` runs it when
   `"developer_chrome_check"` is set.
 - UI tests run serially. `shoot` and `ship` pass `-parallel-testing-enabled NO`; never turn on
   "Execute in parallel" in a screenshot scheme or test plan, and pass the flag in any script that
@@ -281,7 +281,7 @@ Don't mark `--reviewed` on your own translation without the user's go-ahead.
   ffmpeg. Change captions or the mix with `--encode-only`, which re-encodes the kept recording.
 - Set `previews.poster` (a moment the app marks, e.g. `won`, or seconds): the poster is all most
   viewers see, and **it can't be changed once the version is approved**. `preview` writes it to
-  `ap-01.json` beside the clip (commit both); `store previews push` sends it as
+  `ap-01.json` beside the clip (commit both); `store media push` sends it as
   `previewFrameTimeCode`. In search results a portrait preview plays beside ss-01 and ss-02, so
   don't repeat their captions: `preview --dry-run` and the gallery warn when a caption does.
 - [App Previews](https://developer.apple.com/help/app-store-connect/reference/app-information/app-preview-specifications) are a separate resource. "Uploaded" is not "accepted": Apple transcodes for up

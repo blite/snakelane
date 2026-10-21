@@ -137,7 +137,7 @@ The check needs macOS's Vision framework through pyobjc, an optional extra. With
 
 ### The push runs the check up front, as a subprocess
 
-`store screenshots push` runs the check before its first App Store Connect call, over every locale at once. The push deletes each set before uploading its replacement, so a refusal partway through would leave ASC empty. It runs under `--dry-run` too, because a dry run is how the deck gets eyeballed. It runs `snakelane check` as a subprocess so the optional pyobjc dependency stays out of the base install. Availability is checked before running rather than inferred from the exit code, because an import failure inside the subprocess also exits 1, the code for "developer chrome found", and would blame the deck for a broken install. Any exit code other than 1 or 2 is reported as the checker failing, not as evidence about the deck.
+`store media push` runs the check before its first App Store Connect call, over every locale at once. The push deletes each set before uploading its replacement, so a refusal partway through would leave ASC empty. It runs under `--dry-run` too, because a dry run is how the deck gets eyeballed. It runs `snakelane check` as a subprocess so the optional pyobjc dependency stays out of the base install. Availability is checked before running rather than inferred from the exit code, because an import failure inside the subprocess also exits 1, the code for "developer chrome found", and would blame the deck for a broken install. Any exit code other than 1 or 2 is reported as the checker failing, not as evidence about the deck.
 
 ## Display types and sizes
 
@@ -261,9 +261,17 @@ Both pushes refuse, dry run included, while a killed shoot's stash exists. A kil
 
 The per-repo copies created the API client first and died on missing credentials, so a dry run, which is how a deck gets eyeballed, showed nothing offline. The local half (every file read, every size mapped to a slot) is most of what a dry run is for. The live half (which sets would be emptied or deleted) needs credentials, and is named as missing rather than silently skipped.
 
-### Previews and screenshots are separate pushes
+### Previews and screenshots are separate resources
 
-App Previews are separate ASC resources (`appPreviewSets` and `appPreviews`, with their own slot enum), so they have their own command. They share the deck folder so one folder is everything a device class needs. Apple transcodes a preview and can reject it after the bytes land, so the push waits for processing with a 20-minute budget instead of the 10 minutes used for images.
+App Previews are separate ASC resources (`appPreviewSets` and `appPreviews`, with their own slot enum), so they are mirrored on their own, after the screenshots. They share the deck folder so one folder is everything a device class needs. Apple transcodes a preview and can reject it after the bytes land, so the push waits for processing with a 20-minute budget instead of the 10 minutes used for images.
+
+### One media push, every local plan first
+
+Screenshots, previews and creative assets were three commands (`store screenshots push`, `store previews push`, `store creative push`) until 2026-10-21, when they became `store media push` with `--only` to pick some. Run one after another by hand, a bad preview encode was found after the screenshots had already been replaced. The combined push reads every kind's files, and checks the creative assets against Apple's reference data, before its first write; a failure partway stops the run and prints the `--only` command for the kinds not yet pushed, rather than carrying on and burying the failure above a 20-minute preview wait. The old commands stay, hidden, because apps' docs and scripts call them.
+
+### A kind with no files anywhere is skipped unless named
+
+A deck folder with no previews deletes the live previews: that was safe while previews had a command of their own. Run with everything by default, it would delete the previews of an app that never kept them in the repo whenever its screenshots were pushed; Solitaire was one on 2026-10-21, with previews live and none in its deck. So a `media push` without `--only` skips a kind that has no file in any locale and says so; `--only previews` still mirrors an empty deck and deletes them.
 
 ### Processing is verified, and rejects are retried once
 
@@ -277,6 +285,6 @@ The product page header and search-result asset (October 2026) have exact sizes,
 
 A placement doesn't say which asset backs it, and the library takes no checksum, so neither side can tell whether a slot already shows the local file. Each upload's `referenceName` carries a hash of its bytes: a re-run finds the asset in the library, asks it which placements it backs, and writes nothing when the slot's placement is among them. The same file in two slots or locales is uploaded once. A slot holds one placement per localization, so a changed file's old placement is deleted before the new one is made.
 
-### `screenshots show`
+### `media show`
 
 The fastlane migration tables mapped `show_screenshots` to this command before any copy implemented it. It answers the question the stale-set sweep raises: which display classes ASC holds right now, and how many files are in each.

@@ -400,7 +400,7 @@ def build(app: project.App, platform: str = "ios", assets: Assets | None = None,
                        for loc in unlisted)
         sections.append(f'<section id="unlisted"><h2>Not in snakelane.yml — never pushed</h2>'
                         f'<p class="muted">These deck folders exist, but "locales" doesn\'t list them, so '
-                        f'<code>store screenshots push</code> ignores them.</p>{body}</section>')
+                        f'<code>store media push</code> ignores them.</p>{body}</section>')
     notices += [f"review notes: [{f.rule}] {f.message}" for f in findings if f.where.startswith("review/")]
     nav = " · ".join(f'<a href="#{esc(loc)}">{esc(loc)}</a>' for loc in locales) + \
         (' · <a href="#unlisted">not in snakelane.yml</a>' if unlisted else "")

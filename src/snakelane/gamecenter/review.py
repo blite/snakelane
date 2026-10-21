@@ -176,7 +176,7 @@ def cmd_submit(args: SimpleNamespace) -> None:
             raise SystemExit(
                 f"App Store Connect won't take version {asc.attributes(version).get('versionString')} for review "
                 "yet: it is missing something review needs, usually the listing text (`snakelane store push`), "
-                "the screenshots (`snakelane store screenshots push`) or a build. The draft submission is "
+                "the screenshots (`snakelane store media push`) or a build. The draft submission is "
                 "kept and reused next run; no Game Center record was added.\n" + str(error)) from None
         print(f"  {'would add' if client.dry_run else 'added'} app version {asc.attributes(version).get('versionString')}")
     if refused := add(client, submission["id"], todo):
