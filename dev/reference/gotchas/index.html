@@ -689,7 +689,7 @@
   <span class="md-ellipsis">
     
   
-    shoot · frame · check
+    shoot · frame · preview · check
   
 
     
@@ -1748,7 +1748,7 @@ dropping the paywall shot. So:</p>
 <li>Coin balances and in-game currency are fine: they are not money.</li>
 <li><code>snakelane lint</code> (and so <code>store push</code>) catches price wording, "free" included, in the
   listing fields and in <code>framing.captions</code>. It cannot read a caption the UI test draws (<code>frame: test</code>) or what a
-  screen shows, so look at every framed shot before <code>store screenshots push</code>.</li>
+  screen shows, so look at every framed shot before <code>store media push</code>.</li>
 </ul>
 <p><strong>Reviewers want privacy and terms links inside <code>description.txt</code>.</strong> Populating ASC's
 <code>privacyPolicyUrl</code> attribute is not the whole obligation. <a href="https://developer.apple.com/app-store/review/guidelines/#3.1.2">Guideline 3.1.2</a> requires functional
@@ -1853,14 +1853,16 @@ the group requires explicit listing for sources.</p>
 <h2 id="app-previews">App Previews<a class="headerlink" href="#app-previews" title="Permanent link">&para;</a></h2>
 <p>Raw <code>simctl io recordVideo</code> output can't be uploaded. It captures at the simulator's native
 pixel size, at its native frame rate (often 60 fps, sometimes 48 or 37), with no audio
-track, and Apple rejects all three. Every raw <code>.mov</code> needs an ffmpeg pass.</p>
+track, and Apple rejects all three. Every raw <code>.mov</code> needs an ffmpeg pass: <code>snakelane preview</code>
+records and encodes in one go, and <code>store media push</code> checks size, length, frame rate and
+audio format before it uploads anything.</p>
 <p><strong>Resolution must equal <a href="https://developer.apple.com/help/app-store-connect/reference/app-information/app-preview-specifications">Apple's canonical pair</a> for the preview type.</strong> Strict equality, not
 "close enough":</p>
 <table>
 <thead>
 <tr>
 <th>Preview type</th>
-<th>Dimensions (portrait)</th>
+<th>Dimensions (portrait; landscape is the same pair turned)</th>
 </tr>
 </thead>
 <tbody>
@@ -1896,8 +1898,14 @@ transcode is a downscale plus pad. Pick the iPad token by generation as well as 
 <code>IPAD_PRO_3GEN_129</code>.</p>
 <p><strong>30 fps cap.</strong> Above that, Apple's ingest rejects with "frame rate is too high", after the
 upload has succeeded. <code>recordVideo</code> does not honour <code>-r</code>; put <code>fps=30</code> first in the filter chain.</p>
-<p><strong>An audio track is mandatory</strong>, even for a silent app: "preview contains unsupported or
-corrupted audio". Generate silence in the same pass.</p>
+<p><strong>Audio is allowed, and worth using</strong>: previews autoplay muted, but a viewer who taps for sound
+hears it. If present it must be stereo AAC at 44.1 or 48 kHz (256 kbps is Apple's figure).
+<code>snakelane preview</code> taps the app's own sound and can lay a music bed (<code>previews.audio.bed</code>)
+under it. A preview with no audio track at all has been bounced as "preview contains unsupported
+or corrupted audio", so without sound, encode a silent stereo track (the push warns when there
+is none).</p>
+<p><strong>15–30 seconds.</strong> The push refuses anything outside; <code>snakelane preview</code> cuts the clip at the
+test's "end" mark and at <code>previews.max_seconds</code> (29).</p>
 <p><strong>Prefer <code>.m4v</code> with <code>+faststart</code></strong> so the moov atom is at the head.</p>
 <div class="highlight"><pre><span></span><code>ffmpeg<span class="w"> </span>-y<span class="w"> </span>-f<span class="w"> </span>lavfi<span class="w"> </span>-i<span class="w"> </span><span class="s2">"anullsrc=channel_layout=stereo:sample_rate=44100"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-i<span class="w"> </span>raw.mov<span class="w"> </span>-shortest<span class="w"> </span><span class="se">\</span>
@@ -1909,8 +1917,21 @@ corrupted audio". Generate silence in the same pass.</p>
 <p><strong>Apple ingests asynchronously and rejects after the fact.</strong> A successful upload means the
 bytes arrived, not that Apple accepted them. Ingest runs 5–25 minutes later, and its failures
 appear only in the ASC web UI, never in the push log. Check App Information → Preview status
-after every previews push, even one that reported success.</p>
+after every preview push, even one that reported success.</p>
 <p><strong>Three previews per locale per device type.</strong> A fourth displaces the oldest.</p>
+<p><strong>Record on a simulator nothing else is using.</strong> <code>preview</code> films whatever is on the screen: another
+session's test launched Golf Solitaire over Hearts' finale mid-recording, and a simulator that
+had been shut down under it refused the test runner ("Busy … failed preflight checks")
+(2026-10-16). A dedicated one (<code>xcrun simctl create "iPhone 17 Pro (previews)" iPhone-17-Pro</code>,
+then <code>preview --device &lt;its UDID&gt;</code>) avoids both. Watch the end of every clip before pushing. A busy
+Mac also drops frames: <code>preview</code> warns "the picture stalls … mid-motion" when a recording hitches;
+re-record that clip with nothing else running. Above all, <strong>the video test must not query the app
+while recording</strong>: <code>waitForExistence</code> and element lookups snapshot the accessibility tree on the
+app's main thread and hitch every second. Have the app append its own moments to the events file
+and wait on those (<code>Preview.waitFor</code> in the template).</p>
+<p><strong>An app that launches silent in the simulator records a silent preview.</strong> <code>preview</code> warns when
+the tap heard nothing; give the video test a launch argument that turns the app's sound on, and
+keep any review prompt (<code>requestReview</code>) from firing under a UI-test launch.</p>
 <h2 id="simulators-and-ui-tests">Simulators and UI tests<a class="headerlink" href="#simulators-and-ui-tests" title="Permanent link">&para;</a></h2>
 <p><strong>Run UI tests serially: <code>-parallel-testing-enabled NO</code>.</strong> With parallel testing on (a
 scheme or test plan's "Execute in parallel"), <code>xcodebuild test</code> runs each worker on a cold clone
@@ -1923,7 +1944,7 @@ parallel" off in the screenshot scheme so a run from Xcode behaves the same.</p>
 <p><strong>Record the simulator the test runs on.</strong> Run serially, that is the named simulator itself:
 resolve its UDID, boot it, test with <code>-destination id=&lt;UDID&gt;</code>, and <code>recordVideo</code> that UDID.
 Recording the named device while tests run on a clone captures a black screen or a 0-byte
-file. <code>assets/ios/record_gameplay_video.sh.template</code> does this.</p>
+file. <code>snakelane preview</code> does this.</p>
 <p><strong>Sandbox StoreKit purchases leak into later test runs.</strong> An app that seeds entitlements from
 <code>Transaction.currentEntitlements</code> will see packs a developer bought while debugging as owned
 in every subsequent run. Guard the seed on a <code>--ui-tests</code> launch argument; clear existing state

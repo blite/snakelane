@@ -27,7 +27,7 @@
     
     
       
-        <title>shoot · frame · check - snakelane</title>
+        <title>shoot · frame · preview · check - snakelane</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#shoot-frame-check-making-the-deck" class="md-skip">
+        <a href="#shoot-frame-preview-check-making-the-deck" class="md-skip">
           Skip to content
         </a>
       
@@ -117,7 +117,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              shoot · frame · check
+              shoot · frame · preview · check
             
           </span>
         </div>
@@ -703,7 +703,7 @@
   <span class="md-ellipsis">
     
   
-    shoot · frame · check
+    shoot · frame · preview · check
   
 
     
@@ -721,7 +721,7 @@
   <span class="md-ellipsis">
     
   
-    shoot · frame · check
+    shoot · frame · preview · check
   
 
     
@@ -793,6 +793,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recording-the-app-preview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recording the App Preview
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1581,6 +1592,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#recording-the-app-preview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recording the App Preview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#catching-developer-builds" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1616,7 +1638,7 @@
   
 
 
-<h1 id="shoot-frame-check-making-the-deck">shoot, frame, check: making the deck<a class="headerlink" href="#shoot-frame-check-making-the-deck" title="Permanent link">&para;</a></h1>
+<h1 id="shoot-frame-preview-check-making-the-deck">shoot, frame, preview, check: making the deck<a class="headerlink" href="#shoot-frame-preview-check-making-the-deck" title="Permanent link">&para;</a></h1>
 <h2 id="shooting-from-your-ui-test">Shooting from your UI test<a class="headerlink" href="#shooting-from-your-ui-test" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>snakelane<span class="w"> </span>shoot<span class="w"> </span>--dry-run<span class="w">           </span><span class="c1"># the plan: devices, locales, what's replaced</span>
 snakelane<span class="w"> </span>shoot<span class="w">                     </span><span class="c1"># every device × screenshot locale</span>
@@ -1696,12 +1718,31 @@ The skill ships the Swift for both ends:</p>
 </ul>
 <p>Change <code>caption.depth</code> or the theme's lip, and the app's reserve follows on the next shoot.
 You don't keep two numbers in step by hand.</p>
+<h2 id="recording-the-app-preview">Recording the App Preview<a class="headerlink" href="#recording-the-app-preview" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>snakelane<span class="w"> </span>preview<span class="w"> </span>--dry-run<span class="w">         </span><span class="c1"># the plan: simulators, the test, audio, overlay captions</span>
+snakelane<span class="w"> </span>preview<span class="w">                   </span><span class="c1"># record and encode ap-01.m4v for every device</span>
+snakelane<span class="w"> </span>preview<span class="w"> </span>--device<span class="w"> </span><span class="s2">"iPhone 17 Pro"</span>
+snakelane<span class="w"> </span>preview<span class="w"> </span>--encode-only<span class="w">     </span><span class="c1"># new captions or mix, from the kept recording</span>
+</code></pre></div>
+<p><code>preview</code> launches the app into its video fixture on each simulator (or runs a video UI test),
+records it while the app plays itself,
+and taps the app's own sound from its process (macOS 14.2+). It encodes the clip to the preview
+slot's size at 30 fps, optionally with a music bed under the app's sound and the screenshots'
+caption band as a thin strip across the top, and writes <code>ap-01.m4v</code> beside the deck's shots.
+Upload it with <code>snakelane store media push --only previews</code>. The app marks "start" and "end" (and any moments
+captions should follow) in <code>/tmp/&lt;slug&gt;-preview-events.jsonl</code>; the template is the skill's
+<code>assets/ios/PreviewMarks.swift.template</code>. Needs ffmpeg. Settings: <code>previews</code> in
+<a href="../../reference/config/#previews-preview">the config</a>.</p>
+<p><code>previews.poster</code> picks the poster frame, which <code>store media push</code> sends with the preview; it
+is all a viewer sees with autoplay off, and it can't be changed once the version is approved. The
+dry run and each encode warn when a preview caption repeats ss-01's or ss-02's, which a portrait
+preview plays beside in search results.</p>
 <h2 id="catching-developer-builds">Catching developer builds<a class="headerlink" href="#catching-developer-builds" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>snakelane<span class="w"> </span>check
 </code></pre></div>
 <p>OCRs every framed shot's corner for debug overlays (a SpriteKit <code>nodes … fps</code> HUD, developer
 buttons) and exits non-zero if it finds one. macOS only, with the <code>[check]</code> extra.
-<code>store screenshots push</code> runs it too; set <code>developer_chrome_check: true</code> to make the push
+<code>store media push</code> runs it too; set <code>developer_chrome_check: true</code> to make the push
 refuse when the check can't run.</p>
 
 

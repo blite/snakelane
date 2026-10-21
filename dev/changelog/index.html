@@ -689,7 +689,7 @@
   <span class="md-ellipsis">
     
   
-    shoot · frame · check
+    shoot · frame · preview · check
   
 
     
@@ -1400,6 +1400,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#050" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.5.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#040" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1514,6 +1525,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#050" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.5.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#040" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1586,6 +1608,64 @@
 <p>All notable changes to snakelane. Versions follow <a href="https://semver.org">semver</a>; while the
 major version is 0, a change that needs new <code>snakelane.yml</code> keys or changes a command's
 behaviour bumps the minor version. Each release is tagged <code>vX.Y.Z</code>.</p>
+<h2 id="050">0.5.0<a class="headerlink" href="#050" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>The credential config moved to <code>~/.appstoreconnect/config.json</code></strong>, beside the key, and is
+  shared with other tools (ASCStats): <code>{"issuer_id": …, "snakelane": {"key_id": …}}</code>, with each
+  tool choosing its own key under its own name. The key id is the <code>AuthKey_&lt;id&gt;.p8</code> filename;
+  without a <code>snakelane.key_id</code> the only key in <code>private_keys/</code> is used. <code>auth setup</code> merges into
+  the file, keeping other tools' entries. <strong>A machine set up before this must</strong> re-run
+  <code>snakelane auth setup</code> (or write the file by hand); <code>~/.config/snakelane/</code> is no longer read.</li>
+<li>
+<p><strong><code>snakelane preview</code> records the App Preview</strong> from the app's video UI test, with the app's own
+  sound, and encodes it into the deck as <code>ap-01.m4v</code> for <code>store previews push</code>. It replaces the
+  per-app <code>record_gameplay_video.sh</code> / <code>encode_app_preview.sh</code> pair. The test and snakelane shake
+  hands through <code>/tmp/&lt;slug&gt;-preview-events.jsonl</code> and <code>/tmp/&lt;slug&gt;-preview-rolling</code>; the sound
+  comes from a Core Audio tap on the app's process (macOS 14.2+), with an optional music bed
+  (<code>previews.audio.bed</code>), and <code>previews.overlay: {style: band}</code> draws the screenshots' caption band
+  as a thin strip over the top. New <code>previews</code> keys; see <code>references/config.md</code>. <strong>An app must</strong>
+  move its video test to the new handshake (<code>assets/ios/VideoPreviewUITests.swift.template</code>) and
+  add <code>previews.test</code> if its test isn't named <code>&lt;Scheme&gt;UITestsVideoPreviewUITests</code>;
+  <code>assets/ios/record_gameplay_video.sh.template</code> is gone.</p>
+</li>
+<li>
+<p><strong><code>previews.launch</code> records the app with no UI test attached</strong>: snakelane launches it into its
+  video fixture and the app marks "start" and "end" itself (<code>assets/ios/PreviewMarks.swift.template</code>).
+  An attached UI test made the iPad recordings stutter. Prefer it to <code>previews.test</code>.</p>
+</li>
+<li>
+<p><strong><code>preview</code> warns when a recording stalls mid-motion</strong> (a dropped-frame hitch from a busy
+  Mac), and when the app's sound tap heard nothing. Re-record the clip it names.</p>
+</li>
+<li>
+<p><strong><code>store previews push</code> checks what Apple's ingest rejects</strong> before it deletes anything: length
+  outside 15–30 s, more than 30 fps, or audio that isn't stereo AAC at 44.1/48 kHz. A preview
+  with no audio track warns.</p>
+</li>
+<li>
+<p><strong><code>previews.poster</code> sets the App Preview's poster frame</strong>: a moment the app marks (<code>won</code>) or
+  seconds into the clip. <code>preview</code> writes it beside the clip in <code>ap-01.json</code> (with the captions it
+  drew) and <code>store previews push</code> sends it as <code>previewFrameTimeCode</code> when it reserves the preview;
+  the dry runs show it. Unset, the frame stays Apple's. <strong>An app should</strong> set it and commit
+  <code>ap-01.json</code> with <code>ap-01.m4v</code>: the poster can't be changed after the version is approved.</p>
+</li>
+<li>
+<p><strong><code>preview</code> warns when a preview caption repeats ss-01's or ss-02's</strong>, which a portrait preview
+  plays beside in search results, in the dry run, after each encode and in the gallery's
+  search-result mock (which now shows the preview's poster beside ss-01 and ss-02). With
+  <code>frame: test</code> the shots' captions are read with Vision (<code>snakelane[check]</code>); without it the check
+  says it can't run.</p>
+</li>
+<li>
+<p><strong><code>store media push | show</code> uploads screenshots, App Previews and creative assets in one run</strong>,
+  with <code>--only screenshots|previews|creative</code> (repeatable) to pick some. Every kind's files, and the
+  creative assets against Apple's specs, are checked before the first write, so a bad preview stops
+  the run before any screenshot is replaced. A failure partway prints the <code>--only</code> command for what
+  wasn't pushed. Without <code>--only</code>, a kind with no files in any deck is left alone live (previews
+  kept only in App Store Connect survive a screenshot push); <code>--only previews</code> clears them. <code>store screenshots push | show</code>, <code>store previews push</code> and <code>store creative
+  push | show</code> still work but no longer appear in <code>--help</code>; nothing in an app has to change.</p>
+</li>
+</ul>
 <h2 id="040">0.4.0<a class="headerlink" href="#040" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong><code>snakelane store creative push | show</code>: the product page header and the search-result asset</strong>,

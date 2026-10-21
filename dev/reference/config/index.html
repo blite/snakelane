@@ -689,7 +689,7 @@
   <span class="md-ellipsis">
     
   
-    shoot · frame · check
+    shoot · frame · preview · check
   
 
     
@@ -1028,6 +1028,17 @@
     <span class="md-ellipsis">
       
         Screenshots (shoot, frame, check)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#previews-preview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Previews (preview)
       
     </span>
   </a>
@@ -1558,6 +1569,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#previews-preview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Previews (preview)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#game-center-gamecenter" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1689,7 +1711,7 @@ works renamed.</p>
 </tr>
 <tr>
 <td><code>developer_chrome_check</code></td>
-<td><code>true</code>: <code>screenshots push</code> must OCR the deck for a DEBUG HUD (refuses if the <code>[check]</code> extra is missing). <code>false</code>: never. Absent: run if available</td>
+<td><code>true</code>: <code>store media push</code> must OCR the deck for a DEBUG HUD (refuses if the <code>[check]</code> extra is missing). <code>false</code>: never. Absent: run if available</td>
 </tr>
 </tbody>
 </table>
@@ -1747,6 +1769,42 @@ reliably see them, so the language key also goes through <code>/tmp/&lt;slug&gt;
 with <code>frame: snakelane</code> the band depth through <code>/tmp/&lt;slug&gt;-screenshot-banner.json</code>. A shoot
 first sets aside every image in the deck and the <code>ss-*</code> shots in <code>raw/</code>, and puts them back if
 it fails.</p>
+<h2 id="previews-preview">Previews (<code>preview</code>)<a class="headerlink" href="#previews-preview" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="nt">previews</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">launch</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"--ui-screenshot=video-demo"</span><span class="p p-Indicator">]</span><span class="w">   </span><span class="c1"># recommended: the app launched into its video fixture,</span>
+<span class="w">                                 </span><span class="c1">#   no UI test attached; it marks start/end itself (assets/ios/PreviewMarks)</span>
+<span class="w">  </span><span class="nt">test</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AppUITests/AppUITestsVideoPreviewUITests</span><span class="w">   </span><span class="c1"># instead of launch: a video UI test (assets/ios template)</span>
+<span class="w">  </span><span class="nt">scheme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">                   </span><span class="c1"># default: screenshots.scheme; test_plan, env, devices likewise</span>
+<span class="w">  </span><span class="nt">locales</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">en-US</span><span class="p p-Indicator">]</span><span class="w">               </span><span class="c1"># default: the first screenshot locale only</span>
+<span class="w">  </span><span class="nt">fit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">crop</span><span class="w">                      </span><span class="c1"># crop (fill the frame) | pad</span>
+<span class="w">  </span><span class="nt">max_seconds</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">29</span><span class="w">                </span><span class="c1"># Apple takes 15–30 s; a longer clip loses its start, not its end</span>
+<span class="w">  </span><span class="nt">audio</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">capture</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">                </span><span class="c1"># tap the app's process for its sound (macOS 14.2+, swiftc)</span>
+<span class="w">    </span><span class="nt">bed</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">App/Audio/music.wav</span><span class="w">     </span><span class="c1"># a music file looped under it; default none</span>
+<span class="w">    </span><span class="nt">bed_gain</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-14</span><span class="w">                </span><span class="c1"># dB</span>
+<span class="w">    </span><span class="nt">loudness</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-16</span><span class="w">                </span><span class="c1"># the mix's integrated LUFS</span>
+<span class="w">  </span><span class="nt">overlay</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">style</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">band</span><span class="w">                  </span><span class="c1"># band | none (default)</span>
+<span class="w">    </span><span class="nt">depth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.085</span><span class="w">                 </span><span class="c1"># the band's share of the height: the status bar and a little more</span>
+<span class="w">    </span><span class="nt">framing</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">theme</span><span class="p">:</span><span class="w"> </span><span class="nv">…</span><span class="p p-Indicator">,</span><span class="nt"> caption</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">shape</span><span class="p">:</span><span class="w"> </span><span class="nv">arch</span><span class="p p-Indicator">}}</span><span class="w">   </span><span class="c1"># over screenshots.framing's theme and caption</span>
+<span class="w">    </span><span class="nt">captions</span><span class="p">:</span><span class="w">                    </span><span class="c1"># a string, a list of {at, text}, or either keyed by locale</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">at</span><span class="p">:</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="nt"> text</span><span class="p">:</span><span class="w"> </span><span class="s">"No</span><span class="nv"> </span><span class="s">ads,</span><span class="nv"> </span><span class="s">ever"</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">at</span><span class="p">:</span><span class="w"> </span><span class="nv">first-trick</span><span class="p p-Indicator">,</span><span class="nt"> text</span><span class="p">:</span><span class="w"> </span><span class="s">"Smart</span><span class="nv"> </span><span class="s">AI</span><span class="nv"> </span><span class="s">opponents"</span><span class="p p-Indicator">}</span><span class="w">   </span><span class="c1"># at: seconds, or a moment the test marked</span>
+<span class="w">  </span><span class="nt">poster</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">won</span><span class="w">                    </span><span class="c1"># the poster frame: a moment the app marks, or seconds into the clip;</span>
+<span class="w">                                 </span><span class="c1">#   default unset, Apple's choice. Fixed once the version is approved</span>
+</code></pre></div>
+<p>With <code>launch</code>, snakelane starts recording, launches the app, and cuts the clip between the
+"start" and "end" the app appends to <code>/tmp/&lt;slug&gt;-preview-events.jsonl</code> (<code>{"event", "t"}</code>; any
+other name is a moment captions can follow). With <code>test</code>, the test also marks "ready" and waits
+for <code>/tmp/&lt;slug&gt;-preview-rolling</code>, which snakelane writes once recording. Recordings are kept in
+<code>.snakelane/&lt;slug&gt;/previews/</code>; <code>preview --encode-only</code> re-encodes from them.</p>
+<p><code>preview</code> writes <code>ap-01.json</code> beside <code>ap-01.m4v</code>: the poster's <code>HH:MM:SS:FF</code> time code (30 fps)
+and the captions it drew. Commit it with the clip: <code>store media push</code> sends the poster as the
+preview's <code>previewFrameTimeCode</code> when it reserves it, and leaves the frame to Apple without one.
+In search results a portrait preview plays beside ss-01 and ss-02, so <code>preview --dry-run</code> and the
+gallery's search-result mock warn when a preview caption repeats theirs: compared with
+<code>screenshots.framing.captions</code>, or, with <code>frame: test</code>, read off the framed shots with Vision
+(the <code>snakelane[check]</code> extra; without it they say they can't check).</p>
 <h2 id="game-center-gamecenter">Game Center (<code>gamecenter</code>)<a class="headerlink" href="#game-center-gamecenter" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="nt">gamecenter</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">gamekit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">App/GameCenter/GameCenterResources.gamekit</span><span class="w">   </span><span class="c1"># Xcode's Game Center bundle, repo-relative</span>

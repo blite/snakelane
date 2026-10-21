@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#store-listing-screenshots-purchases" class="md-skip">
+        <a href="#store-listing-media-purchases" class="md-skip">
           Skip to content
         </a>
       
@@ -730,6 +730,18 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#screenshots-app-previews-and-creative-assets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Screenshots, App Previews and creative assets
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Screenshots, App Previews and creative assets">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#screenshots-and-app-previews" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -739,8 +751,8 @@
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#creative-assets-the-product-page-header-and-the-search-result" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -748,6 +760,11 @@
       
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -785,7 +802,7 @@
   <span class="md-ellipsis">
     
   
-    shoot · frame · check
+    shoot · frame · preview · check
   
 
     
@@ -1525,6 +1542,18 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#screenshots-app-previews-and-creative-assets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Screenshots, App Previews and creative assets
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Screenshots, App Previews and creative assets">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#screenshots-and-app-previews" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1534,8 +1563,8 @@
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#creative-assets-the-product-page-header-and-the-search-result" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1543,6 +1572,11 @@
       
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1582,7 +1616,7 @@
   
 
 
-<h1 id="store-listing-screenshots-purchases">store: listing, screenshots, purchases<a class="headerlink" href="#store-listing-screenshots-purchases" title="Permanent link">&para;</a></h1>
+<h1 id="store-listing-media-purchases">store: listing, media, purchases<a class="headerlink" href="#store-listing-media-purchases" title="Permanent link">&para;</a></h1>
 <p>Everything on the App Store page, pushed from <code>metadata/</code> and checked afterwards.</p>
 <div class="highlight"><pre><span></span><code>snakelane<span class="w"> </span>store<span class="w"> </span>push<span class="w"> </span>--dry-run<span class="w">          </span><span class="c1"># the diff against live; without a key, the local plan</span>
 snakelane<span class="w"> </span>store<span class="w"> </span>push<span class="w">                    </span><span class="c1"># diff, confirm, write, re-read</span>
@@ -1608,12 +1642,21 @@ rating included, as a starting point.</p>
 <p>Fields: <code>name</code>, <code>subtitle</code>, <code>description</code>, <code>keywords</code>, <code>promotional_text</code>, <code>release_notes</code>,
 <code>support_url</code>, <code>marketing_url</code>, <code>privacy_url</code>, <code>privacy_choices_url</code>, plus
 <code>&lt;platform&gt;/copyright.txt</code> and the App Review card in <code>&lt;platform&gt;/review/</code>.</p>
-<h2 id="screenshots-and-app-previews">Screenshots and App Previews<a class="headerlink" href="#screenshots-and-app-previews" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>snakelane<span class="w"> </span>store<span class="w"> </span>screenshots<span class="w"> </span>push<span class="w"> </span>--dry-run
-snakelane<span class="w"> </span>store<span class="w"> </span>screenshots<span class="w"> </span>push
-snakelane<span class="w"> </span>store<span class="w"> </span>previews<span class="w"> </span>push
-snakelane<span class="w"> </span>store<span class="w"> </span>screenshots<span class="w"> </span>show
+<h2 id="screenshots-app-previews-and-creative-assets">Screenshots, App Previews and creative assets<a class="headerlink" href="#screenshots-app-previews-and-creative-assets" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>snakelane<span class="w"> </span>store<span class="w"> </span>media<span class="w"> </span>push<span class="w"> </span>--dry-run
+snakelane<span class="w"> </span>store<span class="w"> </span>media<span class="w"> </span>push<span class="w">                          </span><span class="c1"># screenshots, then previews, then creative</span>
+snakelane<span class="w"> </span>store<span class="w"> </span>media<span class="w"> </span>push<span class="w"> </span>--only<span class="w"> </span>previews<span class="w">          </span><span class="c1"># repeatable: --only screenshots --only creative</span>
+snakelane<span class="w"> </span>store<span class="w"> </span>media<span class="w"> </span>show<span class="w"> </span><span class="o">[</span>--only<span class="w"> </span>…<span class="o">]</span>
 </code></pre></div>
+<p><code>media push</code> reads every file it would upload, and checks the creative assets against Apple's
+specs, before its first write, so a bad preview encode or an oversized header stops the run before
+any screenshot is replaced. If one kind fails partway, the run stops and prints the
+<code>--only</code> command that pushes the rest. Without <code>--only</code>, a kind with no file in any deck is
+skipped, so pushing screenshots never deletes previews kept only in App Store Connect; name it
+(<code>--only previews</code>) to clear them. The older <code>store screenshots push | show</code>,
+<code>store previews push</code> and <code>store creative push | show</code> still work, and are the same as
+<code>media</code> with one <code>--only</code>.</p>
+<h3 id="screenshots-and-app-previews">Screenshots and App Previews<a class="headerlink" href="#screenshots-and-app-previews" title="Permanent link">&para;</a></h3>
 <p>The deck is <code>metadata/&lt;platform&gt;/screenshots/&lt;locale&gt;/</code> (in <code>iphone/</code> and <code>ipad/</code> for iOS),
 uploaded in file-name order. The slot each image fills is worked out from its pixel size. 6.3" iPhone and 13" iPad are the
 defaults; other <a href="https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications">sizes Apple accepts</a> upload with a warning, and sizes it doesn't are refused.
@@ -1628,7 +1671,7 @@ A push replaces each set wholesale:</p>
 <p>Run <a href="../gallery/"><code>gallery --live</code></a> first to see what will be replaced. Without an API key,
 the dry run still reads every file and maps it to a slot, but can't say what it would
 delete:</p>
-<div class="highlight"><pre><span></span><code>$ snakelane store screenshots push --dry-run
+<div class="highlight"><pre><span></span><code>$ snakelane store media push --only screenshots --dry-run
   (developer-chrome check skipped: needs macOS and the snakelane[check] extra)
   (no screenshots under ~/trailhead/metadata/ios/screenshots/en-AU — skipping en-AU; the App Store shows the primary language's)
   [dry-run] en-US/APP_IPAD_PRO_3GEN_129: 3 file(s) — ss-01.jpg, ss-02.jpg, ss-03.jpg
@@ -1637,11 +1680,8 @@ delete:</p>
 
 [dry-run] no API key set up (`snakelane auth setup`), so the live screenshot sets were not read: the plan above is local only (what would be uploaded, not what would be deleted first). Nothing was written.
 </code></pre></div>
-<h2 id="creative-assets-the-product-page-header-and-the-search-result">Creative assets: the product page header and the search result<a class="headerlink" href="#creative-assets-the-product-page-header-and-the-search-result" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>snakelane<span class="w"> </span>store<span class="w"> </span>creative<span class="w"> </span>push<span class="w"> </span>--dry-run
-snakelane<span class="w"> </span>store<span class="w"> </span>creative<span class="w"> </span>push
-snakelane<span class="w"> </span>store<span class="w"> </span>creative<span class="w"> </span>show
-</code></pre></div>
+<h3 id="creative-assets-the-product-page-header-and-the-search-result">Creative assets: the product page header and the search result<a class="headerlink" href="#creative-assets-the-product-page-header-and-the-search-result" title="Permanent link">&para;</a></h3>
+<p><code>snakelane store media push --only creative</code> pushes just these.</p>
 <p>The two <a href="https://developer.apple.com/help/app-store-connect/reference/app-information/creative-assets-specifications">creative assets</a>
 App Store Connect added in October 2026 for iOS 27 and iPadOS 27: the image or video across the top
 of the product page, and the one at the top of a search result. Each App Store version localization
@@ -1736,13 +1776,13 @@ in every territory</a>. <code>snakelane store subs show</code> prints the live p
         
         
           
-          <a href="../screenshots/" class="md-footer__link md-footer__link--next" aria-label="Next: shoot · frame · check">
+          <a href="../screenshots/" class="md-footer__link md-footer__link--next" aria-label="Next: shoot · frame · preview · check">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                shoot · frame · check
+                shoot · frame · preview · check
               </div>
             </div>
             <div class="md-footer__button md-icon">

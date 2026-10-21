@@ -694,7 +694,7 @@
   <span class="md-ellipsis">
     
   
-    shoot · frame · check
+    shoot · frame · preview · check
   
 
     
@@ -1525,7 +1525,7 @@ Keys, download the <code>.p8</code>, then:</p>
 snakelane<span class="w"> </span>auth<span class="w"> </span>check<span class="w">      </span><span class="c1"># one read-only request, proving Apple accepts the key</span>
 </code></pre></div>
 <p><code>setup</code> moves the key to <code>~/.appstoreconnect/private_keys/</code> (readable only by you) and records
-the key id and issuer id in <code>~/.config/snakelane/credentials.json</code>. Every command reads those
+the issuer id and which key snakelane uses in <code>~/.appstoreconnect/config.json</code>. Every command reads those
 two files and nothing else, whether it runs in a terminal, in Xcode's Archive post-action or
 in CI. There are no environment variables and no Apple ID sign-in.</p>
 <div class="admonition tip">

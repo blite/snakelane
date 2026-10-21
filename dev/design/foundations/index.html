@@ -689,7 +689,7 @@
   <span class="md-ellipsis">
     
   
-    shoot · frame · check
+    shoot · frame · preview · check
   
 
     
@@ -1216,6 +1216,17 @@
     <span class="md-ellipsis">
       
         Credentials are files at fixed paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-ids-live-beside-the-key-for-every-tool" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The ids live beside the key, for every tool
       
     </span>
   </a>
@@ -1935,6 +1946,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#the-ids-live-beside-the-key-for-every-tool" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The ids live beside the key, for every tool
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#auth-setup-moves-the-key-and-never-overwrites-one" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2237,6 +2259,9 @@ for an app without a listing.</p>
 <h3 id="credentials-are-files-at-fixed-paths">Credentials are files at fixed paths<a class="headerlink" href="#credentials-are-files-at-fixed-paths" title="Permanent link">&para;</a></h3>
 <p>Before snakelane, the key came from three <code>APP_STORE_CONNECT_API_KEY_*</code> environment variables. An Xcode launched from the Dock never sees a shell's variables, so the Archive post-action quietly skipped its TestFlight check on exactly the archives it exists for. Both credential paths now hang off <code>$HOME</code> alone, which every process has, so a terminal, an Xcode post-action and CI read the same key. <code>XDG_CONFIG_HOME</code> is not honoured for the same reason: a variable set in a shell profile would split the CLI and Xcode onto two different files.</p>
 <p>The key lives in <code>~/.appstoreconnect/private_keys/AuthKey_&lt;key_id&gt;.p8</code> because <code>altool</code> will not take a path to a .p8. It searches fixed directories for that file name, and this is one of them, so <code>xcodebuild</code>, <code>altool</code> and the client share one copy. The Keychain was ruled out because <code>xcodebuild -exportArchive</code> and <code>altool</code> both need the key as a file, so it would be written back to disk on every upload.</p>
+<h3 id="the-ids-live-beside-the-key-for-every-tool">The ids live beside the key, for every tool<a class="headerlink" href="#the-ids-live-beside-the-key-for-every-tool" title="Permanent link">&para;</a></h3>
+<p>Until 2026-10-19 the key id and issuer id were in <code>~/.config/snakelane/credentials.json</code>, and ASCStats, which needs the same team key, read snakelane's private config path to find them. They moved to <code>~/.appstoreconnect/config.json</code>, next to <code>private_keys/</code>, under a name that belongs to no tool: Apple's tools only search <code>private_keys/</code>, so the file confuses nothing. It is called <code>config.json</code> rather than <code>credentials.json</code> because the secret is the .p8, not this file. Other tools may keep their own settings in it, so <code>auth setup</code> merges rather than replacing the file, and readers ignore entries they don't know.</p>
+<p>The key id is not stored on its own: Apple's filename, <code>AuthKey_&lt;key_id&gt;.p8</code>, already says it, and a second copy in the config can disagree with the file on disk. Tools do not have to share a key, though: ASCStats got its own key on 2026-10-19, so <code>private_keys/</code> gained a second .p8. Each tool therefore names its key under its own entry (<code>"snakelane": {"key_id": …}</code>), and only <code>issuer_id</code>, which is the team's, sits at the top. With no entry, a tool uses the only .p8 there and refuses to guess between several. <code>auth setup</code> always writes snakelane's entry, even for a lone key, so a key another tool installs later cannot make snakelane's choice ambiguous.</p>
 <h3 id="auth-setup-moves-the-key-and-never-overwrites-one">auth setup moves the key and never overwrites one<a class="headerlink" href="#auth-setup-moves-the-key-and-never-overwrites-one" title="Permanent link">&para;</a></h3>
 <p>Apple lets you download a .p8 exactly once, so the copy in <code>~/Downloads</code> is usually the only one, and a second copy left lying around is how keys leak. <code>setup</code> therefore moves the key rather than copying it, into a 0700 directory with mode 0600. It never overwrites a different existing key, because losing the only copy means revoking it. The file must parse as an EC private key before anything moves, so a truncated paste fails at setup rather than as an opaque 401 mid-upload. <code>--key -</code> reads stdin so CI can install from a secret without a temporary file. <code>check</code> warns about a key inside a git work tree because a dotfiles repo rooted at <code>$HOME</code> would publish it.</p>
 <h3 id="asc-errors-carry-the-http-status">ASC errors carry the HTTP status<a class="headerlink" href="#asc-errors-carry-the-http-status" title="Permanent link">&para;</a></h3>
