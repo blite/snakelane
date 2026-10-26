@@ -20,9 +20,11 @@ snakelane.yml "asset_packs" block:
     "source_under"     a folder (relative to content_root) every pictureSource must sit in, e.g.
                        "approved" when only reviewed pictures may ship; packaging anything else is
                        refused. Default: no restriction.
+    "items"            the key of pack.json's list of entries (default "items"), for an app whose
+                       manifests already call it something else, e.g. "puzzles".
 
 pack.json (ships in the binary): snakelane reads assetPackID, delivery ("backgroundAsset" when hosted),
-pictureSource, imageExtension (default "heic"), items[].resourceName (one <name>.<ext> each), productID
+pictureSource, imageExtension (default "heic"), <items>[].resourceName (one <name>.<ext> each), productID
 and tier ("free" is never priced), and writes contentVersion. The record: {"platforms": ["iOS", …],
 "packs": [{"asset_pack_id", "theme", "available_from_version" (the release that enables it; upload
 refuses null), "pictures", "archive_bytes", "uploaded", "apple_version"}]}.
@@ -66,6 +68,7 @@ class Packs:
     record: Path
     build: Path
     source_under: str | None = None
+    items: str = "items"
 
     @classmethod
     def load(cls, app: App) -> Packs:
@@ -83,7 +86,8 @@ class Packs:
                    content_root=app.root / config.get("content_root", "."),
                    record=app.folder / config.get("record", "ios/asset_packs.json"),
                    build=app.root / config.get("build_dir", "build/asset-packs"),
-                   source_under=(config.get("source_under") or "").strip("/") or None)
+                   source_under=(config.get("source_under") or "").strip("/") or None,
+                   items=config.get("items") or "items")
 
     def rel(self, path: Path) -> Path:  # for messages
         try:
@@ -138,7 +142,7 @@ def stage(packs: Packs, theme: str, pack: dict[str, Any]) -> tuple[Path, list[st
         shutil.rmtree(root)
     (root / relative).mkdir(parents=True)
     selectors, missing = [], []
-    for name in filter(None, (item.get("resourceName") for item in pack.get("items", []))):
+    for name in filter(None, (item.get("resourceName") for item in pack.get(packs.items, []))):
         if not (source := source_dir / f"{name}.{extension}").exists():
             missing.append(name)
             continue
@@ -153,7 +157,8 @@ def stage(packs: Packs, theme: str, pack: dict[str, Any]) -> tuple[Path, list[st
             + "\n  ".join(missing[:10]) + ("\n  …" if len(missing) > 10 else "")
         )
     if not selectors:
-        raise SystemExit(f"{theme}/pack.json names no items with a resourceName; nothing to package")
+        raise SystemExit(f'{theme}/pack.json has no "{packs.items}" entries with a resourceName; nothing to '
+                         'package (asset_packs.items names the list)')
     return root, selectors
 
 

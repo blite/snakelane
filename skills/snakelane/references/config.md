@@ -163,4 +163,5 @@ asset_packs:
   record: ios/asset_packs.json           # upload record, in the metadata folder
   build_dir: build/asset-packs
   source_under: approved                 # optional: refuse a pictureSource outside this folder
+  items: puzzles                         # optional: pack.json's list of entries (default "items")
 ```

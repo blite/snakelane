@@ -4,6 +4,13 @@ All notable changes to snakelane. Versions follow [semver](https://semver.org); 
 major version is 0, a change that needs new `snakelane.yml` keys or changes a command's
 behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
+## Unreleased
+
+- **`asset_packs.items` names pack.json's list of entries.** `packs package` read the files to
+  archive from `items[].resourceName` only, so an app whose manifests call the list something
+  else (`puzzles`) packaged nothing. The key defaults to `items`; apps already using it change
+  nothing.
+
 ## 0.5.0
 
 - **The credential config moved to `~/.appstoreconnect/config.json`**, beside the key, and is
