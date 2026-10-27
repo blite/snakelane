@@ -9,11 +9,11 @@ from snakelane.release.assetpacks import Packs, stage
 
 
 def make(tmp_path: Path, items: str, entries_key: str) -> tuple[Packs, dict]:
-    pictures = tmp_path / "content" / "hosted" / "village"
+    pictures = tmp_path / "content" / "asset-packs" / "village"
     pictures.mkdir(parents=True)
     for name in ("village_01", "village_02"):
         (pictures / f"{name}.heic").write_bytes(b"x")
-    pack = {"pictureSource": "hosted/village", "imageExtension": "heic",
+    pack = {"pictureSource": "asset-packs/village", "imageExtension": "heic",
             entries_key: [{"resourceName": "village_02"}, {"resourceName": "village_01"}]}
     packs = Packs(SimpleNamespace(root=tmp_path), tmp_path / "packs", "packs/{theme}",
                   content_root=tmp_path / "content", record=tmp_path / "record.json",

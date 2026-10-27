@@ -10,6 +10,8 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
   archive from `items[].resourceName` only, so an app whose manifests call the list something
   else (`puzzles`) packaged nothing. The key defaults to `items`; apps already using it change
   nothing.
+- **`packs` says "asset packs", not "hosted packs".** `packs list` and its errors now use
+  Apple's own term, the one `assetPackID` already uses. Output wording only.
 
 ## 0.5.0
 

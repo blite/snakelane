@@ -15,7 +15,7 @@ snakelane.yml "asset_packs" block:
     "manifests"        (required) repo-relative folder of <theme>/pack.json.
     "bundle_path"      (required) where a pack's files live in the app bundle, with {theme}.
     "content_root"     repo-relative base for pictureSource (default: repo root).
-    "record"           hosted-pack record, relative to the app folder (default "ios/asset_packs.json").
+    "record"           asset pack record, relative to the app folder (default "ios/asset_packs.json").
     "build_dir"        repo-relative output folder (default "build/asset-packs").
     "source_under"     a folder (relative to content_root) every pictureSource must sit in, e.g.
                        "approved" when only reviewed pictures may ship; packaging anything else is
@@ -23,7 +23,7 @@ snakelane.yml "asset_packs" block:
     "items"            the key of pack.json's list of entries (default "items"), for an app whose
                        manifests already call it something else, e.g. "puzzles".
 
-pack.json (ships in the binary): snakelane reads assetPackID, delivery ("backgroundAsset" when hosted),
+pack.json (ships in the binary): snakelane reads assetPackID, delivery ("backgroundAsset" for an asset pack),
 pictureSource, imageExtension (default "heic"), <items>[].resourceName (one <name>.<ext> each), productID
 and tier ("free" is never priced), and writes contentVersion. The record: {"platforms": ["iOS", …],
 "packs": [{"asset_pack_id", "theme", "available_from_version" (the release that enables it; upload
@@ -178,7 +178,7 @@ def manifest_platforms(packs: Packs) -> list[str]:
 def cmd_package(packs: Packs, theme: str) -> None:
     pack = packs.pack(theme)
     if pack.get("delivery") != "backgroundAsset":
-        raise SystemExit(f"{theme} is delivery={pack.get('delivery', 'bundled')}; only a hosted pack is packaged, "
+        raise SystemExit(f"{theme} is delivery={pack.get('delivery', 'bundled')}; only an asset pack is packaged, "
                          "since a bundled one already ships inside the app")
     root, selectors = stage(packs, theme, pack)
     if not (asset_pack_id := pack.get("assetPackID")):
@@ -213,11 +213,11 @@ def cmd_package(packs: Packs, theme: str) -> None:
 
 
 def show(packs: Packs) -> None:
-    """What is hosted, what ships when, and what has been uploaded."""
+    """Which packs are asset packs, what ships when, and what has been uploaded."""
     if not (rows := packs.read_record().get("packs", [])):
-        return print(f"no hosted packs in {packs.rel(packs.record)}")
+        return print(f"no asset packs in {packs.rel(packs.record)}")
     width = max(len(r["asset_pack_id"]) for r in rows)
-    print(f"{len(rows)} hosted packs — {packs.rel(packs.record)}\n")
+    print(f"{len(rows)} asset pack{'' if len(rows) == 1 else 's'}: {packs.rel(packs.record)}\n")
     for row in sorted(rows, key=lambda r: (r.get("available_from_version") or "zzz", r["asset_pack_id"])):
         size = f"{row['archive_bytes'] / 1_000_000:.0f} MB" if row.get("archive_bytes") else "unmeasured"
         state = "uploaded" if row.get("uploaded") else "not uploaded"
@@ -384,7 +384,7 @@ def packs_for(app: str | None) -> Packs:
 
 @cli.command("list")
 def list_packs(app: AppOption = None) -> None:
-    """Show the hosted packs and their upload state."""
+    """Show the asset packs and their upload state."""
     show(packs_for(app))
 
 
