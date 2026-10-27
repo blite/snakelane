@@ -102,3 +102,21 @@ def test_stamping_and_verifying_an_archive(repo: Path, tmp_path: Path, monkeypat
     with pytest.raises(SystemExit):
         bump.verify_archive(app, archive, before=40)  # a mismatched extension
     assert bump.archived_versions(archive) == ("1.2", "41")
+
+
+def test_bump_version_rewrites_the_app_and_nothing_else(repo: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # The command's `--bump` parameter once shadowed this module and crashed
+    # on every call, explicit version or not, with nothing to catch it.
+    from snakelane.release import ship
+
+    config = repo / project.CONFIG_NAME
+    config.write_text(config.read_text() + "team_id: ABCDE12345\n")
+    monkeypatch.chdir(repo)
+    monkeypatch.setattr(ship.asc, "Client", lambda: object())
+    monkeypatch.setattr(ship, "find_app", lambda client, config: {"id": "app"})
+    monkeypatch.setattr(ship, "live_version", lambda client, app_id, platform: "1.1")
+    ship.bump_version(app=None, version=None, part="minor")
+    text = (repo / "Example.xcodeproj" / "project.pbxproj").read_text()
+    assert "MARKETING_VERSION = 1.3;" in text
+    ship.bump_version(app=None, version="2.0", part="minor")
+    assert "MARKETING_VERSION = 2.0;" in (repo / "Example.xcodeproj" / "project.pbxproj").read_text()

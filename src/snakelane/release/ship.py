@@ -432,7 +432,7 @@ def release(
 def bump_version(
     app: AppOption = None,
     version: Annotated[str | None, typer.Option("--version", help="an explicit version, e.g. 1.6")] = None,
-    bump: Annotated[Literal["major", "minor", "patch"], typer.Option("--bump")] = "minor",
+    part: Annotated[Literal["major", "minor", "patch"], typer.Option("--bump")] = "minor",
 ) -> None:
     """Raise MARKETING_VERSION on the app (and its extensions)."""
     resolved = load_app(app)
@@ -440,7 +440,7 @@ def bump_version(
     if not (target := version):
         major, minor, patch = version_key(current)[:3]
         target = {"major": f"{major + 1}.0", "minor": f"{major}.{minor + 1}",
-                  "patch": f"{major}.{minor}.{patch + 1}"}[bump]
+                  "patch": f"{major}.{minor}.{patch + 1}"}[part]
     if not re.fullmatch(r"\d+(\.\d+){0,2}", target):
         raise SystemExit(f"{target!r} is not a version (expected e.g. 1.6 or 1.6.1)")
     if version_key(target) <= version_key(current):
