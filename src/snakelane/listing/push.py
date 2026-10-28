@@ -62,7 +62,7 @@ def build_push_plan(platform_dir: Path, locales: list[str], app_config: dict[str
     plan = {
         "age_rating": age_rating_attributes(app_config.get("age_rating")),
         "category_relationships": {CATEGORY_RELATIONSHIP_NAMES[k]: v for k, v in categories.items() if v},
-        "copyright": read_copyright(platform_dir),
+        "copyright": read_copyright(platform_dir, app_config),
         "per_locale": per_locale,
         "review": read_review(platform_dir, app_config),
     }
@@ -328,8 +328,10 @@ def cmd_pull(args: SimpleNamespace) -> None:
     platform_dir, locales = folder / platform, app_config["locales"]
     live = show_json(app_config, platform, masked=False)
     own, _, kind = layout.listing_bases(platform_dir)
-    if live["copyright"]:
+    if live["copyright"] and not kind:
         write(layout.copyright_candidates(platform_dir)[0], live["copyright"])
+    elif live["copyright"] and live["copyright"] != app_config.get("copyright"):
+        print(f"snakelane.yml's copyright, from App Store Connect (not written): {live['copyright']!r}")
     for locale, fields in live["per_locale"].items():
         # One locale writes default/; several write per locale so one doesn't overwrite default/.
         target_dir = layout.locale_dir(own, "default" if len(locales) == 1 else locale, kind)

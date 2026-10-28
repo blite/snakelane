@@ -44,11 +44,10 @@ overrides that. `--app <name>` picks among several configs; with one it is not n
     │   │                    support_url, privacy_url, privacy_choices_url (.txt each),
     │   │                    and review_notes.txt (App Review's notes; not localized)
     │   ├── locales/<locale>/   per-locale overrides of any single field
-    │   ├── copyright.txt    one per version
     │   ├── translations.json   what each translation was made from
     │   └── ios/  macos/     only what differs per platform, the same shape:
-    │                        default/, locales/<locale>/, copyright.txt (a Mac description,
-    │                        Mac review notes)
+    │                        default/, locales/<locale>/ (a Mac description, Mac review
+    │                        notes)
     ├── purchases/           iap.yml, everything the app sells — source of truth: one-time
     │                        purchases (`products`) and subscriptions (`subscription_groups`),
     │                        beside their review screenshots
@@ -63,7 +62,8 @@ overrides that. `--app <name>` picks among several configs; with one it is not n
 
 The App Review contact App Store Connect requires (first name, last name, email, phone with
 +country code) is a setting: `snakelane.yml`'s `review.contact`, with `review.demo` for a demo
-account. It rarely changes and is the same on every platform.
+account. So is the version's `copyright`, a plain string. Both rarely change and are the same on
+every platform.
 
 Text resolves most specific first: `listing/<platform>/locales/<locale>/`,
 `listing/<platform>/default/`, `listing/locales/<locale>/`, `listing/default/`. Name, subtitle

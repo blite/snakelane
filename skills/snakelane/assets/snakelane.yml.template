@@ -12,6 +12,16 @@ team_id: "{{TEAM_ID}}"
 locales: [en-US]
 platforms: [ios]
 
+copyright: "{{YEAR}} {{COPYRIGHT_HOLDER}}"
+
+# The App Review contact; App Store Connect refuses the review card without all four.
+review:
+  contact:
+    first_name: "{{FIRST_NAME}}"
+    last_name: "{{LAST_NAME}}"
+    email: "{{EMAIL}}"
+    phone: "{{PHONE_WITH_COUNTRY_CODE}}"
+
 # Informational: the Kids Category band and the age rating are set once in App Store
 # Connect. Drop the key for an app that is not in the Kids Category.
 kids_age_band: FIVE_AND_UNDER

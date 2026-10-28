@@ -68,6 +68,10 @@ team_id: {json.dumps(team or "TODO")}
 locales: [en-US]
 platforms: [{", ".join(platforms)}]
 
+# copyright: "2026 Your Name"
+# review:
+#   contact: {{first_name: …, last_name: …, email: …, phone: "+1 …"}}
+
 # categories:
 #   primary: PRODUCTIVITY
 #   secondary: UTILITIES

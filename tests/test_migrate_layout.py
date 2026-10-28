@@ -64,7 +64,7 @@ def reads(app: project.App) -> dict[str, Any]:
         pd = app.folder / platform
         out[platform] = {
             "listing": fields.read_listing(pd, app.locales),
-            "copyright": fields.read_copyright(pd),
+            "copyright": fields.read_copyright(pd, app.config),
             "review": fields.read_review(pd, app.config),
             "decks": {loc: [str(p.relative_to(layout.screenshots_dir(pd))) for p in media.deck_dirs(pd, loc)]
                       for loc in app.locales},
@@ -98,7 +98,7 @@ def test_files_land_where_the_layout_says(app: project.App) -> None:
     for rel in ("listing/default/description.txt", "listing/locales/de-DE/description.txt",
                 "listing/macos/default/description.txt", "listing/macos/locales/de-DE/release_notes.txt",
                 "listing/default/review_notes.txt", "listing/macos/default/review_notes.txt",
-                "listing/copyright.txt", "listing/translations.json", "purchases/iap.yml", "purchases/vip.jpg",
+                "listing/translations.json", "purchases/iap.yml", "purchases/vip.jpg",
                 "release/asset_packs.json", "screenshots/ios/en-US/iphone/ss-01.jpg", "README.md"):
         assert (folder / rel).is_file(), rel
     assert (folder / "screenshots/ios/de-DE").is_dir()  # the empty deck folder survives
@@ -114,6 +114,7 @@ def test_tracked_files_move_as_renames_and_the_contact_goes_to_the_config(app: p
     assert "D  metadata/review/first_name.txt" in status
     assert after.config["review"]["contact"] == {"first_name": "Ada", "last_name": "Lovelace",
                                                  "email": "ada@example.com", "phone": "+1 555 123 4567"}
+    assert after.config["copyright"] == "2026 Example"
     assert "review_screenshot: vip.jpg" in (after.folder / "purchases/iap.yml").read_text()
     assert (after.root / ".gitignore").read_text() == "metadata/screenshots/\n"
 
@@ -159,3 +160,32 @@ def test_the_config_contact_wins_over_flat_files(tmp_path: Path) -> None:
     (app.folder / "review").mkdir()
     (app.folder / "review" / "email_address.txt").write_text("old@example.com")
     assert fields.read_review(app.folder / "ios", app.config)["email_address"] == "new@example.com"
+
+
+def test_a_folder_moved_before_copyright_joined_the_config_moves_just_that(app: project.App) -> None:
+    after = migrated(app)
+    leftover = after.folder / "listing/copyright.txt"
+    leftover.write_text("2026 Example")
+    config = after.config_path.read_text()
+    after.config_path.write_text(config.replace('copyright: "2026 Example"\n', ""))
+    after = project.resolve_app(None, root=after.root)
+    assert fields.read_copyright(after.folder / "ios", after.config) == "2026 Example"  # still read
+    final = migrated(after)
+    assert not leftover.exists()
+    assert final.config["copyright"] == "2026 Example"
+    assert fields.read_copyright(final.folder / "ios", final.config) == "2026 Example"
+
+
+def test_copyright_in_both_the_config_and_a_shared_file_is_refused(app: project.App) -> None:
+    after = migrated(app)
+    (after.folder / "listing/copyright.txt").write_text("2025 Someone Else")
+    with pytest.raises(SystemExit, match=r"also in snakelane\.yml"):
+        fields.read_copyright(after.folder / "ios", after.config)
+
+
+def test_a_platform_copyright_file_still_overrides_the_config(app: project.App) -> None:
+    after = migrated(app)
+    (after.folder / "listing/macos").mkdir(parents=True, exist_ok=True)
+    (after.folder / "listing/macos/copyright.txt").write_text("2026 Example (Mac)")
+    assert fields.read_copyright(after.folder / "macos", after.config) == "2026 Example (Mac)"
+    assert fields.read_copyright(after.folder / "ios", after.config) == "2026 Example"

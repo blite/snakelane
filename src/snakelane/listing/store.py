@@ -11,7 +11,7 @@ file, else it is skipped, never pushed blank. Why: docs/design/foundations.md#bl
                                             privacy_choices_url
     listing/default/review_notes.txt      the App Review notes (not localized; the contact is
                                           snakelane.yml's review.contact)
-    listing/copyright.txt                 one per version, not per locale
+    snakelane.yml's copyright             one per version, not per locale
     listing/<platform>/default/, …/locales/<locale>/, …/copyright.txt
                                           platform overrides (app-level fields refused here)
     purchases/iap.yml, purchases/         products and subscription_groups; their review screenshots

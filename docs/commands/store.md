@@ -31,7 +31,8 @@ rating included, as a starting point.
 
 Fields: `name`, `subtitle`, `description`, `keywords`, `promotional_text`, `release_notes`,
 `support_url`, `marketing_url`, `privacy_url`, `privacy_choices_url`, plus
-`listing/copyright.txt` and the App Review card: `listing/default/review_notes.txt` for the notes (a
+the copyright (`snakelane.yml`'s `copyright`; a `listing/<platform>/copyright.txt` overrides it for
+one platform) and the App Review card: `listing/default/review_notes.txt` for the notes (a
 platform's own in `listing/<platform>/default/`), and `snakelane.yml`'s `review.contact` and
 `review.demo` for the contact and demo account.
 

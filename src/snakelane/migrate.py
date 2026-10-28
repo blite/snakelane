@@ -39,6 +39,7 @@ class Plan:
     empty: list[tuple[Path, Path]] = field(default_factory=list)   # empty folder -> folder (a deck's
                                                                    # empty locale means "delete what's live")
     review: dict[str, str] = field(default_factory=dict)           # stem -> value, for snakelane.yml
+    copyright: str | None = None                                   # for snakelane.yml
     dropped: list[Path] = field(default_factory=list)              # contact files the config now holds
     left: list[Path] = field(default_factory=list)
     problems: list[str] = field(default_factory=list)
@@ -89,7 +90,10 @@ def plan_platform(plan: Plan, folder: Path, platform_dir: Path) -> None:
         elif name == "review":
             plan_review(plan, path, own / "default" / layout.REVIEW_NOTES, plan.review)
         elif name == "copyright.txt":
-            plan.moves.append((path, own / "copyright.txt"))
+            if read_text(path) in (None, plan.copyright):  # the same as the shared one: the config has it
+                plan.dropped.append(path)
+            else:
+                plan.moves.append((path, own / "copyright.txt"))
         elif name == "asset_packs.json":
             plan.moves.append((path, folder / "release" / "asset_packs.json"))
         elif path.is_dir() and LOCALE.fullmatch(name):
@@ -98,13 +102,28 @@ def plan_platform(plan: Plan, folder: Path, platform_dir: Path) -> None:
             plan.left.append(path)
 
 
+def plan_copyright(plan: Plan, app: project.App, path: Path) -> None:
+    """The shared copyright.txt becomes snakelane.yml's `copyright`."""
+    shared, configured = read_text(path), app.config.get("copyright")
+    if shared is not None and configured not in (None, "") and str(configured).strip() != shared:
+        plan.problems.append(f"{path.name} says {shared!r} and snakelane.yml says {configured!r}; make them agree")
+    elif configured in (None, ""):
+        plan.copyright = shared
+    plan.dropped.append(path)
+
+
 def build_plan(app: project.App) -> Plan:
     folder = app.folder
-    if layout.kind_first(folder):
-        raise SystemExit(f"{folder} already has listing/: it is in the kind-first layout")
     plan = Plan()
+    if layout.kind_first(folder):  # moved before copyright joined the config: that file is all that's left
+        if not (path := folder / layout.LISTING / "copyright.txt").is_file():
+            raise SystemExit(f"{folder} already has listing/: it is in the kind-first layout")
+        plan_copyright(plan, app, path)
+        return plan
     platforms = set(PLATFORMS) | set(app.config.get("platforms") or [])
     listing = folder / layout.LISTING
+    if (folder / "copyright.txt").is_file():  # first, as a platform's is checked against it
+        plan_copyright(plan, app, folder / "copyright.txt")
     if (review := folder / "review").is_dir():  # first: a platform's contact is checked against it
         plan_review(plan, review, listing / "default" / layout.REVIEW_NOTES, None)
     for path in sorted(folder.iterdir()):
@@ -113,7 +132,9 @@ def build_plan(app: project.App) -> Plan:
             continue
         if name == "default":
             plan.move_tree(path, listing / "default")
-        elif name in ("copyright.txt", "translations.json"):
+        elif name == "copyright.txt":
+            continue  # into snakelane.yml, above
+        elif name == "translations.json":
             plan.moves.append((path, listing / name))
         elif name == "iap.yml":
             plan.moves.append((path, folder / "purchases" / "iap.yml"))
@@ -136,6 +157,13 @@ def tracked(root: Path, folder: Path) -> set[Path]:
     out = subprocess.run(["git", "-C", str(root), "ls-files", "-z", "--", str(folder)],
                          capture_output=True, text=True)
     return {root / p for p in out.stdout.split("\0") if p} if out.returncode == 0 else set()
+
+
+def config_yaml(plan: Plan) -> str:
+    """What the move adds to snakelane.yml: the copyright and the review section, or ""."""
+    text = (f"\n# One per version, the same on every platform.\ncopyright: {quote(plan.copyright)}\n"
+            if plan.copyright else "")
+    return text + (review_yaml(plan.review) if plan.review else "")
 
 
 def review_yaml(review: dict[str, str]) -> str:
@@ -203,8 +231,8 @@ def execute(app: project.App, plan: Plan) -> None:
             path.unlink()
     if (catalogue := app.folder / "purchases" / "iap.yml").is_file():
         catalogue.write_text(iap_screenshot_edits(catalogue.read_text()))
-    if plan.review:
-        app.config_path.write_text(app.config_path.read_text().rstrip("\n") + "\n" + review_yaml(plan.review))
+    if added := config_yaml(plan):
+        app.config_path.write_text(app.config_path.read_text().rstrip("\n") + "\n" + added)
     if edit := gitignore_edits(app):
         path, old, new = edit
         path.write_text(path.read_text().replace(old, new, 1))
@@ -231,10 +259,9 @@ def report(app: project.App, plan: Plan, dry_run: bool) -> None:
     print(f"{verb} {len(plan.moves)} file(s):")
     for (src, dst), n in groups.items():
         print(f"  {src}/ → {dst}/  ({n})")
-    if plan.review or plan.dropped:
-        print(f"review contact → {app.config_path.name}'s review section"
-              + (f", replacing {len(plan.dropped)} file(s):" if plan.dropped else ":"))
-        print("  " + review_yaml(plan.review).strip().replace("\n", "\n  "))
+    if added := config_yaml(plan):
+        print(f"→ {app.config_path.name}, replacing {len(plan.dropped)} file(s):")
+        print("  " + added.strip().replace("\n", "\n  "))
     if edit := gitignore_edits(app):
         print(f".gitignore: {edit[1].strip()} → {edit[2].strip()}")
     if (catalogue := app.folder / "iap.yml").is_file() and iap_screenshot_edits(text := catalogue.read_text()) != text:

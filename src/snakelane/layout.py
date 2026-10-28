@@ -5,13 +5,14 @@ Kind first (a `listing/` folder exists), since 2026-10-28:
     listing/default/<field>.txt              the primary locale's text, and review_notes.txt
     listing/locales/<locale>/<field>.txt     each translation
     listing/<platform>/default/, …/locales/  platform overrides, the same shape
-    listing/copyright.txt                    one per version; listing/<platform>/copyright.txt overrides
+    listing/<platform>/copyright.txt         overrides snakelane.yml's `copyright` for one platform
     purchases/iap.yml                        the catalogue; review screenshots relative to purchases/
     screenshots/<platform>/<locale>/         the decks
     creative/[<platform>/]<locale|default>/  in-app event and product page art
     release/asset_packs.json                 the asset pack record
 
-The review contact is snakelane.yml's `review.contact`, not files.
+The review contact and the copyright are snakelane.yml's `review.contact` and `copyright`, not files
+(a shared listing/copyright.txt is still read when the config has none).
 
 Flat, before it: `<locale>/` and `default/` at the top, `<platform>/screenshots/`, `<platform>/<locale>/`
 overrides, `review/` and `<platform>/review/`, `iap.yml` with screenshots relative to the folder.

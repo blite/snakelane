@@ -179,7 +179,6 @@ your-repo/
     │   ├── default/*.txt         the listing for every platform: name, subtitle, …,
     │   │                         and review_notes.txt for App Review
     │   ├── locales/<locale>/*.txt   per-locale overrides of any single field
-    │   ├── copyright.txt
     │   └── macos/                a second platform: only what differs
     │       └── default/description.txt
     ├── purchases/
@@ -190,7 +189,8 @@ your-repo/
         └── macos/<locale>/ss-NN.jpg
 ```
 
-The App Review contact is a setting, `review.contact` in `snakelane.yml`. An app in the older flat
+The App Review contact and the copyright are settings, `review.contact` and `copyright` in
+`snakelane.yml`. An app in the older flat
 layout keeps working; `snakelane migrate-layout` moves it.
 
 ```yaml

@@ -81,9 +81,19 @@ def read_field(platform_dir: Path, locale: str, field: str) -> str | None:
     return next((text for c in candidates if (text := read_text(c)) is not None), None)
 
 
-def read_copyright(platform_dir: Path) -> str | None:
-    """One per version, not per locale."""
-    return next((text for c in layout.copyright_candidates(platform_dir) if (text := read_text(c))), None)
+def read_copyright(platform_dir: Path, app_config: dict[str, Any] | None = None) -> str | None:
+    """One per version, not per locale: snakelane.yml's `copyright`, a setting like the review contact.
+    A platform's copyright.txt still overrides it; a shared copyright.txt is the older home, read
+    only when the config has none."""
+    own, shared = layout.copyright_candidates(platform_dir)
+    if text := read_text(own):
+        return text
+    configured = (app_config or {}).get("copyright")
+    if configured not in (None, ""):
+        if read_text(shared):
+            raise SystemExit(f"{shared}: copyright is also in snakelane.yml; keep one (delete the file)")
+        return str(configured).strip()
+    return read_text(shared)
 
 
 def read_listing(platform_dir: Path, locales: list[str]) -> dict[str, dict[str, str | None]]:
