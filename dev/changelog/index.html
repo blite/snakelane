@@ -1400,10 +1400,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#unreleased" class="md-nav__link">
+  <a href="#060" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Unreleased
+        0.6.0
       
     </span>
   </a>
@@ -1536,10 +1536,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#unreleased" class="md-nav__link">
+  <a href="#060" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Unreleased
+        0.6.0
       
     </span>
   </a>
@@ -1630,8 +1630,22 @@
 <p>All notable changes to snakelane. Versions follow <a href="https://semver.org">semver</a>; while the
 major version is 0, a change that needs new <code>snakelane.yml</code> keys or changes a command's
 behaviour bumps the minor version. Each release is tagged <code>vX.Y.Z</code>.</p>
-<h2 id="unreleased">Unreleased<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
+<h2 id="060">0.6.0<a class="headerlink" href="#060" title="Permanent link">&para;</a></h2>
 <ul>
+<li><strong>metadata/ is sorted by kind</strong>: <code>listing/</code> (<code>default/</code>, <code>locales/&lt;locale&gt;/</code>, <code>&lt;platform&gt;/</code>),
+  <code>purchases/</code>, <code>screenshots/&lt;platform&gt;/&lt;locale&gt;/</code>, <code>creative/</code>, <code>release/</code>. Review notes are
+  <code>listing/default/review_notes.txt</code>; the review contact is <code>review.contact</code> in <code>snakelane.yml</code> and
+  the copyright line is <code>copyright</code>, settings rather than files. A folder without <code>listing/</code> is
+  read in the flat layout as before. <strong>An app should</strong> run <code>snakelane migrate-layout</code> (with
+  <code>--dry-run</code> first), fix the paths it lists outside metadata/, and commit the move on its own.</li>
+<li><strong><code>migrate-layout</code> leaves short folders that hold no listing text alone.</strong> A two- or
+  three-letter folder (<code>ppo/</code>, product page art) was filed under <code>listing/locales/</code> as if it
+  were a language. An <code>asset_packs.record</code> naming the moved <code>ios/asset_packs.json</code> now follows it
+  to <code>release/</code>.</li>
+<li><strong>Apple TV.</strong> 1920x1080 and 3840x2160 screenshots fill the <code>APP_APPLE_TV</code> slot (a tvOS deck was
+  refused as an unknown size), and <code>ship --platform tvos</code> archives for <code>generic/platform=tvOS</code>.</li>
+<li><strong><code>store media push --dry-run</code> works without a draft version</strong>, planning against the live one
+  as <code>store push --dry-run</code> already did. Screenshots, previews and creative all stopped there.</li>
 <li><strong><code>asset_packs.items</code> names pack.json's list of entries.</strong> <code>packs package</code> read the files to
   archive from <code>items[].resourceName</code> only, so an app whose manifests call the list something
   else (<code>puzzles</code>) packaged nothing. The key defaults to <code>items</code>; apps already using it change

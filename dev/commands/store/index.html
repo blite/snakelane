@@ -1659,6 +1659,8 @@ skipped, so pushing screenshots never deletes previews kept only in App Store Co
 (<code>--only previews</code>) to clear them. The older <code>store screenshots push | show</code>,
 <code>store previews push</code> and <code>store creative push | show</code> still work, and are the same as
 <code>media</code> with one <code>--only</code>.</p>
+<p>With no draft version yet, <code>--dry-run</code> plans against the live version, as <code>store push</code> does;
+the real push needs the draft first.</p>
 <h3 id="screenshots-and-app-previews">Screenshots and App Previews<a class="headerlink" href="#screenshots-and-app-previews" title="Permanent link">&para;</a></h3>
 <p>The deck is <code>metadata/screenshots/&lt;platform&gt;/&lt;locale&gt;/</code> (in <code>iphone/</code>, <code>ipad/</code> and <code>duo/</code> for iOS),
 uploaded in file-name order. The slot each image fills is worked out from its pixel size. 6.3" iPhone and 13" iPad are the
