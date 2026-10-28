@@ -151,7 +151,7 @@ def test_a_blank_or_undersized_mac_capture_fails_before_anything_is_filed(tmp_pa
     small = capture(Image.new("RGB", (544, 340), (20, 40, 60)))
     with pytest.raises(SystemExit, match=r"ss-02 \(raw\): one flat colour"):
         extract.stage(attach(("01-Board", good), ("02-Home", blank)), dirs, "mac")
-    with pytest.raises(SystemExit, match=r"(?s)544x340.*Screen Recording"):
+    with pytest.raises(SystemExit, match=r"(?s)544x340.*second display"):
         extract.stage(attach(("01-Board", small)), dirs, "mac")
     assert not list(dirs["raw"].iterdir())
     assert extract.stage(attach(("01-Board", small)), dirs, "iphone")["raw"] == 1  # only the Mac has a floor

@@ -24,8 +24,8 @@ NAME_RE = re.compile(r"^([0-9]{2})-[A-Za-z][A-Za-z0-9-]*(_framed)?_\d+_[0-9A-F-]
 
 def capture_problem(image: Image.Image, deck: str) -> str | None:
     """Why a capture can't be a screenshot, or None. A passing test can still attach nothing: a Mac
-    runner without Screen Recording access captured every window as a small white rectangle, and the
-    shoot filed seven of them over the previous deck.
+    window on a second display captured as a small white rectangle, and the shoot filed seven of them
+    over the previous deck.
     Why: docs/design/screenshots.md#a-blank-capture-fails-the-shoot"""
     low, high = image.convert("L").getextrema()
     if low == high:
@@ -57,8 +57,8 @@ def stage(attachments_dir: Path, dirs: dict[str, Path], deck: str = "") -> dict[
                 problems.append(f"  ss-{number} ({kind}): {problem}")
     if problems:
         raise SystemExit("the test passed but its captures can't be screenshots:\n" + "\n".join(problems)
-                         + ("\n  a Mac runner needs Screen Recording access (System Settings > Privacy & Security"
-                            " > Screen & System Audio Recording)" if deck == "mac" else ""))
+                         + ("\n  a Mac window on a second display captures blank: open it on the primary one"
+                            " (the skill's ScreenshotWindowSizer does)" if deck == "mac" else ""))
     for (kind, number), (_, exported) in latest.items():
         # JPEG, not the PNG it arrived as: ASC rejects the alpha channel captures carry.
         # Named by slot only: docs/design/screenshots.md#files-are-named-by-slot-only

@@ -46,8 +46,10 @@ the manifest listed last.
 ### A blank capture fails the shoot
 
 A test can pass with nothing captured. Jigsaw's first Mac shoot (2026-10-28) passed all seven
-tests and filed seven 544x340 white rectangles: the runner had no Screen Recording access, so
-its window screenshots came back blank and small. A passing shoot discards the deck it set aside,
+tests and filed seven 544x340 white rectangles: its window had opened on a Studio Display beside
+the MacBook, and XCUITest captures a window on a second display blank and small (HeartsNoAds
+had met the wrong size there, which is why `ScreenshotWindowSizer` places the window on the
+primary display; Jigsaw's own window code predated it). Screen Recording access is not needed. A passing shoot discards the deck it set aside,
 so the previous hand-made deck was lost with it. The extract now looks at every capture before
 filing any: one flat colour, or a Mac capture under 1280x800 (the smallest Mac size App Store
 Connect takes), exits the pass, and the failed shoot puts the previous deck back.
