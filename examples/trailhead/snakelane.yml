@@ -21,3 +21,11 @@ categories:
 screenshots:
   devices: [iPhone 17 Pro, iPad Pro 13-inch (M5)]   # 6.3" iPhone and 13" iPad
   locales: [en-US, de-DE]                            # en-AU inherits en-US's shots
+
+# The App Review contact (and demo account): settings, not listing text.
+review:
+  contact:
+    first_name: Alex
+    last_name: Example
+    email: review@example.com
+    phone: "+1 555 0100"

@@ -12,7 +12,7 @@ products:
       base_territory: USA
       customer_price: 9.99        # kept as text: 9.90 stays "9.90"
     review_note: Settings > Maps > Unlock Offline Maps opens the purchase sheet.
-    review_screenshot: iap/offline_maps.jpg   # relative to metadata/
+    review_screenshot: offline_maps.jpg   # relative to metadata/
     localizations:
       en-US:
         name: Offline Maps
