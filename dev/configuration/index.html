@@ -1526,7 +1526,6 @@ text files. <a href="https://github.com/blite/snakelane/tree/main/examples"><cod
     │   ├── default/*.txt         the listing for every platform: name, subtitle, …,
     │   │                         and review_notes.txt for App Review
     │   ├── locales/&lt;locale&gt;/*.txt   per-locale overrides of any single field
-    │   ├── copyright.txt
     │   └── macos/                a second platform: only what differs
     │       └── default/description.txt
     ├── purchases/
@@ -1536,7 +1535,8 @@ text files. <a href="https://github.com/blite/snakelane/tree/main/examples"><cod
         ├── ios/&lt;locale&gt;/{iphone,ipad}/ss-NN.jpg
         └── macos/&lt;locale&gt;/ss-NN.jpg
 </code></pre></div>
-<p>The App Review contact is a setting, <code>review.contact</code> in <code>snakelane.yml</code>. An app in the older flat
+<p>The App Review contact and the copyright are settings, <code>review.contact</code> and <code>copyright</code> in
+<code>snakelane.yml</code>. An app in the older flat
 layout keeps working; <code>snakelane migrate-layout</code> moves it.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># snakelane.yml</span>
 <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Trailhead</span>

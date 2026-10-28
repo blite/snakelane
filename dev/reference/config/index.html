@@ -1690,6 +1690,14 @@ works renamed.</p>
 <td>The <a href="https://developer.apple.com/help/app-store-connect/reference/app-information/age-ratings-values-and-definitions">age-rating questionnaire</a>, pushed by <code>store push</code>: Apple's question names in snake_case, e.g. <code>violence_cartoon_or_fantasy: INFREQUENT_OR_MILD</code>, <code>gambling: false</code>, <code>age_rating_override_v2: NONE</code>. Only answers that differ are sent; a real push refuses names App Store Connect doesn't ask. <code>snakelane store show --json</code> prints the live answers to start from</td>
 </tr>
 <tr>
+<td><code>copyright</code></td>
+<td>The version's copyright line, e.g. <code>"2026 Ada Lovelace"</code>, the same on every platform. A <code>listing/&lt;platform&gt;/copyright.txt</code> overrides it for one platform; a shared <code>listing/copyright.txt</code> is the older home, read only when this is unset, and refused beside it</td>
+</tr>
+<tr>
+<td><code>review</code></td>
+<td>The App Review card's settings: <code>contact: {first_name, last_name, email, phone}</code> (the phone with <code>+</code> and the country code; App Store Connect refuses the card without all four) and <code>demo: {user, password}</code> for an app behind a sign-in. The notes are listing text, <code>listing/default/review_notes.txt</code></td>
+</tr>
+<tr>
 <td><code>aliases</code></td>
 <td>Extra names <code>--app</code> accepts (the file's <code>&lt;name&gt;</code> always works)</td>
 </tr>
