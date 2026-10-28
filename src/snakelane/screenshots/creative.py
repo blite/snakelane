@@ -38,7 +38,7 @@ from PIL import Image
 from .. import layout
 from ..args import load_app, resolve_platform
 from ..connect import asc
-from ..connect.resources import find_app, find_editable_version, keyed
+from ..connect.resources import find_app, find_editable_version, keyed, version_to_push
 from ..terminal import dim, green, red
 from .media import read_mp4_dimensions
 
@@ -366,7 +366,7 @@ def check_plan(client: asc.Client, plan: dict[str, dict[str, Path]]) -> RefData:
 def push_creative(client: asc.Client, app_config: dict[str, Any], platform: str, plan: dict[str, dict[str, Path]],
                   ref: RefData) -> None:
     app = find_app(client, app_config)
-    version = find_editable_version(client, app["id"], platform)
+    version = version_to_push(client, app["id"], platform)
     changed = apply_plan(client, app["id"], version, plan, ref)
     if client.dry_run:
         print("\n[dry-run] nothing was uploaded or placed.")

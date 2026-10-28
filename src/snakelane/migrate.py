@@ -5,8 +5,8 @@
 Tracked files move with `git mv`, so `git log --follow` keeps their history; ignored ones (a gitignored
 deck) are moved as they are. The review contact and demo account leave their files for snakelane.yml's
 `review` section, a `.gitignore` rule for `<metadata>/*/screenshots/` becomes `<metadata>/screenshots/`,
-and iap.yml's `review_screenshot` paths lose their `iap/` prefix, since they are now relative to
-purchases/. Anything it does not recognise stays where it is and is listed. Commit the result on its
+iap.yml's `review_screenshot` paths lose their `iap/` prefix, since they are now relative to
+purchases/, and an `asset_packs.record` naming the moved file follows it. Anything it does not recognise stays where it is and is listed. Commit the result on its
 own, so the move is one commit and nothing else.
 Why: docs/design/foundations.md#metadata-is-sorted-by-kind
 """
@@ -24,7 +24,7 @@ import typer
 
 from . import layout, project
 from .args import AppOption, command_app, run
-from .listing.fields import CONFIG_REVIEW, read_text
+from .listing.fields import CONFIG_REVIEW, LISTING, read_text
 
 PLATFORMS = ("ios", "macos", "tvos", "visionos")
 LOCALE = re.compile(r"[a-z]{2,3}(?:-[A-Za-z0-9]+)*")
@@ -76,7 +76,16 @@ def plan_review(plan: Plan, review_dir: Path, notes_to: Path, shared: dict[str, 
             plan.left.append(path)
 
 
-def plan_platform(plan: Plan, folder: Path, platform_dir: Path) -> None:
+def is_locale(path: Path, locales: list[str]) -> bool:
+    """A configured locale, or a locale-shaped folder holding listing text: a short name alone
+    is not enough (Solitaire's freecell/ppo/ holds product page art, not Portuguese text)."""
+    if not path.is_dir():
+        return False
+    return path.name in locales or bool(LOCALE.fullmatch(path.name)
+                                        and any(p.stem in LISTING for p in path.glob("*.txt")))
+
+
+def plan_platform(plan: Plan, folder: Path, platform_dir: Path, locales: list[str]) -> None:
     platform = platform_dir.name
     own = folder / layout.LISTING / platform
     for path in sorted(platform_dir.iterdir()):
@@ -96,7 +105,7 @@ def plan_platform(plan: Plan, folder: Path, platform_dir: Path) -> None:
                 plan.moves.append((path, own / "copyright.txt"))
         elif name == "asset_packs.json":
             plan.moves.append((path, folder / "release" / "asset_packs.json"))
-        elif path.is_dir() and LOCALE.fullmatch(name):
+        elif is_locale(path, locales):
             plan.move_tree(path, own / "locales" / name)
         elif name != ".DS_Store":
             plan.left.append(path)
@@ -141,8 +150,8 @@ def build_plan(app: project.App) -> Plan:
         elif name == "iap":
             plan.move_tree(path, folder / "purchases")
         elif path.is_dir() and name in platforms:
-            plan_platform(plan, folder, path)
-        elif path.is_dir() and (name in app.locales or LOCALE.fullmatch(name)):
+            plan_platform(plan, folder, path, app.locales)
+        elif is_locale(path, app.locales):
             plan.move_tree(path, listing / "locales" / name)
         else:
             plan.left.append(path)
@@ -193,6 +202,21 @@ def gitignore_edits(app: project.App) -> tuple[Path, str, str] | None:
     return None
 
 
+def record_edit(app: project.App, plan: Plan) -> tuple[str, str] | None:
+    """(old, new) for `asset_packs.record` when it names a file the move takes elsewhere."""
+    named = (app.config.get("asset_packs") or {}).get("record")
+    if not named:
+        return None
+    moved = {src: dst for src, dst in plan.moves}
+    if (dst := moved.get(app.folder / named)) is None:
+        return None
+    return named, dst.relative_to(app.folder).as_posix()
+
+
+def record_config_edits(text: str, old: str, new: str) -> str:
+    return re.sub(rf"(^\s+record:\s*['\"]?){re.escape(old)}(['\"]?)", rf"\g<1>{new}\2", text, count=1, flags=re.M)
+
+
 def iap_screenshot_edits(text: str) -> str:
     return re.sub(r"(review_screenshot:\s*['\"]?)iap/", r"\1", text)
 
@@ -231,6 +255,8 @@ def execute(app: project.App, plan: Plan) -> None:
             path.unlink()
     if (catalogue := app.folder / "purchases" / "iap.yml").is_file():
         catalogue.write_text(iap_screenshot_edits(catalogue.read_text()))
+    if record := record_edit(app, plan):
+        app.config_path.write_text(record_config_edits(app.config_path.read_text(), *record))
     if added := config_yaml(plan):
         app.config_path.write_text(app.config_path.read_text().rstrip("\n") + "\n" + added)
     if edit := gitignore_edits(app):
@@ -264,6 +290,8 @@ def report(app: project.App, plan: Plan, dry_run: bool) -> None:
         print("  " + added.strip().replace("\n", "\n  "))
     if edit := gitignore_edits(app):
         print(f".gitignore: {edit[1].strip()} → {edit[2].strip()}")
+    if record := record_edit(app, plan):
+        print(f"{app.config_path.name}: asset_packs.record {record[0]} → {record[1]}")
     if (catalogue := app.folder / "iap.yml").is_file() and iap_screenshot_edits(text := catalogue.read_text()) != text:
         print("purchases/iap.yml: review_screenshot paths lose their iap/ prefix")
     if plan.left:

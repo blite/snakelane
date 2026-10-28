@@ -67,7 +67,8 @@ from . import bump
 
 DEFAULT_TEST_DEVICE = "iPhone 17 Pro Max"
 MAC_TEST_DESTINATION = "platform=macOS,arch=arm64"
-ARCHIVE_DESTINATIONS = {"ios": "generic/platform=iOS", "macos": "generic/platform=macOS"}
+ARCHIVE_DESTINATIONS = {"ios": "generic/platform=iOS", "macos": "generic/platform=macOS",
+                        "tvos": "generic/platform=tvOS"}
 PROCESSING_TIMEOUT = 45 * 60  # usually 5–15 minutes; on a timeout the caller says how to finish by hand
 PROCESSING_POLL_INTERVAL = 30
 RELEASE_TYPES = {"after_approval": "AFTER_APPROVAL", "manual": "MANUAL", "scheduled": "SCHEDULED"}

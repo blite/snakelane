@@ -28,6 +28,11 @@ def test_both_iphone_duo_displays_map_to_its_slot(tmp_path: Path, size: tuple[in
     assert media.display_type_for(image(tmp_path / "ss-01.png", *size)) == "APP_IPHONE_DUO"
 
 
+
+@pytest.mark.parametrize("size", [(1920, 1080), (3840, 2160)])
+def test_apple_tv_sizes_fill_the_apple_tv_slot(tmp_path: Path, size: tuple[int, int]) -> None:
+    assert media.display_type_for(image(tmp_path / "ss-01.png", *size)) == "APP_APPLE_TV"
+
 def test_a_duo_size_is_not_a_size_warning() -> None:
     assert media.size_warnings([(1398, 2034), (2007, 2853)]) == []
 

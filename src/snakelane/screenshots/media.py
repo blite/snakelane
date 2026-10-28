@@ -48,13 +48,14 @@ SCREEN_SIZES = {size: inches for _, inches, sizes in IOS_SLOTS for size in _both
 SCREENSHOT_DISPLAY_TYPES = {
     **{size: slot for slot, _, sizes in IOS_SLOTS for size in _both_ways(sizes)},
     **{size: "APP_DESKTOP" for size in [(1280, 800), (1440, 900), (2560, 1600), (2880, 1800)]},  # 16:10 only
+    **{size: "APP_APPLE_TV" for size in [(1920, 1080), (3840, 2160)]},  # landscape only
 }
 
 # The sizes snakelane shoots by default; any other accepted size uploads with a warning.
 # Why: docs/design/screenshots.md#non-default-sizes-are-a-warning
 DISPLAY_TYPE_FAMILY = {"APP_IPHONE_61": "iPhone", "APP_IPHONE_65": "iPhone", "APP_IPHONE_67": "iPhone",
                        "APP_IPHONE_DUO": "iPhone Duo",
-                       "APP_IPAD_PRO_3GEN_129": "iPad", "APP_DESKTOP": "Mac"}
+                       "APP_IPAD_PRO_3GEN_129": "iPad", "APP_DESKTOP": "Mac", "APP_APPLE_TV": "Apple TV"}
 PREFERRED_SIZES = {  # family -> (label, sizes, advice)
     "iPhone": ('6.3"', {d for d, t in SCREENSHOT_DISPLAY_TYPES.items() if t == "APP_IPHONE_61"},
                'ASC will show the 6.3" slot, the one it requires, dimmed; re-shoot on iPhone 17 Pro'),

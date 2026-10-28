@@ -189,3 +189,18 @@ def test_a_platform_copyright_file_still_overrides_the_config(app: project.App) 
     (after.folder / "listing/macos/copyright.txt").write_text("2026 Example (Mac)")
     assert fields.read_copyright(after.folder / "macos", after.config) == "2026 Example (Mac)"
     assert fields.read_copyright(after.folder / "ios", after.config) == "2026 Example"
+
+
+def test_a_short_folder_without_listing_text_is_not_a_locale(app: project.App) -> None:
+    image(app.folder / "ppo" / "search-result.jpg", 1206, 2622)  # product page art, not a language
+    plan = migrate.build_plan(app)
+    assert app.folder / "ppo" in plan.left
+    assert not any("ppo" in str(dst) for _, dst in plan.moves)
+
+
+def test_an_asset_pack_record_named_in_the_config_follows_the_file(app: project.App) -> None:
+    app.config_path.write_text(app.config_path.read_text() + "asset_packs:\n  record: ios/asset_packs.json  # kept\n")
+    git(app.root, "commit", "-qam", "record")
+    after = migrated(project.load_app(app.config_path))
+    assert after.config["asset_packs"]["record"] == "release/asset_packs.json"
+    assert "# kept" in after.config_path.read_text()

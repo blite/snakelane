@@ -175,7 +175,8 @@ match what now exists. Only GETs are retried — a timed-out POST may have lande
 - Dingbats (✓ ✗ ✦) and emoji in listing text are a 409; • × — « » ° are fine.
 - Release notes (`whatsNew`) are rejected on an app's first version, so `push` skips them there.
   `push` needs an editable version — press "+" next to the current version in ASC if there is
-  none; `pull` and `show` fall back to the live one.
+  none; `pull` and `show` fall back to the live one, and so does a `--dry-run` of `store push`
+  or `store media push`, so a dry run works between releases.
 - Every IAP needs an App Review screenshot (640×920 is the floor) or stays
   `MISSING_METADATA`. Show the purchase sheet with the price visible. That shot is for the
   reviewer only: **never put a paywall, purchase sheet or price in the App Store deck.**

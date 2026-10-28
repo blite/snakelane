@@ -76,6 +76,18 @@ def find_editable_version(client: asc.Client, app_id: str, platform: str) -> dic
         "string, Save. (The same one-time step deliver's 'No data' abort wanted.)")
 
 
+def version_to_push(client: asc.Client, app_id: str, platform: str) -> dict[str, Any]:
+    """The editable version. A dry run without one plans against the live version: the plan is
+    still worth seeing, and between releases there is often no draft; the real push needs it first."""
+    try:
+        return find_editable_version(client, app_id, platform)
+    except NoEditableVersion as error:
+        if not client.dry_run or (version := find_listing_version(client, app_id, platform)) is None:
+            raise
+        print(red(f"  ! {error}\n  (dry run: planning against the live version instead)"))
+        return version
+
+
 def find_listing_version(client: asc.Client, app_id: str, platform: str) -> dict[str, Any] | None:
     """The editable version, else the live one; quiet, for readers."""
     versions = _versions(client, app_id, platform)

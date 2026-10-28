@@ -15,14 +15,13 @@ from .. import layout, project
 from ..args import load_app, resolve_platform
 from ..connect import asc
 from ..connect.resources import (
-    NoEditableVersion,
     find_app,
     find_editable_app_info,
-    find_editable_version,
     find_listing_version,
     find_or_create_locale_resource,
     get_optional,
     live_version,
+    version_to_push,
 )
 from ..terminal import dim, format_text_diff, green, red, truncate
 from . import lint, translations
@@ -241,13 +240,7 @@ def cmd_push(args: SimpleNamespace) -> None:
     app_id = find_app(client, app_config)["id"]
     print(f"→ found app {app_config['bundle_id']} (id={app_id})")
     app_info = find_editable_app_info(client, app_id)
-    try:
-        version = find_editable_version(client, app_id, platform)
-    except NoEditableVersion as error:
-        if not client.dry_run or (version := find_listing_version(client, app_id, platform)) is None:
-            raise
-        # The diff is still worth seeing; the real push needs the draft first.
-        print(red(f"  ! {error}\n  (dry run: diffing against the live version instead)"))
+    version = version_to_push(client, app_id, platform)
     version_string = asc.attributes(version).get("versionString")
     if live_version(client, app_id, platform) is None:  # ASC rejects whatsNew on an app's first version
         for locale, fields in plan["per_locale"].items():

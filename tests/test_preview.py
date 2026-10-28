@@ -280,7 +280,7 @@ def test_previews_push_reserves_each_preview_with_its_poster(monkeypatch: pytest
     monkeypatch.setattr(asc.Credentials, "available", staticmethod(lambda: True))
     monkeypatch.setattr(upload.asc, "Client", lambda dry_run=False: client)
     monkeypatch.setattr(upload, "find_app", lambda c, cfg: {"id": "A1"})
-    monkeypatch.setattr(upload, "find_editable_version", lambda c, app_id, platform: {"id": "V1"})
+    monkeypatch.setattr(upload, "version_to_push", lambda c, app_id, platform: {"id": "V1"})
     monkeypatch.setattr(upload, "keyed", lambda c, path: {"en-US": {"id": "L1"}})
     monkeypatch.setattr(upload, "wait_for_asset_processing", lambda *a, **k: (["ok"], [], []))
     upload.cmd_previews_push(SimpleNamespace(app=None, platform=None, dry_run=False))

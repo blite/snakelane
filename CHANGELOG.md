@@ -6,6 +6,20 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **metadata/ is sorted by kind**: `listing/` (`default/`, `locales/<locale>/`, `<platform>/`),
+  `purchases/`, `screenshots/<platform>/<locale>/`, `creative/`, `release/`. Review notes are
+  `listing/default/review_notes.txt`; the review contact is `review.contact` in `snakelane.yml` and
+  the copyright line is `copyright`, settings rather than files. A folder without `listing/` is
+  read in the flat layout as before. **An app should** run `snakelane migrate-layout` (with
+  `--dry-run` first), fix the paths it lists outside metadata/, and commit the move on its own.
+- **`migrate-layout` leaves short folders that hold no listing text alone.** A two- or
+  three-letter folder (`ppo/`, product page art) was filed under `listing/locales/` as if it
+  were a language. An `asset_packs.record` naming the moved `ios/asset_packs.json` now follows it
+  to `release/`.
+- **Apple TV.** 1920x1080 and 3840x2160 screenshots fill the `APP_APPLE_TV` slot (a tvOS deck was
+  refused as an unknown size), and `ship --platform tvos` archives for `generic/platform=tvOS`.
+- **`store media push --dry-run` works without a draft version**, planning against the live one
+  as `store push --dry-run` already did. Screenshots, previews and creative all stopped there.
 - **`asset_packs.items` names pack.json's list of entries.** `packs package` read the files to
   archive from `items[].resourceName` only, so an app whose manifests call the list something
   else (`puzzles`) packaged nothing. The key defaults to `items`; apps already using it change

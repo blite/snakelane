@@ -54,6 +54,9 @@ skipped, so pushing screenshots never deletes previews kept only in App Store Co
 `store previews push` and `store creative push | show` still work, and are the same as
 `media` with one `--only`.
 
+With no draft version yet, `--dry-run` plans against the live version, as `store push` does;
+the real push needs the draft first.
+
 ### Screenshots and App Previews
 
 The deck is `metadata/screenshots/<platform>/<locale>/` (in `iphone/`, `ipad/` and `duo/` for iOS),

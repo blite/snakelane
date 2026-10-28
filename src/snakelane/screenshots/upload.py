@@ -22,6 +22,7 @@ from ..connect.resources import (
     keyed,
     report_processing,
     upload_asset_resource,
+    version_to_push,
     wait_for_asset_processing,
 )
 from ..terminal import dim, green, red
@@ -82,7 +83,7 @@ def mirror(client: asc.Client, app_config: dict[str, Any], platform: str, plan: 
 
     ASC has no replace-in-place, so a kept set is emptied and refilled, and a set for a slot the
     deck no longer fills is deleted. Why: docs/design/screenshots.md#remote-mirrors-local"""
-    version = find_editable_version(client, find_app(client, app_config)["id"], platform)
+    version = version_to_push(client, find_app(client, app_config)["id"], platform)
     asvls = keyed(client, f"/v1/appStoreVersions/{version['id']}/appStoreVersionLocalizations")
     uploads: list[dict[str, Any]] = []
     for locale, by_type in plan.items():
