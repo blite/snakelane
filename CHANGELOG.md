@@ -4,7 +4,7 @@ All notable changes to snakelane. Versions follow [semver](https://semver.org); 
 major version is 0, a change that needs new `snakelane.yml` keys or changes a command's
 behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
-## Unreleased
+## 0.6.0
 
 - **metadata/ is sorted by kind**: `listing/` (`default/`, `locales/<locale>/`, `<platform>/`),
   `purchases/`, `screenshots/<platform>/<locale>/`, `creative/`, `release/`. Review notes are
