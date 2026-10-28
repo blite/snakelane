@@ -31,3 +31,16 @@ def test_frame_on_a_mac_only_app_honours_mac_frame_without_platform(tmp_path, mo
     frame.frame_command(app=None, locale=None, deck=None, theme=None, list_themes=False, device=None,
                         platform=None, dry_run=False)
     assert framed
+
+
+def test_mac_test_plan_overrides_the_top_level_plan_and_null_drops_it() -> None:
+    from snakelane.screenshots.shoot import ShotsConfig, for_mac
+
+    def config(mac: dict) -> ShotsConfig:
+        return ShotsConfig(scheme="App", test=None, test_plan="Screenshots", devices=[], locales={"en-US": None},
+                           env={}, frame="test", reframe_test=None, mac=mac)
+
+    assert for_mac(config({})).test_plan == "Screenshots"
+    assert for_mac(config({"test_plan": "MacScreenshots"})).test_plan == "MacScreenshots"
+    assert for_mac(config({"test_plan": None})).test_plan is None
+    assert for_mac(config({"frame": "snakelane"})).frame == "snakelane"

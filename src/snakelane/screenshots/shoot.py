@@ -12,8 +12,8 @@ snakelane.yml "screenshots" (all optional; full reference in the skill's referen
     frame             who draws captions: "test" (default; reframe runs reframe_test) | "snakelane" | "none"
     reframe_test      -only-testing id of the UI test that re-frames raws on disk (frame "test")
     framing           `snakelane frame`'s settings — see screenshots/frame.py
-    mac               enables --platform macos: {} or {"scheme", "test", "reframe_test", "destination", "frame"};
-                      "frame" overrides the top-level one for the Mac deck
+    mac               enables --platform macos: {} or {"scheme", "test", "test_plan", "reframe_test", "destination",
+                      "frame"}; "frame" and "test_plan" override the top-level ones for the Mac deck
     check             `snakelane check` settings — see screenshots/check.py
 
 The runner gets TEST_RUNNER_SNAKELANE_{LOCALE, LANGUAGE, PLATFORM, DEVICE, REFRAME_LOCALE, BANNER}; an iOS
@@ -150,6 +150,18 @@ def frame_mode(screenshots: dict[str, Any], platform: str | None = None) -> str:
     if platform == "macos" and isinstance(mac := screenshots.get("mac"), dict) and mac.get("frame"):
         return mac["frame"]
     return screenshots.get("frame") or ("snakelane" if screenshots.get("framing") else "test")
+
+
+def for_mac(config: ShotsConfig) -> ShotsConfig:
+    """The Mac lane's config: `mac.frame` and `mac.test_plan` replace the top-level ones. A Mac-only
+    UI test target needs its own scheme, and the iOS test plan names targets that scheme lacks, so
+    `test_plan` may be null there to run the scheme's tests as they are."""
+    assert config.mac is not None
+    if config.mac.get("frame"):
+        config = replace(config, frame=config.mac["frame"])
+    if "test_plan" in config.mac:
+        config = replace(config, test_plan=config.mac["test_plan"])
+    return config
 
 
 def quiet(*cmd: str) -> None:
@@ -423,8 +435,8 @@ def make_plan(app: App, config: ShotsConfig, args: SimpleNamespace) -> Plan:
         if unknown := [l for l in requested if l not in config.locales]:
             raise SystemExit(f"unknown locale(s): {', '.join(unknown)} — expected {', '.join(config.locales)}")
         locales = {l: config.locales[l] for l in requested}
-    if mac and config.mac.get("frame"):
-        config = replace(config, frame=config.mac["frame"])
+    if mac:
+        config = for_mac(config)
     plan = Plan(app, config, "macos" if mac else "ios", locales, full_locales=not args.locales)
     if mac:
         plan.add_passes(DeckTree(app, "macos"), "Mac", "macos", None, config.mac.get("scheme", config.scheme),
