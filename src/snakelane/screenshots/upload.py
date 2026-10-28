@@ -13,7 +13,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, NamedTuple
 
-from .. import project
+from .. import layout, project
 from ..args import load_app, resolve_platform
 from ..connect import asc
 from ..connect.resources import (
@@ -241,7 +241,7 @@ def screenshots_plan(folder: Path, app_config: dict[str, Any], platform: str, *,
     all_dimensions: list[tuple[int, int]] = []
     for locale in locales:
         if not (dirs := deck_dirs(platform_dir, locale)):
-            print(f"  (no screenshots under {platform_dir / 'screenshots' / locale} — skipping {locale}; "
+            print(f"  (no screenshots under {layout.screenshots_dir(platform_dir) / locale} — skipping {locale}; "
                   "the App Store shows the primary language's)")
             plan[locale] = None
             continue

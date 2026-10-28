@@ -19,7 +19,7 @@ from typing import Annotated, Any
 
 import typer
 
-from .. import project
+from .. import layout, project
 from ..args import AppOption, command_app, run
 from .fields import TEXT_FIELDS, read_text
 
@@ -33,7 +33,13 @@ def digest(text: str) -> str:
 
 def manifest_path(folder: Path) -> Path:
     """Beside the shared listing it tracks; platform overrides are not tracked."""
-    return folder / MANIFEST
+    return layout.translations_base(folder)[0] / MANIFEST
+
+
+def field_files(folder: Path, locale: str, field: str) -> tuple[Path, Path]:
+    """(the source, the translation) for one field of the shared listing."""
+    base, kind = layout.translations_base(folder)
+    return base / "default" / f"{field}.txt", layout.locale_dir(base, locale, kind) / f"{field}.txt"
 
 
 def load_manifest(folder: Path) -> dict[str, Any]:
@@ -43,7 +49,7 @@ def load_manifest(folder: Path) -> dict[str, Any]:
 
 def field_status(folder: Path, manifest: dict[str, Any], locale: str, field: str) -> str | None:
     """stale/unreviewed/current/untracked/default, or None when there is nothing to say."""
-    source, translation = read_text(folder / "default" / f"{field}.txt"), read_text(folder / locale / f"{field}.txt")
+    source, translation = (read_text(p) for p in field_files(folder, locale, field))
     if translation is None:
         return "default" if source is not None else None
     if (entry := manifest.get(f"{locale}/{field}")) is None:
@@ -101,7 +107,7 @@ def cmd_mark(app: project.App, locales: list[str], fields: list[str], reviewed: 
     marked = 0
     for locale in locales:
         for field in fields:
-            translation, source = read_text(folder / locale / f"{field}.txt"), read_text(folder / "default" / f"{field}.txt")
+            source, translation = (read_text(p) for p in field_files(folder, locale, field))
             if translation is not None and source is not None:
                 manifest[f"{locale}/{field}"] = {"source": digest(source), "translation": digest(translation),
                                                  "reviewed": reviewed}

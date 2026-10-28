@@ -26,6 +26,7 @@ from typing import Annotated, Any
 
 import typer
 
+from .. import layout
 from ..args import AppOption, command_app
 from ..args import run as run_cli
 from ..project import IMAGE_SUFFIXES, resolve_app
@@ -186,8 +187,9 @@ def framed_decks(app, locales: list[str] | None = None) -> list[Path]:
     from .media import DECK_SUFFIXES, deck_dirs, deck_files
     return [
         p
-        for platform_dir in sorted(p.parent for p in app.folder.glob("*/screenshots"))
-        for locale in locales or sorted(p.name for p in (platform_dir / "screenshots").iterdir() if p.is_dir())
+        for platform_dir in [app.folder / pf for pf in app.config.get("platforms") or ["ios"]]
+        if layout.screenshots_dir(platform_dir).is_dir()
+        for locale in locales or sorted(p.name for p in layout.screenshots_dir(platform_dir).iterdir() if p.is_dir())
         for p in deck_files(deck_dirs(platform_dir, locale), DECK_SUFFIXES, "screenshot", quiet=True)
     ]
 

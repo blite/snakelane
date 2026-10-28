@@ -96,6 +96,14 @@ App Store Connect has no notion of "leave this alone", so writing an empty strin
 
 Until 2026-10-02 every iOS and Mac app duplicated its whole listing per platform, byte for byte in all five. Now the listing lives once in `metadata/` and a platform folder holds only what differs, such as a Mac description. App-level fields (name, subtitle, the privacy URLs) are one per locale at App Store Connect, so a platform copy is refused; otherwise the last platform pushed would win.
 
+### Metadata is sorted by kind
+
+Until 2026-10-28 the metadata folder mixed two axes at its top level: locale folders (`default/`, `de-DE/`) held listing text, while `ios/` and `macos/` held mostly screenshots, so `metadata/ios/` read as "the iOS listing" and was the decks. Now the top level is the kind of thing, and locale and platform sit beneath it: `listing/`, `purchases/`, `screenshots/`, `creative/`, `release/`. Inside `listing/`, translations are in `locales/` apart from `default/`, and `listing/<platform>/` has the same shape as `listing/` for the few overrides a platform needs.
+
+The split follows how the files are worked on, measured over 395 metadata commits in 13 app repos (2026-04 to 2026-10). Review notes changed with listing text in 29 of their 54 deliberate edits, usually as "release notes, review notes and the privacy page" before a version, so the notes are a listing file (`default/review_notes.txt`, not localized: App Store Connect keeps one per version, so a copy under a locale is refused). The contact changed six times in six months and had drifted across repos (a placeholder phone, three email addresses), so it is a setting, `review.contact` in snakelane.yml. Purchases change on their own schedule, so they have their own folder, and their review screenshots are relative to it. Mac overrides were only ever a description, release notes or review notes.
+
+A kind is also a gitignore unit: some repos commit their framed decks and some regenerate them, and either is one rule on `metadata/screenshots/`. An app whose folder has no `listing/` is read in the flat layout as before (`layout.py` is the one place that knows both), and `snakelane migrate-layout` moves it with `git mv`, so history follows the files, in a commit of its own.
+
 ### store is one command from ten copies
 
 `store` used to be ten drifting copies of `Metadata/scripts/store.py`, one per app repo. It is the union of them, with every fix any copy carried and nothing app-specific left in the code. Until 2026-10-02 it was one 3,500-line module; it is now only the command line, routing to `listing/`, `screenshots/` and `purchases/`. It calls the REST API directly, so a failure names the resource and attribute instead of surfacing through fastlane's layers.

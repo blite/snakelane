@@ -1,6 +1,6 @@
 $ snakelane store media push --only screenshots --dry-run
   (developer-chrome check skipped: needs macOS and the snakelane[check] extra)
-  (no screenshots under ~/trailhead/metadata/ios/screenshots/en-AU — skipping en-AU; the App Store shows the primary language's)
+  (no screenshots under ~/trailhead/metadata/screenshots/ios/en-AU — skipping en-AU; the App Store shows the primary language's)
   [dry-run] en-US/APP_IPAD_PRO_3GEN_129: 3 file(s) — ss-01.jpg, ss-02.jpg, ss-03.jpg
   [dry-run] en-US/APP_IPHONE_65: 3 file(s) — ss-01.jpg, ss-02.jpg, ss-03.jpg
   [dry-run] de-DE/APP_IPHONE_65: 3 file(s) — ss-01.jpg, ss-02.jpg, ss-03.jpg

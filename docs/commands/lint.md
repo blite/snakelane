@@ -57,7 +57,7 @@ snakelane translations mark de-DE --reviewed   # a person has checked it
 snakelane translations status
 ```
 
-The source of a field is `default/<field>.txt`, its translation `<locale>/<field>.txt`. Each
+The source of a field is `listing/default/<field>.txt`, its translation `listing/locales/<locale>/<field>.txt`. Each
 translated field is stale (the source changed since), unreviewed, current (reviewed, or
 edited by hand after marking) or untracked. `store push` warns about stale and unreviewed
 ones. Here the English description and subtitle changed after the German translation was

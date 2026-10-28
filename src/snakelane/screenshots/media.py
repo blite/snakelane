@@ -11,7 +11,7 @@ from typing import Any
 
 from PIL import Image
 
-from .. import project
+from .. import layout, project
 from ..project import (  # noqa: F401  (the deck's users import them from here)
     DECK_SUFFIXES,
     IMAGE_SUFFIXES,
@@ -356,7 +356,7 @@ def deck_dirs(platform_dir: Path, locale: str) -> list[Path]:
     """`<platform>/screenshots/<locale>/` and its device folders (which only keep same-named shots apart).
 
     [] when the locale has no folder (no opinion); an empty folder means "delete what's live"."""
-    root = platform_dir / "screenshots" / locale
+    root = layout.screenshots_dir(platform_dir) / locale
     if not root.is_dir():
         return []
     return [root, *sorted(p for p in root.iterdir() if p.is_dir() and not p.name.startswith((".", "_")))]

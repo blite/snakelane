@@ -25,6 +25,7 @@ COMMANDS: dict[str, tuple[str, str]] = {
     "translations": ("listing.translations", "track which translated fields are stale or unreviewed"),
     "status": ("release.status", "what App Store Connect holds right now: versions, review, builds"),
     "init": ("init", "write snakelane.yml and metadata/ for an Xcode project"),
+    "migrate-layout": ("migrate", "move a flat metadata/ folder to listing/, purchases/, screenshots/"),
     "gallery": ("screenshots.gallery", "an HTML page of every deck and a search-result mock, for review"),
 }
 

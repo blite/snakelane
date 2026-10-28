@@ -35,6 +35,7 @@ from typing import Any
 
 from PIL import Image
 
+from .. import layout
 from ..args import load_app, resolve_platform
 from ..connect import asc
 from ..connect.resources import find_app, find_editable_version, keyed
@@ -125,8 +126,7 @@ def parse_ref_data(payload: dict[str, Any]) -> RefData:
 
 def creative_dirs(folder: Path, platform: str, locale: str) -> list[Path]:
     """Where a locale's creative assets may be, most specific first."""
-    return [folder / platform / "creative" / locale, folder / platform / "creative" / "default",
-            folder / "creative" / locale, folder / "creative" / "default"]
+    return layout.creative_candidates(folder / platform, locale)
 
 
 def _candidates(directory: Path, stem: str) -> list[Path]:

@@ -28,6 +28,8 @@ from typing import Any
 from ruamel.yaml import YAML
 from ruamel.yaml.constructor import SafeConstructor
 
+from . import layout
+
 CONFIG_NAME = "snakelane.yml"
 CONFIG_PATTERN = re.compile(r"snakelane(?:\.([A-Za-z0-9_-]+))?\.yml")
 # Captures read may be PNG; every uploaded screenshot is JPEG. Why: docs/adr/0002-jpeg-only-screenshot-decks.md
@@ -169,7 +171,8 @@ def runner_vars(env: dict[str, Any]) -> dict[str, str]:
 class DeckTree:
     """Where one device class's screenshots live, for one platform.
 
-        framed (what ships)   <metadata>/<platform>/screenshots/<locale>/<device>/
+        framed (what ships)   <metadata>/screenshots/<platform>/<locale>/<device>/
+                              (flat layout: <metadata>/<platform>/screenshots/<locale>/<device>/)
         raw (the captures)    <repo>/.snakelane/<slug>/raw/<platform>/<locale>/<device>/
 
     `device` is "iphone"/"ipad"/"duo" for iOS, "" for a Mac deck (in the locale folder itself).
@@ -180,7 +183,7 @@ class DeckTree:
     platform: str
     device: str = ""
 
-    framed_base = property(lambda self: self.app.folder / self.platform / "screenshots")
+    framed_base = property(lambda self: layout.screenshots_dir(self.app.folder / self.platform))
     raw_base = property(lambda self: self.app.work_dir / "raw" / self.platform)
     deck = property(lambda self: self.device or "mac")  # iphone, ipad, duo or mac
 

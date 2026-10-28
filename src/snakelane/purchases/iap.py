@@ -7,6 +7,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
+from .. import layout
 from ..args import load_app, resolve_platform
 from ..connect import asc
 from ..connect.resources import (
@@ -198,7 +199,7 @@ def cmd_iap_push(args: SimpleNamespace) -> None:
         ensure_availability(client, "  ", f"/v2/inAppPurchases/{resource_id}/inAppPurchaseAvailability",
                             "inAppPurchaseAvailabilities", ("inAppPurchase", "inAppPurchases", resource_id))
         if shot := product.get("review_screenshot"):
-            upload_review_screenshot(client, "  ", platform_dir.parent / shot,  # relative to metadata/
+            upload_review_screenshot(client, "  ", layout.purchases_dir(platform_dir) / shot,  # relative to iap.yml's folder
                                      f"/v2/inAppPurchases/{resource_id}/appStoreReviewScreenshot",
                                      "inAppPurchaseAppStoreReviewScreenshots", {"inAppPurchaseV2": rel},
                                      product_id, problems)

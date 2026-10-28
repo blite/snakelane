@@ -277,7 +277,7 @@ def run(app: project.App, platform: str, check_urls: bool = False) -> list[Findi
     platform_dir, locales = app.platform_dir(platform), app.locales
     terms_url = legal_terms_url(app, platform_dir)
     values = read_listing(platform_dir, locales)
-    found = lint(values, read_review(platform_dir).get("notes"), terms_url, allowed(app))
+    found = lint(values, read_review(platform_dir, app.config).get("notes"), terms_url, allowed(app))
     found += caption_findings(app, allowed(app))
     found += gamecenter_findings(app)
     if check_urls:

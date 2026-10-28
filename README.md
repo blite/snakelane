@@ -175,18 +175,23 @@ text files. [`examples/`](https://github.com/blite/snakelane/tree/main/examples)
 your-repo/
 ├── snakelane.yml                 bundle id, locales, platforms, categories, …
 └── metadata/
-    ├── default/*.txt             the listing for every platform: name, subtitle, …
-    ├── <locale>/*.txt            per-locale overrides of any single field
-    ├── copyright.txt
-    ├── review/                   App Review notes + contact
-    ├── iap.yml                   one-time purchases and subscriptions
-    ├── iap/                      their review screenshots (JPEG)
-    ├── ios/
-    │   └── screenshots/<locale>/{iphone,ipad}/ss-NN.jpg
-    └── macos/                    a second platform: only what differs
-        ├── default/description.txt
-        └── screenshots/<locale>/ss-NN.jpg
+    ├── listing/
+    │   ├── default/*.txt         the listing for every platform: name, subtitle, …,
+    │   │                         and review_notes.txt for App Review
+    │   ├── locales/<locale>/*.txt   per-locale overrides of any single field
+    │   ├── copyright.txt
+    │   └── macos/                a second platform: only what differs
+    │       └── default/description.txt
+    ├── purchases/
+    │   ├── iap.yml               one-time purchases and subscriptions
+    │   └── *.jpg                 their review screenshots
+    └── screenshots/
+        ├── ios/<locale>/{iphone,ipad}/ss-NN.jpg
+        └── macos/<locale>/ss-NN.jpg
 ```
+
+The App Review contact is a setting, `review.contact` in `snakelane.yml`. An app in the older flat
+layout keeps working; `snakelane migrate-layout` moves it.
 
 ```yaml
 # snakelane.yml

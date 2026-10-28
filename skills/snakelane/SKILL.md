@@ -38,29 +38,39 @@ overrides that. `--app <name>` picks among several configs; with one it is not n
 ├── snakelane.yml            identity, categories, locales, platforms, per-app settings (YAML)
 ├── .snakelane/              snakelane's working files: raw captures, a killed shoot's stash (gitignored)
 └── metadata/                (the config's `metadata` key; default `metadata`)
-    ├── default/             the listing for every platform: name, subtitle, description,
-    │                        keywords, promotional_text, release_notes, marketing_url,
-    │                        support_url, privacy_url, privacy_choices_url (.txt each)
-    ├── <locale>/            per-locale overrides of any single field
-    ├── copyright.txt, review/   one for every platform (a platform folder may override)
-    │                          review/: notes.txt, and the contact App Store Connect requires —
-    │                          first_name, last_name, email_address, phone_number (+country code)
-    ├── iap.yml              everything the app sells — source of truth: one-time
-    │                        purchases (`products`) and subscriptions (`subscription_groups`)
-    ├── iap/                 their review screenshots
-    ├── translations.json    what each translation was made from
+    ├── listing/             everything on the version page
+    │   ├── default/         the listing for every platform: name, subtitle, description,
+    │   │                    keywords, promotional_text, release_notes, marketing_url,
+    │   │                    support_url, privacy_url, privacy_choices_url (.txt each),
+    │   │                    and review_notes.txt (App Review's notes; not localized)
+    │   ├── locales/<locale>/   per-locale overrides of any single field
+    │   ├── copyright.txt    one per version
+    │   ├── translations.json   what each translation was made from
+    │   └── ios/  macos/     only what differs per platform, the same shape:
+    │                        default/, locales/<locale>/, copyright.txt (a Mac description,
+    │                        Mac review notes)
+    ├── purchases/           iap.yml, everything the app sells — source of truth: one-time
+    │                        purchases (`products`) and subscriptions (`subscription_groups`),
+    │                        beside their review screenshots
+    ├── screenshots/
+    │   └── ios/  macos/     <locale>/: the deck, ss-NN.jpg + ap-NN.m4v previews — in iphone/,
+    │                        ipad/ and duo/ for iOS, directly in the locale folder for Mac
     ├── creative/<locale>/, creative/default/   `store media push`: search-result.*,
-    │                        product-page-header.*, universal.png (one file per slot)
-    └── ios/  macos/         only what differs per platform, plus screenshots:
-        ├── default/, <locale>/       version-level overrides (a Mac description, say)
-        ├── creative/                 per-platform creative assets, same layout as above
-        └── screenshots/<locale>/     the deck: ss-NN.jpg + ap-NN.m4v previews — in iphone/
-                                      and ipad/ for iOS, directly in the locale folder for Mac
+    │                        product-page-header.*, universal.png (one file per slot);
+    │                        creative/<platform>/ overrides
+    └── release/asset_packs.json   the asset pack record
 ```
 
-Text resolves most specific first: `<platform>/<locale>/`, `<platform>/default/`, `<locale>/`,
-`default/`. Name, subtitle and the privacy URLs are app-level at App Store Connect, so a
-platform copy of them is refused; put them in the shared listing.
+The App Review contact App Store Connect requires (first name, last name, email, phone with
++country code) is a setting: `snakelane.yml`'s `review.contact`, with `review.demo` for a demo
+account. It rarely changes and is the same on every platform.
+
+Text resolves most specific first: `listing/<platform>/locales/<locale>/`,
+`listing/<platform>/default/`, `listing/locales/<locale>/`, `listing/default/`. Name, subtitle
+and the privacy URLs are app-level at App Store Connect, so a platform copy of them is refused;
+put them in the shared listing. An app still in the older flat layout (`default/`, `<locale>/`,
+`review/`, `iap.yml`, `<platform>/screenshots/` at the top) reads as it always did;
+`snakelane migrate-layout` moves it, with `git mv`, and `--dry-run` shows the plan.
 
 A repo with several apps has one `snakelane.<name>.yml` per app at the root, each with its own
 `metadata: metadata/<name>`. YAML is read with 1.2 rules and decimals kept as text, so don't
@@ -69,7 +79,7 @@ A repo with several apps has one `snakelane.<name>.yml` per app at the root, eac
 
 iPad shots upload into the iOS version — App Store Connect has no iPadOS platform.
 
-**Locale resolution**, per (locale, field): `<locale>/<field>.txt` if non-blank, else
+**Locale resolution**, per (locale, field): `locales/<locale>/<field>.txt` if non-blank, else
 `default/<field>.txt` if non-blank, else **skip the field entirely**. App Store Connect has
 no "leave this alone": pushing `""` clobbers what is live, so a blank file means "no
 opinion". Which locales are pushed comes from `snakelane.yml`'s `locales`, never from which
@@ -200,9 +210,9 @@ Fix the copy; if a rule is wrong for this app, add it to `snakelane.yml`'s
 ## Translating the listing
 
 snakelane tracks translations; you write them. The source is `default/<field>.txt`, a
-translation is `<locale>/<field>.txt`.
+translation is `locales/<locale>/<field>.txt`.
 
-1. Translate each field into `<locale>/<field>.txt`, within the field's limit (name and
+1. Translate each field into `listing/locales/<locale>/<field>.txt`, within the field's limit (name and
     subtitle 30, keywords 100, promotional text 170). Use the words the app's own localized UI
     uses for features, not a fresh translation of them. Keywords are researched per market,
     not translated: no spaces after commas, no words already in the name or subtitle.
@@ -339,7 +349,7 @@ Archive only from the app scheme; turn Archive off in helper schemes.
 ## Setting up a new app
 
 1. `snakelane.yml` at the repo root from `assets/snakelane.yml.template` (fill every `{{…}}`),
-    and `metadata/default/*.txt` from `assets/metadata/` (or `snakelane init`, which writes both).
+    and `metadata/listing/default/*.txt` from `assets/metadata/` (or `snakelane init`, which writes both).
 
 2. UI-test templates into the UI-test target: the shared ones at the top of `assets/`, and the
     iOS-only ones in `assets/ios/` (caption drawing, App Preview recording); substitute `{{APP_NAME}}`,

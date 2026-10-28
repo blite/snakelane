@@ -113,7 +113,7 @@ def init_command(
     print(f"platforms  {', '.join(platforms)}")
     project_line = f"project: {xcodeproj.name}\n" if len(all_projects) > 1 else ""
     # A platform folder is only for what differs from default/, so init writes none.
-    default = root / "metadata" / "default"
+    default = root / "metadata" / "listing" / "default"
     files = {config: config_text(name, bundle_id, scheme, team, platforms, project_line),
              default / "name.txt": name + "\n",
              **{default / f"{field}.txt": value + "\n" for field, value in PLACEHOLDERS.items()}}
@@ -134,7 +134,7 @@ def init_command(
 
         store.main(["pull"])
     else:
-        print("\nnext: fill in metadata/default/*.txt (or `snakelane init --pull --force` for an app "
+        print("\nnext: fill in metadata/listing/default/*.txt (or `snakelane init --pull --force` for an app "
               "already on the store), then `snakelane lint`")
 
 

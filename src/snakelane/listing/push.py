@@ -11,7 +11,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
-from .. import project
+from .. import layout, project
 from ..args import load_app, resolve_platform
 from ..connect import asc
 from ..connect.resources import (
@@ -30,6 +30,7 @@ from .fields import (
     APP_CATEGORIES,
     CATEGORY_INCLUDE,
     CATEGORY_RELATIONSHIP_NAMES,
+    CONFIG_REVIEW,
     LISTING,
     REVIEW,
     age_rating_attributes,
@@ -63,7 +64,7 @@ def build_push_plan(platform_dir: Path, locales: list[str], app_config: dict[str
         "category_relationships": {CATEGORY_RELATIONSHIP_NAMES[k]: v for k, v in categories.items() if v},
         "copyright": read_copyright(platform_dir),
         "per_locale": per_locale,
-        "review": read_review(platform_dir),
+        "review": read_review(platform_dir, app_config),
     }
     violations = [f"{locale}/{stem}: {message}" for locale, fields in per_locale.items()
                   for stem, value in fields.items() for _, message in hard_limit_problems(stem, value)]
@@ -101,7 +102,7 @@ def print_push_plan(plan: dict[str, Any]) -> None:
     for key, value in plan["review"].items():
         print(f"  {key} = {mask(key, truncate(str(value)))!r}")
     if not plan["review"]:
-        print("  (no review/ files — skipped)")
+        print("  (no review notes or contact — skipped)")
 
 
 def push_review_detail(client: asc.Client, version: dict[str, Any], review: dict[str, str]) -> None:
@@ -269,7 +270,7 @@ def cmd_push(args: SimpleNamespace) -> None:
     # Before any write, so a missing contact can't leave a push half done.
     # Why: docs/design/foundations.md#the-review-contact-is-required-on-every-write
     if changes["review"] and (missing := missing_contact(plan["review"], live["review"])):
-        files = ", ".join(f"review/{stem}.txt" for stem in missing)
+        files = ", ".join(f"review.{'.'.join(CONFIG_REVIEW[stem])} in snakelane.yml" for stem in missing)
         raise SystemExit(red(f"\n✗ App Store Connect needs the App Review contact before it will take any of the "
                              f"review card. Add {files} (the phone with + and the country code) — nothing pushed."))
     if client.dry_run:
@@ -326,16 +327,26 @@ def cmd_pull(args: SimpleNamespace) -> None:
     platform = resolve_platform(app_config, args.platform)
     platform_dir, locales = folder / platform, app_config["locales"]
     live = show_json(app_config, platform, masked=False)
+    own, _, kind = layout.listing_bases(platform_dir)
     if live["copyright"]:
-        write(platform_dir / "copyright.txt", live["copyright"])
+        write(layout.copyright_candidates(platform_dir)[0], live["copyright"])
     for locale, fields in live["per_locale"].items():
         # One locale writes default/; several write per locale so one doesn't overwrite default/.
-        target_dir = platform_dir / ("default" if len(locales) == 1 else locale)
+        target_dir = layout.locale_dir(own, "default" if len(locales) == 1 else locale, kind)
         for stem, value in fields.items():
             if value:
                 write(target_dir / f"{stem}.txt", value)
-    for stem, value in live["review"].items():  # platform-level, not per locale; absent on a fresh app
-        if value:
+    review = {stem: value for stem, value in live["review"].items() if value}  # absent on a fresh app
+    if kind:
+        if notes := review.pop("notes", None):
+            write(layout.review_notes_candidates(platform_dir)[0], notes)
+        if review:
+            print("snakelane.yml's review section, from App Store Connect (not written; settings are yours):")
+            for stem, value in review.items():
+                group, key = CONFIG_REVIEW[stem]
+                print(f"  review.{group}.{key}: {mask(stem, value)}")
+    else:
+        for stem, value in review.items():
             write(platform_dir / "review" / f"{stem}.txt", value)
     print("\nPull complete.")
 

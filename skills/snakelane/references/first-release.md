@@ -147,8 +147,8 @@ that number, and the next `ship beta` picks the following one from TestFlight.
 
 - **App Privacy** (the nutrition label) — answer it to match the privacy policy.
 - **Price and availability** of the app itself (an IAP's are in `iap.yml`).
-- **App Review contact**: `review/first_name.txt`, `last_name.txt`, `email_address.txt` and
-  `phone_number.txt` (with `+` and the country code), pushed by `store push` with the notes.
+- **App Review contact**: `snakelane.yml`'s `review.contact` (`first_name`, `last_name`, `email`,
+  `phone` with `+` and the country code), pushed by `store push` with the notes.
   App Store Connect refuses the notes until the contact is set, so `store push` stops early
   without them.
 - **Content rights** and, for a game using Game Center, enabling Game Center on the version.

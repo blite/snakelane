@@ -15,7 +15,8 @@ snakelane.yml "asset_packs" block:
     "manifests"        (required) repo-relative folder of <theme>/pack.json.
     "bundle_path"      (required) where a pack's files live in the app bundle, with {theme}.
     "content_root"     repo-relative base for pictureSource (default: repo root).
-    "record"           asset pack record, relative to the app folder (default "ios/asset_packs.json").
+    "record"           asset pack record, relative to the app folder (default "release/asset_packs.json";
+                       "ios/asset_packs.json" in the flat layout).
     "build_dir"        repo-relative output folder (default "build/asset-packs").
     "source_under"     a folder (relative to content_root) every pictureSource must sit in, e.g.
                        "approved" when only reviewed pictures may ship; packaging anything else is
@@ -44,7 +45,7 @@ from typing import Annotated, Any
 
 import typer
 
-from .. import project
+from .. import layout, project
 from ..args import AppOption, command_app
 from ..args import run as run_cli
 from ..connect import asc
@@ -84,7 +85,7 @@ class Packs:
             raise SystemExit('"asset_packs.bundle_path" must contain {theme}')
         return cls(app, app.root / config["manifests"], config["bundle_path"].strip("/"),
                    content_root=app.root / config.get("content_root", "."),
-                   record=app.folder / config.get("record", "ios/asset_packs.json"),
+                   record=app.folder / config.get("record", layout.asset_pack_record(app.folder)),
                    build=app.root / config.get("build_dir", "build/asset-packs"),
                    source_under=(config.get("source_under") or "").strip("/") or None,
                    items=config.get("items") or "items")

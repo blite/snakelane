@@ -32,7 +32,7 @@ from typing import Annotated, Any
 
 import typer
 
-from .. import project
+from .. import layout, project
 from ..args import AppOption, PlatformOption, command_app, resolve_platform
 from ..args import run as run_cli
 from ..connect import asc
@@ -362,7 +362,7 @@ def build(app: project.App, platform: str = "ios", assets: Assets | None = None,
     findings = lint.run(app, platform)
     translation = translations.statuses(app.folder, locales)
     on_disk = {p.name for pf in app.config.get("platforms") or ["ios"]
-               for p in (app.folder / pf / "screenshots").glob("*") if p.is_dir()}
+               for p in layout.screenshots_dir(app.folder / pf).glob("*") if p.is_dir()}
     decks_by_locale = {locale: local_decks(app, locale) for locale in [*locales, *sorted(on_disk - set(locales))]}
     for locale, decks in decks_by_locale.items():
         if live is not None:

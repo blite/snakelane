@@ -12,8 +12,8 @@ snakelane store show                    # print what is live
 ## The listing
 
 `push` reads each locale's text from the most specific file that has any:
-`metadata/<platform>/<locale>/`, `metadata/<platform>/default/`, `metadata/<locale>/`, then
-`metadata/default/`. If none has any, the field is skipped: a missing or blank file leaves the
+`listing/<platform>/locales/<locale>/`, `listing/<platform>/default/`, `listing/locales/<locale>/`,
+then `listing/default/`, all under `metadata/`. If none has any, the field is skipped: a missing or blank file leaves the
 live value alone, and snakelane never pushes an empty string. Before writing, it prints a word-level diff of
 every field that would change and asks (`--yes` skips the question, for CI). After writing, it
 reads App Store Connect back and reports anything that didn't land. `--dry-run` prints the same
@@ -31,7 +31,9 @@ rating included, as a starting point.
 
 Fields: `name`, `subtitle`, `description`, `keywords`, `promotional_text`, `release_notes`,
 `support_url`, `marketing_url`, `privacy_url`, `privacy_choices_url`, plus
-`<platform>/copyright.txt` and the App Review card in `<platform>/review/`.
+`listing/copyright.txt` and the App Review card: `listing/default/review_notes.txt` for the notes (a
+platform's own in `listing/<platform>/default/`), and `snakelane.yml`'s `review.contact` and
+`review.demo` for the contact and demo account.
 
 ## Screenshots, App Previews and creative assets
 
@@ -53,7 +55,7 @@ skipped, so pushing screenshots never deletes previews kept only in App Store Co
 
 ### Screenshots and App Previews
 
-The deck is `metadata/<platform>/screenshots/<locale>/` (in `iphone/`, `ipad/` and `duo/` for iOS),
+The deck is `metadata/screenshots/<platform>/<locale>/` (in `iphone/`, `ipad/` and `duo/` for iOS),
 uploaded in file-name order. The slot each image fills is worked out from its pixel size. 6.3" iPhone and 13" iPad are the
 defaults; other [sizes Apple accepts](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications) upload with a warning, and sizes it doesn't are refused.
 A push replaces each set wholesale:
@@ -106,7 +108,7 @@ crop preview: check it in App Store Connect's product page preview tool before s
 
 ## In-app purchases and subscriptions
 
-`metadata/iap.yml` holds everything the app sells: one-time purchases under
+`metadata/purchases/iap.yml` holds everything the app sells: one-time purchases under
 `products` and [subscriptions](https://developer.apple.com/help/app-store-connect/manage-subscriptions/offer-auto-renewable-subscriptions) under `subscription_groups`.
 
 ```bash

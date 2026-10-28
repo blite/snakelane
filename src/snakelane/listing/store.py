@@ -2,20 +2,25 @@
 to their modules. `store screenshots|previews|creative` are the older, hidden spellings of `store media
 --only …`, kept because apps' docs and scripts call them.
 
-The metadata folder (default `metadata/`) is written once for every platform; a platform folder holds only
-what differs, plus its screenshots. Each field comes from the most specific non-blank file, else it is
-skipped, never pushed blank. Why: docs/design/foundations.md#blank-local-text-means-no-opinion
+The metadata folder (default `metadata/`) is sorted by kind, and its listing is written once for every
+platform; a platform folder holds only what differs. Each field comes from the most specific non-blank
+file, else it is skipped, never pushed blank. Why: docs/design/foundations.md#blank-local-text-means-no-opinion
 
-    default/<field>.txt, <locale>/<field>.txt   name, subtitle, description, keywords, promotional_text,
-                                          release_notes, support_url, marketing_url, privacy_url, privacy_choices_url
-    copyright.txt                         one per version, not per locale
-    review/<field>.txt                    App Review contact card + notes (not localized)
-    iap.yml, iap/                         products and subscription_groups; their review screenshots
-    <platform>/default/, <platform>/<locale>/   version-field overrides (app-level fields refused here)
-    <platform>/copyright.txt, <platform>/review/   platform overrides, per file / per field
-    <platform>/screenshots/<locale>/      ss-NN.jpg/png and ap-NN.m4v; in iphone/, ipad/ and duo/ for iOS
+    listing/default/<field>.txt           name, subtitle, description, keywords, promotional_text,
+    listing/locales/<locale>/<field>.txt    release_notes, support_url, marketing_url, privacy_url,
+                                            privacy_choices_url
+    listing/default/review_notes.txt      the App Review notes (not localized; the contact is
+                                          snakelane.yml's review.contact)
+    listing/copyright.txt                 one per version, not per locale
+    listing/<platform>/default/, …/locales/<locale>/, …/copyright.txt
+                                          platform overrides (app-level fields refused here)
+    purchases/iap.yml, purchases/         products and subscription_groups; their review screenshots
+    screenshots/<platform>/<locale>/      ss-NN.jpg and ap-NN.m4v; in iphone/, ipad/ and duo/ for iOS
     creative/<locale>/, creative/default/  search-result.*, product-page-header.*, universal.png
-                                          (store creative; <platform>/creative/ overrides)
+                                          (store creative; creative/<platform>/ overrides)
+    release/asset_packs.json              the asset pack record
+
+An app still in the flat layout (no listing/) reads as before; `snakelane migrate-layout` moves it.
 
 Every command takes `--app` and, except `subs show`, `--platform`. Every `--dry-run` reads App Store
 Connect and shows what would change when a key is set up, and the local plan when none is.

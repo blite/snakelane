@@ -10,7 +10,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from .. import project
+from .. import layout, project
 from ..terminal import red
 
 CATALOGUE = "iap.yml"
@@ -55,8 +55,9 @@ def confirm_create(product_id: str, create: bool, indent: str, what: str) -> Non
 
 
 def catalogue_path(platform_dir: Path) -> Path:
-    """metadata/iap.yml: purchases belong to the app, not a platform (universal purchase)."""
-    return platform_dir.parent / CATALOGUE
+    """purchases/iap.yml (flat layout: metadata/iap.yml): purchases belong to the app, not a platform
+    (universal purchase)."""
+    return layout.purchases_dir(platform_dir) / CATALOGUE
 
 
 def read_catalogue(platform_dir: Path) -> tuple[Path, dict[str, Any]]:

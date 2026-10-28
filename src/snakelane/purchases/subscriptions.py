@@ -9,7 +9,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 from typing import Any
 
-from .. import project
+from .. import layout, project
 from ..args import load_app, resolve_platform
 from ..connect import asc
 from ..connect.resources import find_app, keyed
@@ -173,7 +173,7 @@ def cmd_subs_push(args: SimpleNamespace) -> None:
             ensure_availability(client, "    ", f"/v1/subscriptions/{sub_id}/subscriptionAvailability",
                                 "subscriptionAvailabilities", ("subscription", "subscriptions", sub_id))
             if shot := sub.get("review_screenshot"):
-                upload_review_screenshot(client, "    ", platform_dir.parent / shot,  # relative to metadata/
+                upload_review_screenshot(client, "    ", layout.purchases_dir(platform_dir) / shot,  # relative to iap.yml's folder
                                          f"/v1/subscriptions/{sub_id}/appStoreReviewScreenshot",
                                          "subscriptionAppStoreReviewScreenshots", {"subscription": rel},
                                          product_id, problems)

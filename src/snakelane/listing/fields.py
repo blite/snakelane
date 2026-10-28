@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from .. import layout
+
 
 @dataclass(frozen=True)
 class Field:
@@ -61,28 +63,27 @@ def read_text(path: Path) -> str | None:
 
 
 def text_candidates(platform_dir: Path, locale: str, name: str) -> list[Path]:
-    """<platform>/<locale>, <platform>/default, <locale>, default — most specific first.
+    """The platform's <locale>, its default, the shared <locale>, the shared default — most specific first.
 
     Why: docs/design/foundations.md#the-listing-is-written-once-platforms-override
     """
-    folder = platform_dir.parent
-    return [platform_dir / locale / name, platform_dir / "default" / name, folder / locale / name, folder / "default" / name]
+    return layout.text_candidates(platform_dir, locale, name)
 
 
 def read_field(platform_dir: Path, locale: str, field: str) -> str | None:
     """App-level fields (one per locale at ASC) refuse a platform copy, or the last platform pushed would win."""
     candidates = text_candidates(platform_dir, locale, f"{field}.txt")
     if LISTING[field].home == "app":
-        if stray := [p for p in candidates[:2] if p.is_file()]:
-            raise SystemExit(f"{stray[0]}: {field} is the same on every platform at App Store "
-                             f"Connect; move it to {platform_dir.parent / stray[0].parent.name / stray[0].name}")
+        if stray := [i for i in (0, 1) if candidates[i].is_file()]:
+            raise SystemExit(f"{candidates[stray[0]]}: {field} is the same on every platform at App Store "
+                             f"Connect; move it to {candidates[stray[0] + 2]}")
         candidates = candidates[2:]
     return next((text for c in candidates if (text := read_text(c)) is not None), None)
 
 
 def read_copyright(platform_dir: Path) -> str | None:
     """One per version, not per locale."""
-    return read_text(platform_dir / "copyright.txt") or read_text(platform_dir.parent / "copyright.txt")
+    return next((text for c in layout.copyright_candidates(platform_dir) if (text := read_text(c))), None)
 
 
 def read_listing(platform_dir: Path, locales: list[str]) -> dict[str, dict[str, str | None]]:
@@ -90,12 +91,41 @@ def read_listing(platform_dir: Path, locales: list[str]) -> dict[str, dict[str, 
     return {locale: {stem: read_field(platform_dir, locale, stem) for stem in LISTING} for locale in locales}
 
 
-def read_review(platform_dir: Path) -> dict[str, str]:
-    """{stem: text}, per field `<platform>/review/` then `metadata/review/`: a Mac build may need its own
-    notes, same contact."""
-    return {stem: text for stem in REVIEW
-            if (text := read_text(platform_dir / "review" / f"{stem}.txt")
-                or read_text(platform_dir.parent / "review" / f"{stem}.txt"))}
+# snakelane.yml's review.contact / review.demo keys, by field stem.
+CONFIG_REVIEW = {"first_name": ("contact", "first_name"), "last_name": ("contact", "last_name"),
+                 "email_address": ("contact", "email"), "phone_number": ("contact", "phone"),
+                 "demo_user": ("demo", "user"), "demo_password": ("demo", "password")}
+
+
+def review_config(app_config: dict[str, Any] | None) -> dict[str, str]:
+    """The contact and demo account from snakelane.yml's `review`: they rarely change and are the
+    same for every platform, so they are settings rather than listing text."""
+    review = (app_config or {}).get("review") or {}
+    if not isinstance(review, dict) or set(review) - {"contact", "demo", "_comment"}:
+        raise SystemExit('snakelane.yml "review" takes "contact" {first_name, last_name, email, phone} '
+                         'and "demo" {user, password}')
+    found = {}
+    for stem, (group, key) in CONFIG_REVIEW.items():
+        if (value := (review.get(group) or {}).get(key)) not in (None, ""):
+            found[stem] = str(value).strip()
+    return found
+
+
+def read_review(platform_dir: Path, app_config: dict[str, Any] | None = None) -> dict[str, str]:
+    """The App Review card: contact and demo account from snakelane.yml, notes from the listing
+    (`default/review_notes.txt`, a platform's own first). Flat layout: per field `<platform>/review/`
+    then `review/`, with snakelane.yml's values winning where it has them."""
+    configured = review_config(app_config)
+    if layout.kind_first(platform_dir.parent):
+        if stray := layout.stray_review_notes(platform_dir):
+            raise SystemExit(f"{stray[0]}: App Store Connect keeps one review note per version, not per "
+                             "language; the notes go in default/review_notes.txt")
+        notes = next((text for c in layout.review_notes_candidates(platform_dir) if (text := read_text(c))), None)
+        return configured | ({"notes": notes} if notes else {})
+    from_files = {stem: text for stem in REVIEW
+                  if (text := next((t for d in layout.review_dirs(platform_dir)
+                                    if (t := read_text(d / f"{stem}.txt"))), None))}
+    return from_files | configured
 
 
 # App Store Connect refuses any write to the review card while one of these is empty on it.

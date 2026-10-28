@@ -58,9 +58,9 @@ platforms: [ios]
 ```
 
 ```
-metadata/default/name.txt
-metadata/default/subtitle.txt
-metadata/default/description.txt
+metadata/listing/default/name.txt
+metadata/listing/default/subtitle.txt
+metadata/listing/default/description.txt
 …
 ```
 

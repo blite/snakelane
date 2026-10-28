@@ -35,7 +35,7 @@ def test_init_writes_a_config_snakelane_reads(repo: Path) -> None:
     assert app.config["scheme"] == "Trail"
     assert app.config["team_id"] == "ABCDE12345"
     assert app.config["platforms"] == ["ios", "macos"]
-    assert (repo / "metadata" / "default" / "name.txt").read_text().strip() == "Trail"
+    assert (repo / "metadata" / "listing" / "default" / "name.txt").read_text().strip() == "Trail"
 
 
 def test_placeholders_cannot_be_pushed_and_nothing_is_overwritten(repo: Path) -> None:
@@ -44,6 +44,6 @@ def test_placeholders_cannot_be_pushed_and_nothing_is_overwritten(repo: Path) ->
     assert any(f.rule == "placeholder" for f in lint.run(app, "ios"))
     with pytest.raises(SystemExit, match="already exists"):
         init.main([])
-    (repo / "metadata" / "default" / "subtitle.txt").write_text("Hike logs\n")
+    (repo / "metadata" / "listing" / "default" / "subtitle.txt").write_text("Hike logs\n")
     init.main(["--force"])
-    assert (repo / "metadata" / "default" / "subtitle.txt").read_text() == "Hike logs\n"
+    assert (repo / "metadata" / "listing" / "default" / "subtitle.txt").read_text() == "Hike logs\n"
