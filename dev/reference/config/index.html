@@ -1739,7 +1739,7 @@ works renamed.</p>
 <span class="w">  </span><span class="nt">scheme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">App (Screenshots)</span><span class="w">      </span><span class="c1"># default: scheme; a Release-config scheme is recommended</span>
 <span class="w">  </span><span class="nt">test</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AppUITests/AppUITestsScreenshotsUITests</span><span class="w">   </span><span class="c1"># -only-testing; null = whole scheme/plan</span>
 <span class="w">  </span><span class="nt">test_plan</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
-<span class="w">  </span><span class="nt">devices</span><span class="p">:</span><span class="w">                       </span><span class="c1"># name, UDID, or {name|id, os, deck: iphone|ipad}</span>
+<span class="w">  </span><span class="nt">devices</span><span class="p">:</span><span class="w">                       </span><span class="c1"># name, UDID, or {name|id, os, deck: iphone|ipad|duo}</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">iPhone 17 Pro</span><span class="w">              </span><span class="c1"># 6.3", the default size</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">iPad Pro 13-inch (M5)</span><span class="w">      </span><span class="c1"># 13"</span>
 <span class="w">  </span><span class="nt">locales</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">en-US</span><span class="p p-Indicator">]</span><span class="w">               </span><span class="c1"># or a mapping {es-MX: es-MX, de-DE: de} → the language key</span>
@@ -1752,7 +1752,7 @@ works renamed.</p>
 <span class="w">  </span><span class="nt">framing</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nv">…</span><span class="p p-Indicator">}</span><span class="w">                   </span><span class="c1"># `snakelane frame`: captions ({"1": …}, or per locale</span>
 <span class="w">                                 </span><span class="c1">#   {en-US: {"1": …}, de-DE: {…}}; a locale without one gets the</span>
 <span class="w">                                 </span><span class="c1">#   primary's; a deck key, mac: {…}, gives that deck its own),</span>
-<span class="w">                                 </span><span class="c1">#   targets (keyed iphone/ipad/mac), and three</span>
+<span class="w">                                 </span><span class="c1">#   targets (keyed iphone/ipad/duo/mac), and three</span>
 <span class="w">                                 </span><span class="c1">#   independent choices: layout (full-bleed|stacked|device, fit),</span>
 <span class="w">                                 </span><span class="c1">#   caption {shape band|arch|callout|headline, position, depth, …},</span>
 <span class="w">                                 </span><span class="c1">#   theme (a built-in name, or {base, fill, text, accent, font, lip, …});</span>
@@ -1763,7 +1763,7 @@ works renamed.</p>
 <span class="w">  </span><span class="nt">check</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">patterns</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">…</span><span class="p p-Indicator">],</span><span class="nt"> corner</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.45</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.06</span><span class="p p-Indicator">],</span><span class="nt"> upscale</span><span class="p">:</span><span class="w"> </span><span class="nv">3</span><span class="p p-Indicator">,</span><span class="nt"> advice</span><span class="p">:</span><span class="w"> </span><span class="s">"…"</span><span class="p p-Indicator">}</span>
 </code></pre></div>
 <p>Every <code>xcodebuild test</code> gets <code>TEST_RUNNER_SNAKELANE_LOCALE</code>, <code>…_LANGUAGE</code>,
-<code>…_PLATFORM</code> (ios, macos) and <code>…_DEVICE</code> (iphone, ipad, or empty for the Mac), plus
+<code>…_PLATFORM</code> (ios, macos) and <code>…_DEVICE</code> (iphone, ipad, duo, or empty for the Mac), plus
 <code>…_BANNER</code> with <code>frame: snakelane</code> and <code>…_REFRAME_LOCALE</code> for reframes. iOS UI-test runners don't
 reliably see them, so the language key also goes through <code>/tmp/&lt;slug&gt;-screenshot-locale</code>, and
 with <code>frame: snakelane</code> the band depth through <code>/tmp/&lt;slug&gt;-screenshot-banner.json</code>. A shoot
@@ -1824,6 +1824,7 @@ describe where the app's packs are and how they are built:</p>
 <span class="w">  </span><span class="nt">record</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ios/asset_packs.json</span><span class="w">           </span><span class="c1"># upload record, in the metadata folder</span>
 <span class="w">  </span><span class="nt">build_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">build/asset-packs</span>
 <span class="w">  </span><span class="nt">source_under</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">approved</span><span class="w">                 </span><span class="c1"># optional: refuse a pictureSource outside this folder</span>
+<span class="w">  </span><span class="nt">items</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">puzzles</span><span class="w">                         </span><span class="c1"># optional: pack.json's list of entries (default "items")</span>
 </code></pre></div>
 
 

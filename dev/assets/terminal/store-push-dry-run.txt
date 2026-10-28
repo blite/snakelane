@@ -18,6 +18,6 @@ lint: clean
   support_url: (no file, or empty — skipped)
   release_notes: (no file, or empty — skipped)
 -- App Review information (appStoreReviewDetail) --
-  (no review/ files — skipped)
+  (no review notes or contact — skipped)
 
 [dry-run] no network calls made — nothing above was written to App Store Connect.
