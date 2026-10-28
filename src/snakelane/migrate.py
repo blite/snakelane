@@ -172,9 +172,12 @@ def iap_screenshot_edits(text: str) -> str:
 def stale_references(app: project.App) -> list[str]:
     """Files outside the metadata folder that name a path the move changes, for fixing by hand."""
     rel = app.folder.relative_to(app.root).as_posix()
-    pattern = (rf"{re.escape(rel)}/(?:\*|ios|macos|default|review|iap|copyright\.txt|"
-               rf"de-DE|es-ES|fr-FR|it|ja|pt-BR|ru|zh-Hans|en-GB|es-MX|en-AU)\b")
-    out = subprocess.run(["git", "-C", str(app.root), "grep", "-nE", pattern, "--", ".", f":(exclude){rel}/**"],
+    # POSIX ERE for git grep: no (?:…) and no \b.
+    names = ["\\*", "<platform>", "<locale>", "ios", "macos", "default", "review", "iap", "copyright",
+             "translations", *app.locales]
+    pattern = rf"{re.escape(rel)}/({'|'.join(names)})([/.]|$)"
+    moved = [f":(exclude){rel}/{kind}/**" for kind in ("listing", "purchases", "screenshots", "creative", "release")]
+    out = subprocess.run(["git", "-C", str(app.root), "grep", "-nE", pattern, "--", ".", *moved],
                          capture_output=True, text=True)
     return out.stdout.splitlines()
 
