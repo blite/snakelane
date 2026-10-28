@@ -119,6 +119,44 @@ def test_jpeg_dimensions(tmp_path: Path) -> None:
     assert media.screenshot_dimensions(path) == (1284, 2778)
 
 
+def capture(image):  # a flat colour is a blank capture to the extract, so mark one pixel
+    image.putpixel((0, 0), (255, 255, 255, 255))
+    return image
+
+
+def test_a_blank_or_undersized_mac_capture_fails_before_anything_is_filed(tmp_path: Path) -> None:
+    import json
+
+    from PIL import Image
+
+    from snakelane.screenshots import extract
+
+    def attach(*shots: tuple[str, Image.Image]) -> Path:
+        folder = tmp_path / f"attachments{len(list(tmp_path.iterdir()))}"
+        folder.mkdir()
+        manifest = []
+        for n, (name, picture) in enumerate(shots):
+            picture.save(folder / f"{n}.png")
+            manifest.append({"attachments": [{"suggestedHumanReadableName":
+                                              f"{name}_0_0123ABCD-0000-0000-0000-00000000000{n}.png",
+                                              "exportedFileName": f"{n}.png"}]})
+        (folder / "manifest.json").write_text(json.dumps(manifest))
+        return folder
+
+    dirs = {"raw": tmp_path / "raw", "framed": tmp_path / "framed"}
+    for d in dirs.values():
+        d.mkdir()
+    good = capture(Image.new("RGB", (2880, 1800), (20, 40, 60)))
+    blank = Image.new("RGB", (2880, 1800), (255, 255, 255))
+    small = capture(Image.new("RGB", (544, 340), (20, 40, 60)))
+    with pytest.raises(SystemExit, match=r"ss-02 \(raw\): one flat colour"):
+        extract.stage(attach(("01-Board", good), ("02-Home", blank)), dirs, "mac")
+    with pytest.raises(SystemExit, match=r"(?s)544x340.*Screen Recording"):
+        extract.stage(attach(("01-Board", small)), dirs, "mac")
+    assert not list(dirs["raw"].iterdir())
+    assert extract.stage(attach(("01-Board", small)), dirs, "iphone")["raw"] == 1  # only the Mac has a floor
+
+
 def test_extraction_files_attachments_as_rgb_jpegs(tmp_path: Path) -> None:
     import json
 
@@ -131,7 +169,7 @@ def test_extraction_files_attachments_as_rgb_jpegs(tmp_path: Path) -> None:
     uuid = "0123ABCD-0000-0000-0000-000000000000"
     manifest = []
     for name, file in (("01-Home", "a.png"), ("01-Home_framed", "b.png"), ("Screenshot", "c.png")):
-        Image.new("RGBA", (1284, 2778), (20, 40, 60, 255)).save(attachments / file)
+        capture(Image.new("RGBA", (1284, 2778), (20, 40, 60, 255))).save(attachments / file)
         manifest.append({"attachments": [{"suggestedHumanReadableName": f"{name}_0_{uuid}.png",
                                           "exportedFileName": file}]})
     (attachments / "manifest.json").write_text(json.dumps(manifest))
@@ -154,7 +192,7 @@ def test_a_retried_shot_keeps_the_passing_attempt(tmp_path: Path) -> None:
     manifest = []
     # The passing retry is listed first; the hung first attempt's capture is older.
     for file, colour, when in (("retry.png", (0, 200, 0, 255), 200.0), ("hung.png", (200, 0, 0, 255), 100.0)):
-        Image.new("RGBA", (1206, 2622), colour).save(attachments / file)
+        capture(Image.new("RGBA", (1206, 2622), colour)).save(attachments / file)
         manifest.append({"attachments": [{"suggestedHumanReadableName":
                                           f"01-Home_0_0123ABCD-0000-0000-0000-00000000000{len(manifest)}.png",
                                           "exportedFileName": file, "timestamp": when}]})

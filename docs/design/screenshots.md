@@ -43,6 +43,15 @@ already have captured a shot or two in a bad state. The extract keeps the newest
 slot (the attachment's `timestamp`), which is the passing attempt's; it used to keep whichever
 the manifest listed last.
 
+### A blank capture fails the shoot
+
+A test can pass with nothing captured. Jigsaw's first Mac shoot (2026-10-28) passed all seven
+tests and filed seven 544x340 white rectangles: the runner had no Screen Recording access, so
+its window screenshots came back blank and small. A passing shoot discards the deck it set aside,
+so the previous hand-made deck was lost with it. The extract now looks at every capture before
+filing any: one flat colour, or a Mac capture under 1280x800 (the smallest Mac size App Store
+Connect takes), exits the pass, and the failed shoot puts the previous deck back.
+
 ### The Mac lane checks for developer mode and Automation Mode
 
 Both switches are administrator actions, so the shoot prints the commands rather than running them. They are once per machine, though an OS upgrade turns Automation Mode back off. Without developer mode the failure arrives after the whole project has built, as "The test runner failed to initialize for UI testing (Underlying Error: Authentication canceled…)", which names a dialog rather than the switch. Without Automation Mode every synthesized click and key is dropped after about five seconds with no error. The no-authentication setting is used because a run that asks for a password part-way through is a run nobody is watching.

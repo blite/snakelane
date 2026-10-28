@@ -22,8 +22,22 @@ from .media import save_jpeg
 NAME_RE = re.compile(r"^([0-9]{2})-[A-Za-z][A-Za-z0-9-]*(_framed)?_\d+_[0-9A-F-]{36}\.png$")
 
 
-def stage(attachments_dir: Path, dirs: dict[str, Path]) -> dict[str, int]:
-    """Route each attachment into `dirs["raw"]` or `dirs["framed"]` by its `_framed` suffix."""
+def capture_problem(image: Image.Image, deck: str) -> str | None:
+    """Why a capture can't be a screenshot, or None. A passing test can still attach nothing: a Mac
+    runner without Screen Recording access captured every window as a small white rectangle, and the
+    shoot filed seven of them over the previous deck.
+    Why: docs/design/screenshots.md#a-blank-capture-fails-the-shoot"""
+    low, high = image.convert("L").getextrema()
+    if low == high:
+        return f"one flat colour ({low}): nothing was captured"
+    if deck == "mac" and (image.width < 1280 or image.height < 800):
+        return f"{image.width}x{image.height}, under the smallest Mac size App Store Connect takes (1280x800)"
+    return None
+
+
+def stage(attachments_dir: Path, dirs: dict[str, Path], deck: str = "") -> dict[str, int]:
+    """Route each attachment into `dirs["raw"]` or `dirs["framed"]` by its `_framed` suffix. Exits,
+    before filing anything, when a capture is blank or too small (see `capture_problem`)."""
     stats = {"raw": 0, "framed": 0, "unknown": 0}
     # A retried test leaves both attempts' captures: the newest of each slot is the passing one.
     # Why: docs/design/screenshots.md#a-hung-shot-is-cut-off-and-retried
@@ -36,6 +50,15 @@ def stage(attachments_dir: Path, dirs: dict[str, Path]) -> dict[str, int]:
             slot, when = ("framed" if match[2] else "raw", match[1]), attachment.get("timestamp") or 0.0
             if slot not in latest or when >= latest[slot][0]:
                 latest[slot] = (when, attachment["exportedFileName"])
+    problems = []
+    for (kind, number), (_, exported) in sorted(latest.items()):
+        with Image.open(attachments_dir / exported) as image:
+            if problem := capture_problem(image, deck):
+                problems.append(f"  ss-{number} ({kind}): {problem}")
+    if problems:
+        raise SystemExit("the test passed but its captures can't be screenshots:\n" + "\n".join(problems)
+                         + ("\n  a Mac runner needs Screen Recording access (System Settings > Privacy & Security"
+                            " > Screen & System Audio Recording)" if deck == "mac" else ""))
     for (kind, number), (_, exported) in latest.items():
         # JPEG, not the PNG it arrived as: ASC rejects the alpha channel captures carry.
         # Named by slot only: docs/design/screenshots.md#files-are-named-by-slot-only
@@ -55,7 +78,7 @@ def extract_deck(xcresult: Path, tree: DeckTree, locale: str = "en-US", label: s
         out.mkdir(parents=True)
         subprocess.run(["xcrun", "xcresulttool", "export", "attachments", "--path", str(xcresult),
                         "--output-path", str(out)], check=True)
-        stats = stage(out, {"raw": tree.raw(locale), "framed": tree.framed(locale)})
+        stats = stage(out, {"raw": tree.raw(locale), "framed": tree.framed(locale)}, tree.deck)
     print(f"[{label or xcresult.stem}] raw={stats['raw']} framed={stats['framed']} "
           f"unknown={stats['unknown']} → {tree.framed(locale)}")
     if stats["raw"] + stats["framed"] == 0:
