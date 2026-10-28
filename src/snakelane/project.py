@@ -172,7 +172,7 @@ class DeckTree:
         framed (what ships)   <metadata>/<platform>/screenshots/<locale>/<device>/
         raw (the captures)    <repo>/.snakelane/<slug>/raw/<platform>/<locale>/<device>/
 
-    `device` is "iphone"/"ipad" for iOS, "" for a Mac deck (in the locale folder itself).
+    `device` is "iphone"/"ipad"/"duo" for iOS, "" for a Mac deck (in the locale folder itself).
     Why raw is outside metadata/: docs/design/foundations.md#raw-captures-live-outside-metadata
     """
 
@@ -182,7 +182,7 @@ class DeckTree:
 
     framed_base = property(lambda self: self.app.folder / self.platform / "screenshots")
     raw_base = property(lambda self: self.app.work_dir / "raw" / self.platform)
-    deck = property(lambda self: self.device or "mac")  # iphone, ipad or mac
+    deck = property(lambda self: self.device or "mac")  # iphone, ipad, duo or mac
 
     def framed(self, locale: str) -> Path:
         return self.framed_base / locale / self.device
@@ -199,7 +199,9 @@ class DeckTree:
 
 
 def device_deck(device_name: str) -> str:
-    return "ipad" if "ipad" in device_name.lower() else "iphone"
+    """The deck a simulator's shots file into, by its name: an iPhone Duo has its own App Store slot."""
+    name = device_name.lower()
+    return "ipad" if "ipad" in name else "duo" if "duo" in name else "iphone"
 
 
 def load_app(config_path: Path) -> App:

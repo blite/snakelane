@@ -34,7 +34,7 @@ class Shot:
 
     slot: int                        # the shot's number, ss-NN
     locale: str                      # the ASC locale being framed, e.g. "de-DE"
-    deck: str                        # "iphone", "ipad" or "mac"
+    deck: str                        # "iphone", "ipad", "duo" or "mac"
     size: tuple[int, int]            # the canvas, width x height
     capture: tuple[int, int, int, int]   # (x, y, width, height) of the capture on the canvas; a
                                      # bleeding device card's box runs past the bottom edge

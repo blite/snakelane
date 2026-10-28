@@ -7,7 +7,7 @@ metadata/<platform>/screenshots/<locale>/<device>/ss-NN.jpg. Settings: snakelane
 `screenshots.framing` (keys: docs/reference/framing.md; reasons: docs/design/framing.md).
 A raw file's slot is its `ss-NN` name; a capture without a caption is an error. `framing.captions`
 is one {slot: caption} map for every locale, or {locale: {slot: caption}}; a locale without an
-entry gets the primary locale's. A deck key (iphone, ipad, mac) holds that deck's own captions in
+entry gets the primary locale's. A deck key (iphone, ipad, duo, mac) holds that deck's own captions in
 either form; a deck without one uses the rest. Without `framing.targets`, a deck is framed at its
 captures' size, or, when they differ, at the most common App Store size among them.
 """
@@ -31,9 +31,9 @@ from .framing.themes import THEMES
 from .media import SCREENSHOT_DISPLAY_TYPES, deck_files, save_jpeg, screenshot_dimensions
 
 # The canvas when "targets" names none: 6.3" iPhone, 13" iPad, the Mac. Only the handoff needs it.
-DECK_CANVAS = {"iphone": (1206, 2622), "ipad": (2064, 2752), "mac": (2880, 1800)}
+DECK_CANVAS = {"iphone": (1206, 2622), "ipad": (2064, 2752), "duo": (1398, 2034), "mac": (2880, 1800)}
 CAPTIONS = 'snakelane.yml "framing.captions"'
-PLATFORM_DECKS = {"ios": ("iphone", "ipad"), "macos": ("mac",)}
+PLATFORM_DECKS = {"ios": ("iphone", "ipad", "duo"), "macos": ("mac",)}
 OLD_ACCENT = re.compile(r"(?<![*\\])\*(?!\*)[^*\n]+(?<![*\\])\*(?!\*)")
 
 

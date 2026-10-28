@@ -72,7 +72,7 @@ every run, so a broken translation fails before it is drawn.
 
 ### Captions per deck
 
-A deck key (`iphone`, `ipad`, `mac`) gives that deck its own captions, in either form above;
+A deck key (`iphone`, `ipad`, `duo`, `mac`) gives that deck its own captions, in either form above;
 every deck without one uses the rest. A Mac app is clicked and fills a window where the phone
 app is tapped and fills the screen, so the same shot often needs different words:
 
@@ -110,7 +110,7 @@ size stops the run.
 |---|---|
 | `slot` | The shot's number (`ss-NN`) |
 | `locale` | The ASC locale being framed, e.g. `de-DE`; translate the art from it |
-| `deck` | `iphone`, `ipad` or `mac` |
+| `deck` | `iphone`, `ipad`, `duo` or `mac` |
 | `size` | The canvas, `(width, height)` |
 | `capture` | `(x, y, width, height)` of the capture on the canvas. A bleeding device card's box runs past the bottom edge; for `full-bleed` it is the whole canvas |
 | `caption` | The caption as written, marks and all |

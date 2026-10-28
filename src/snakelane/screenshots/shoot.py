@@ -68,7 +68,7 @@ class DeviceSpec:  # one lineup entry as snakelane.yml wrote it, before simctl i
     name: str | None = None
     udid: str | None = None
     os: str | None = None
-    deck: str | None = None  # "iphone" / "ipad"; default from the device's name
+    deck: str | None = None  # "iphone" / "ipad" / "duo"; default from the device's name
 
     @classmethod
     def parse(cls, entry: Any) -> DeviceSpec:
@@ -553,7 +553,7 @@ def reframe_with_test(args: SimpleNamespace) -> None:
     app = resolve_app(args.app)
     config = load_config(app)
     mac = args.platform == "macos"
-    populated = [d for d in (("mac",) if mac else ("iphone", "ipad"))
+    populated = [d for d in (("mac",) if mac else ("iphone", "ipad", "duo"))
                  if (raw := DeckTree.for_deck(app, d).raw(args.locale)).is_dir() and any(raw.iterdir())]
     if config.frame == "none":
         raise SystemExit(f'{app.name} ships its raw captures ("frame": "none"); there is no banner to redraw')

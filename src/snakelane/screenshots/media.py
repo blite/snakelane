@@ -37,6 +37,10 @@ IOS_SLOTS = [
     ("APP_IPHONE_65", '6.5"', [(1242, 2688), (1284, 2778)]),  # 11 Pro Max / XS Max, 14 Plus / 13 Pro Max
     # Plus the physically 6.5" iPhone Air (1260x2736), which files here.
     ("APP_IPHONE_67", '6.9"', [(1260, 2736), (1290, 2796), (1320, 2868)]),
+    # iPhone Duo, outer (closed) and inner (open) display. Not in Apple's OpenAPI (4.5.1, 2026-10);
+    # App-Store-Connect-CLI#2926 created the set and uploaded the outer size. Required from April 2027
+    # for apps built with the iOS 27.1 SDK.
+    ("APP_IPHONE_DUO", "Duo", [(1398, 2034), (2007, 2853)]),
     ("APP_IPAD_PRO_3GEN_129", '13"', [(2064, 2752)]),  # required
     ("APP_IPAD_PRO_3GEN_129", '12.9"', [(2048, 2732)]),  # legacy, same slot
 ]
@@ -49,6 +53,7 @@ SCREENSHOT_DISPLAY_TYPES = {
 # The sizes snakelane shoots by default; any other accepted size uploads with a warning.
 # Why: docs/design/screenshots.md#non-default-sizes-are-a-warning
 DISPLAY_TYPE_FAMILY = {"APP_IPHONE_61": "iPhone", "APP_IPHONE_65": "iPhone", "APP_IPHONE_67": "iPhone",
+                       "APP_IPHONE_DUO": "iPhone Duo",
                        "APP_IPAD_PRO_3GEN_129": "iPad", "APP_DESKTOP": "Mac"}
 PREFERRED_SIZES = {  # family -> (label, sizes, advice)
     "iPhone": ('6.3"', {d for d, t in SCREENSHOT_DISPLAY_TYPES.items() if t == "APP_IPHONE_61"},

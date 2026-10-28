@@ -9,7 +9,7 @@ import XCTest
 ///
 /// Extraction: after `xcodebuild test`, `snakelane shoot` (extraction)
 /// pulls the attachments out of the xcresult bundle and routes raw
-/// vs framed: framed into `metadata/ios/screenshots/<locale>/{iphone,ipad}/`, raw into `.snakelane/`. The
+/// vs framed: framed into `metadata/ios/screenshots/<locale>/{iphone,ipad,duo}/`, raw into `.snakelane/`. The
 /// `snakelane shoot` wires that up for you.
 ///
 /// Test method ordering matters: XCTest runs methods alphabetically;

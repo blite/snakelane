@@ -9,7 +9,7 @@ from typing import Any
 
 from .themes import THEMES
 
-DECKS = ("iphone", "ipad", "mac")
+DECKS = ("iphone", "ipad", "duo", "mac")
 LAYOUTS = ("full-bleed", "stacked", "device")
 SHAPES = ("band", "arch", "callout", "headline")
 FITS = ("scale", "crop")

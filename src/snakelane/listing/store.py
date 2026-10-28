@@ -13,7 +13,7 @@ skipped, never pushed blank. Why: docs/design/foundations.md#blank-local-text-me
     iap.yml, iap/                         products and subscription_groups; their review screenshots
     <platform>/default/, <platform>/<locale>/   version-field overrides (app-level fields refused here)
     <platform>/copyright.txt, <platform>/review/   platform overrides, per file / per field
-    <platform>/screenshots/<locale>/      ss-NN.jpg/png and ap-NN.m4v; in iphone/ and ipad/ for iOS
+    <platform>/screenshots/<locale>/      ss-NN.jpg/png and ap-NN.m4v; in iphone/, ipad/ and duo/ for iOS
     creative/<locale>/, creative/default/  search-result.*, product-page-header.*, universal.png
                                           (store creative; <platform>/creative/ overrides)
 

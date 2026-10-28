@@ -11,7 +11,7 @@ snakelane shoot --platform macos    # the Mac deck, from this Mac
 
 `shoot` runs the app's screenshot UI test on each simulator in the config's
 `screenshots.devices`, once per screenshot locale, and files the captures as
-`metadata/ios/screenshots/<locale>/iphone/ss-NN.jpg` (and `ipad/`, or straight in the locale
+`metadata/ios/screenshots/<locale>/iphone/ss-NN.jpg` (and `ipad/` and `duo/`, or straight in the locale
 folder for the Mac). The raw captures, before captions, go to `.snakelane/`, which you should
 gitignore. The status bar is pinned to 9:41.
 If any run fails, the previous deck is put back as it was, so a push never uploads a

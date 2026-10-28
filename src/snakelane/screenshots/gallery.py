@@ -42,7 +42,7 @@ from ..listing.fields import LISTING, TEXT_FIELDS, read_field
 from . import media
 
 SKIP_DIRS = {"build", "DerivedData", ".build", "Pods", "node_modules", ".git"}
-FOLDER_FAMILIES = {"iphone": "iPhone", "ipad": "iPad"}  # device folder -> what the page calls it
+FOLDER_FAMILIES = {"iphone": "iPhone", "ipad": "iPad", "duo": "iPhone Duo"}  # device folder -> what the page calls it
 THUMB_WIDTH = 400  # live thumbnails: enough to compare, a fraction of the bytes
 
 
@@ -111,7 +111,7 @@ def local_decks(app: project.App, locale: str) -> list[Deck]:
             previews = media.deck_files([folder], media.PREVIEW_SUFFIXES, "preview", quiet=True)
             is_root = folder == dirs[0]
             if is_root and not shots and not previews and len(dirs) > 1:
-                continue  # the locale folder only holds iphone/ and ipad/
+                continue  # the locale folder only holds iphone/, ipad/ and duo/
             family = ((None if is_root else FOLDER_FAMILIES.get(folder.name))
                       or ("Mac" if platform == "macos" else "iPhone"))
             found.append(Deck(family, platform, folder, shots, previews))

@@ -23,6 +23,25 @@ def test_every_accepted_63_inch_size_maps(tmp_path: Path, size: tuple[int, int])
     assert media.display_type_for(image(tmp_path / "ss-01.png", *size)) == "APP_IPHONE_61"
 
 
+@pytest.mark.parametrize("size", [(1398, 2034), (2034, 1398), (2007, 2853), (2853, 2007)])
+def test_both_iphone_duo_displays_map_to_its_slot(tmp_path: Path, size: tuple[int, int]) -> None:
+    assert media.display_type_for(image(tmp_path / "ss-01.png", *size)) == "APP_IPHONE_DUO"
+
+
+def test_a_duo_size_is_not_a_size_warning() -> None:
+    assert media.size_warnings([(1398, 2034), (2007, 2853)]) == []
+
+
+@pytest.mark.parametrize("name, deck", [
+    ("iPhone 17 Pro", "iphone"), ("iPad Pro 13-inch (M5)", "ipad"),
+    ("iPhone Duo", "duo"), ("iPhone Duo — Play", "duo"),
+])
+def test_a_simulator_files_into_its_deck_by_name(name: str, deck: str) -> None:
+    from snakelane.project import device_deck
+
+    assert device_deck(name) == deck
+
+
 def test_unknown_size_is_refused(tmp_path: Path) -> None:
     with pytest.raises(SystemExit, match="unknown screenshot pixel size"):
         media.display_type_for(image(tmp_path / "ss-01.png", 1668, 2420))

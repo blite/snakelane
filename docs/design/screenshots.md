@@ -147,6 +147,8 @@ The display type is read from the image's pixel size. Both orientations are list
 
 1290x2796, the third accepted 6.9" size (iPhone 14, 15 and 16 Pro Max and Plus), was missing until 2026-10-02, so a deck shot on one of those simulators failed the push as an unknown size. The legacy 12.9" iPad sizes stay mapped so an older deck still pushes until its next re-shoot. The iPad naming is a trap: the current device is named for its chip and the legacy one for its inches, so the older simulator is the one that reads like the deliberate choice.
 
+iPhone Duo got its own slot on 2026-10-28: 1398x2034 for the outer (closed) display and 2007x2853 for the inner (open) one, per Apple's screenshot-specifications page, both in `APP_IPHONE_DUO`. That value is not in Apple's OpenAPI (4.5.1); another ASC client (App-Store-Connect-CLI#2926) created a set with it and uploaded the outer size, and nobody has uploaded the inner size yet. A Duo is a device of its own rather than a bigger iPhone, so it gets its own `duo/` deck, which a simulator named "Duo" files into by default; filed into `iphone/`, its shots would overwrite the phone deck's `ss-NN` names. Duo sets are optional until April 2027, when apps built with the iOS 27.1 SDK must have them. There is no Duo App Preview slot in `ACCEPTED_PREVIEW_SIZES` until one is confirmed, so `store media push` refuses a video in `duo/` rather than guessing.
+
 ### Non-default sizes are a warning
 
 Any accepted size uploads. A size other than the default (6.3" iPhone, 13" iPad) gets a warning, because the class that was shot is the one ASC shows as uploaded rather than dimmed.

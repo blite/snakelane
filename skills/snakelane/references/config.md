@@ -64,7 +64,7 @@ screenshots:
   scheme: App (Screenshots)      # default: scheme; a Release-config scheme is recommended
   test: AppUITests/AppUITestsScreenshotsUITests   # -only-testing; null = whole scheme/plan
   test_plan: null
-  devices:                       # name, UDID, or {name|id, os, deck: iphone|ipad}
+  devices:                       # name, UDID, or {name|id, os, deck: iphone|ipad|duo}
     - iPhone 17 Pro              # 6.3", the default size
     - iPad Pro 13-inch (M5)      # 13"
   locales: [en-US]               # or a mapping {es-MX: es-MX, de-DE: de} → the language key
@@ -77,7 +77,7 @@ screenshots:
   framing: {…}                   # `snakelane frame`: captions ({"1": …}, or per locale
                                  #   {en-US: {"1": …}, de-DE: {…}}; a locale without one gets the
                                  #   primary's; a deck key, mac: {…}, gives that deck its own),
-                                 #   targets (keyed iphone/ipad/mac), and three
+                                 #   targets (keyed iphone/ipad/duo/mac), and three
                                  #   independent choices: layout (full-bleed|stacked|device, fit),
                                  #   caption {shape band|arch|callout|headline, position, depth, …},
                                  #   theme (a built-in name, or {base, fill, text, accent, font, lip, …});
@@ -89,7 +89,7 @@ screenshots:
 ```
 
 Every `xcodebuild test` gets `TEST_RUNNER_SNAKELANE_LOCALE`, `…_LANGUAGE`,
-`…_PLATFORM` (ios, macos) and `…_DEVICE` (iphone, ipad, or empty for the Mac), plus
+`…_PLATFORM` (ios, macos) and `…_DEVICE` (iphone, ipad, duo, or empty for the Mac), plus
 `…_BANNER` with `frame: snakelane` and `…_REFRAME_LOCALE` for reframes. iOS UI-test runners don't
 reliably see them, so the language key also goes through `/tmp/<slug>-screenshot-locale`, and
 with `frame: snakelane` the band depth through `/tmp/<slug>-screenshot-banner.json`. A shoot
