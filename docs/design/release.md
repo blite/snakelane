@@ -58,20 +58,36 @@ A Homebrew rsync 3.4 or later ahead of it rejects the flags, and the export fail
 failed" after a good archive (Jigsaw). The key path passed to the export is absolute because
 xcodebuild rejects a relative or tilde'd path with an unhelpful auth error.
 
-### A new app's first export
+### Export signing failures
 
-A brand-new bundle id has no App Store provisioning profile. With no Apple Distribution
-certificate in the keychain (the normal state with Xcode-managed signing), `-exportArchive`
-has to make one with Apple's cloud-managed certificate, and an App Manager API key may not:
-the export fails with "Cloud signing permission error" and "No profiles for '<bundle id>'
-were found", after a good archive (FreeCell, 2026-10). The family's older apps never showed
-it because each already had an Xcode-made "iOS Team Store Provisioning Profile" from an
-upload through Organizer.
+`ship` exports with the App Store Connect key, never the user's Apple ID, so it can sign only
+with an Apple Distribution certificate in this Mac's keychain that the app's App Store profile
+includes. Apple's cloud-managed certificate, which is how Xcode's own uploads sign, is off limits
+to an App Manager key. Three different problems stop the export there, and they need different
+words:
 
-`ship` recognises those two lines (`FIRST_EXPORT_SIGNS`) and replaces xcodebuild's traceback
-with the two ways past it: upload that archive from Organizer once, or give the key the Admin
-role. It does not try either itself: one is a person signing in as their Apple ID, the other
-a change to what the key may do.
+- **No profile** ("No profiles for '<bundle id>'"): a new bundle id's first upload (FreeCell,
+  2026-10). The family's older apps never showed it because each already had a profile.
+- **No certificate** ('No signing certificate "iOS Distribution" found'): the Mac has never had
+  an Apple Distribution certificate, because every upload so far went through Xcode's cloud
+  signing (Cloudless Cam, 2026-10-30).
+- **Profile without the certificate** ("Provisioning profile … doesn't include signing
+  certificate"): the certificate was made after Xcode built the profile around the cloud one.
+  Cloudless Cam hit this an hour after the previous case, once its certificate existed.
+
+All three also print "Cloud signing permission error", because the export tries the cloud
+certificate first. The first version matched that line and called every one of them a first
+upload, which sent an app with a dozen builds in TestFlight looking for a missing profile.
+`SIGNING_PROBLEMS` names each by its own line and leaves anything else as xcodebuild's error.
+
+The fix is the same Xcode step for all three, after adding the certificate in Xcode → Settings
+→ Accounts when there isn't one: upload that archive from Organizer. Xcode signs as the Apple ID
+and remakes its managed "Team Store" profile with every Apple Distribution certificate the team
+has. Cloudless Cam's iOS profile went from the cloud certificate alone to both after one upload,
+so later exports have a certificate they're allowed to sign with. Each platform has its own profile (the Mac one was
+untouched). The Admin role on the key is the other way out; it widens what a leaked key could
+do, so the message offers it second. `ship` does neither itself: one is the user signing in as
+their Apple ID, the other a change to what the key may do.
 
 ### dSYMs to Sentry
 

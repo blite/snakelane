@@ -147,33 +147,60 @@ def upload(app: App, archive_path: Path) -> None:
                     "-authenticationKeyID", credentials.key_id, "-authenticationKeyIssuerID", credentials.issuer_id],
                    env)
     except subprocess.CalledProcessError as error:
-        if needs_first_store_profile(error.output or ""):
-            raise SystemExit(first_upload_message(app, archive_path)) from None
+        if problem := signing_problem(error.output or ""):
+            raise SystemExit(signing_failure_message(app, archive_path, problem)) from None
         raise
 
 
-# What `-exportArchive` prints when the bundle id has no App Store provisioning profile and the
-# API key may not make one. Why: docs/design/release.md#a-new-apps-first-export
-FIRST_EXPORT_SIGNS = ("Cloud signing permission error", "No profiles for")
+# Why export signing fails, told apart by the line xcodebuild prints for each. All three also
+# print "Cloud signing permission error" (the export tries Apple's cloud certificate first), so
+# that line names none of them. Why: docs/design/release.md#export-signing-failures
+SIGNING_PROBLEMS = (
+    # The App Store profile predates this Mac's certificate, or Xcode made it with the cloud one.
+    ("profile-lacks-certificate", re.compile(r"Provisioning profile .* doesn't include signing certificate")),
+    # No Apple Distribution certificate with its private key in this Mac's keychain.
+    ("no-certificate", re.compile(r'No signing certificate "[^"]*Distribution" found')),
+    # A new bundle id: no App Store profile at all yet.
+    ("no-profile", re.compile(r"No profiles for ")),
+)
 
 
-def needs_first_store_profile(output: str) -> bool:
-    """Whether an export failed because this is a new app's first upload (no store profile yet)."""
-    return any(sign in output for sign in FIRST_EXPORT_SIGNS)
+def signing_problem(output: str) -> str | None:
+    """Which signing problem stopped an export, or None for any other failure."""
+    return next((name for name, line in SIGNING_PROBLEMS if line.search(output)), None)
 
 
-def first_upload_message(app: App, archive_path: Path) -> str:
-    """The way past a first export that can't sign: upload this archive from Xcode once."""
+def signing_failure_message(app: App, archive_path: Path, problem: str) -> str:
+    """What went wrong signing, and the fix in Xcode: it signs this archive as the user's Apple ID and
+    remakes the App Store profile with this Mac's certificate, so the next ship can sign."""
+    bundle_id = app.config["bundle_id"]
+    cause = {
+        "no-profile": (
+            f"{bundle_id} has no App Store provisioning profile yet (a new app's first upload), and this API "
+            "key isn't allowed to make one."),
+        "no-certificate": (
+            "this Mac has no Apple Distribution certificate, and this API key isn't allowed to use Apple's "
+            "cloud-managed one. Uploads from Xcode work because Xcode signs as your Apple ID, not the key."),
+        "profile-lacks-certificate": (
+            f"the App Store provisioning profile for {bundle_id} doesn't include this Mac's Apple Distribution "
+            "certificate (it was made before the certificate existed), and this API key isn't allowed to "
+            "remake it."),
+    }[problem]
+    steps = []
+    if problem == "no-certificate":
+        steps.append("add one in Xcode → Settings → Accounts → your team → Manage Certificates → + → "
+                     "Apple Distribution")
+    steps.append(
+        f"upload this archive from Xcode: open {shlex.quote(str(archive_path))}, then Distribute App → App "
+        "Store Connect → Upload. Xcode signs as your Apple ID and remakes the App Store profile with this "
+        "Mac's certificate, so the next `snakelane ship` can sign. The build number is already stamped; "
+        "`snakelane ship symbols` sends its dSYMs if the app uses Sentry.")
+    numbered = "".join(f"  {n}. {step}\n" for n, step in enumerate(steps, 1))
     return (
-        f"the archive is built, but it can't be signed for the App Store yet: {app.config['bundle_id']} has no App "
-        "Store provisioning profile, and this API key isn't allowed to make one with Apple's cloud signing.\n"
-        "That happens once, on a new app's first upload. Either:\n"
-        f"  1. upload this archive from Xcode:  open {shlex.quote(str(archive_path))}\n"
-        "     then Distribute App → App Store Connect → Upload. Xcode signs as your Apple ID and creates "
-        "the profile; every later `snakelane ship beta` uses it. The build number is already stamped.\n"
-        "  2. or give the key cloud signing (Admin role) in App Store Connect → Users and Access → "
-        "Integrations, then run `snakelane ship beta` again.\n"
-        "skills/snakelane/references/first-release.md §5 has the details."
+        f"the archive is built, but it can't be signed for the App Store: {cause}\n"
+        f"{numbered}"
+        "(Or give the key cloud signing, the Admin role, in App Store Connect → Users and Access → "
+        "Integrations.) skills/snakelane/references/first-release.md §5 has the details."
     )
 
 

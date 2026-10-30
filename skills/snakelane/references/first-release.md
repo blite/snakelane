@@ -123,22 +123,33 @@ error: exportArchive No profiles for 'com.example.app' were found
   Xcode couldn't find any iOS App Store provisioning profiles matching 'com.example.app'.
 ```
 
-A new bundle id has no App Store provisioning profile. With no Apple Distribution certificate
-in the keychain (the normal state on a machine that uses Xcode-managed signing), Xcode must
-make the profile with Apple's **cloud-managed** distribution certificate, and an App Manager
-API key isn't allowed to. Existing apps never hit this because they already have an
-Xcode-made "iOS Team Store Provisioning Profile" — check
-`~/Library/Developer/Xcode/UserData/Provisioning Profiles/` to see which do.
+A new bundle id has no App Store provisioning profile. The key signs only with an Apple
+Distribution certificate in this Mac's keychain that the profile includes; Apple's
+**cloud-managed** certificate, which Xcode's own uploads use, is off limits to an App Manager
+key. The same rule produces two more failures on apps that are *not* new, and `ship` names
+each one:
 
-Either, and it's the user's account so the user does it:
+- **No certificate** (`No signing certificate "iOS Distribution" found`): every upload so far
+  went through Xcode, so the Mac never needed one.
+- **Profile without the certificate** (`Provisioning profile … doesn't include signing
+  certificate`): the certificate was made after Xcode built the profile.
 
-1. **Upload the first build from Xcode.** `ship beta` leaves the archive at
-    `build/<App>-ios.xcarchive`: `open` it, then Organizer → Distribute App → App Store Connect
-    → Upload. Xcode signs as the user's Apple ID and creates the store profile; every later
-    `ship beta` exports against it. Simplest, and it's what the family's older apps did.
-2. **Give the key cloud signing.** In App Store Connect → Users and Access → Integrations,
-    an Admin-role team key can use the cloud-managed certificate. That changes what a leaked
-    key could do; let the user weigh it.
+All three also print `Cloud signing permission error`; that line alone names none of them.
+Check `~/Library/Developer/Xcode/UserData/Provisioning Profiles/` to see what a profile holds.
+
+The fix is in Xcode, and it's the user's account so the user does it:
+
+1. **No certificate on this Mac:** Xcode → Settings → Accounts → the team → Manage Certificates
+    → + → Apple Distribution.
+2. **Upload the archive from Organizer.** `ship beta` leaves it at `build/<App>-ios.xcarchive`:
+    `open` it, then Distribute App → App Store Connect → Upload. Xcode signs as the user's Apple
+    ID and remakes its managed App Store profile with every Apple Distribution certificate the
+    team has, this Mac's included, so the next `ship beta` can sign. Each platform has its own
+    profile: a Mac build needs its own Organizer upload once.
+
+Or **give the key cloud signing**: in App Store Connect → Users and Access → Integrations, an
+Admin-role team key can use the cloud-managed certificate. That changes what a leaked key could
+do; let the user weigh it.
 
 The archive's build number was already bumped and stamped; uploading it from Organizer uses
 that number, and the next `ship beta` picks the following one from TestFlight.

@@ -6,6 +6,12 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **A signing failure says which one it is.** `ship` called every export that couldn't sign "a
+  new app's first upload", because all of them print "Cloud signing permission error". It now
+  tells apart a missing profile, a Mac with no Apple Distribution certificate, and a profile
+  made before the certificate, and gives the Xcode steps for each: add the certificate, then
+  upload the archive from Organizer once so Xcode remakes the profile with it.
+
 - **dSYMs go to Sentry after a ship.** With a `sentry` block (`org`, `project`, optional `url`)
   in `snakelane.yml`, `ship beta` and `ship release` run `sentry-cli debug-files upload` on the
   archive's dSYMs after the TestFlight upload. sentry-cli and its sign-in are checked before the

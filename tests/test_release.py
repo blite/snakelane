@@ -162,4 +162,46 @@ def test_any_other_export_failure_still_raises_as_it_was(tmp_path: Path, monkeyp
     monkeypatch.setattr(ship, "run_logged", failing_export)
     with pytest.raises(subprocess.CalledProcessError):
         ship.upload(app, tmp_path / "Example-ios.xcarchive")
-    assert not ship.needs_first_store_profile("error: Copy failed")
+    assert ship.signing_problem("error: Copy failed") is None
+
+
+# What -exportArchive printed for Cloudless Cam on 2026-10-30, before and then after the Mac had an
+# Apple Distribution certificate. Both also carry the cloud-signing line, which names neither.
+CLOUD_LINE = """\
+error: exportArchive Cloud signing permission error
+  You haven't been given access to cloud-managed distribution certificates.
+"""
+NO_CERTIFICATE_OUTPUT = CLOUD_LINE + """\
+error: exportArchive No signing certificate "iOS Distribution" found
+  No "iOS Distribution" signing certificate matching team ID "TEAM" with a private key was found.
+** EXPORT FAILED **
+"""
+PROFILE_LACKS_CERTIFICATE_OUTPUT = CLOUD_LINE + """\
+error: exportArchive Provisioning profile "iOS Team Store Provisioning Profile: com.example.app" doesn't \
+include signing certificate "Apple Distribution: Example (TEAM)".
+** EXPORT FAILED **
+"""
+
+
+def test_each_signing_failure_is_named_by_its_own_line_not_the_cloud_one() -> None:
+    from snakelane.release import ship
+
+    assert ship.signing_problem(FIRST_EXPORT_OUTPUT) == "no-profile"
+    assert ship.signing_problem(NO_CERTIFICATE_OUTPUT) == "no-certificate"
+    assert ship.signing_problem(PROFILE_LACKS_CERTIFICATE_OUTPUT) == "profile-lacks-certificate"
+    assert ship.signing_problem(CLOUD_LINE + "** EXPORT FAILED **\n") is None
+
+
+def test_an_existing_app_is_not_told_it_is_on_its_first_upload(tmp_path: Path) -> None:
+    from snakelane.release import ship
+
+    app = make_app(tmp_path, scheme="Example", team_id="TEAM", bundle_id="com.example.app")
+    archive = tmp_path / "build" / "Example-ios.xcarchive"
+    no_certificate = ship.signing_failure_message(app, archive, "no-certificate")
+    assert "first upload" not in no_certificate
+    assert "Manage Certificates" in no_certificate
+    assert f"open {archive}" in no_certificate
+    lacking = ship.signing_failure_message(app, archive, "profile-lacks-certificate")
+    assert "first upload" not in lacking
+    assert "doesn't include this Mac's Apple Distribution certificate" in lacking
+    assert "remakes the App Store profile" in lacking
