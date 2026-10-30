@@ -4,6 +4,15 @@ All notable changes to snakelane. Versions follow [semver](https://semver.org); 
 major version is 0, a change that needs new `snakelane.yml` keys or changes a command's
 behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
+## Unreleased
+
+- **dSYMs go to Sentry after a ship.** With a `sentry` block (`org`, `project`, optional `url`)
+  in `snakelane.yml`, `ship beta` and `ship release` run `sentry-cli debug-files upload` on the
+  archive's dSYMs after the TestFlight upload. sentry-cli and its sign-in are checked before the
+  tests; a failed upload after the build has gone to Apple warns instead of failing.
+  `ship symbols` re-sends the last archive's. Apps without the key change nothing; **an app
+  that wants it** adds the block, installs sentry-cli and runs `sentry-cli login` once.
+
 ## 0.6.0
 
 - **metadata/ is sorted by kind**: `listing/` (`default/`, `locales/<locale>/`, `<platform>/`),

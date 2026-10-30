@@ -73,6 +73,24 @@ with the two ways past it: upload that archive from Organizer once, or give the 
 role. It does not try either itself: one is a person signing in as their Apple ID, the other
 a change to what the key may do.
 
+### dSYMs to Sentry
+
+An app that reports crashes to Sentry needs each build's dSYMs there too, or its stack traces
+stay as addresses. Apple gets them through `uploadSymbols` on the export; Sentry doesn't, and
+uploading them by hand after every ship is the step that gets forgotten (Cloudless Cam,
+2026-10, the first app to report to Sentry). With a `sentry` block, `ship beta` and `ship
+release` run `sentry-cli debug-files upload` on the archive's `dSYMs/` right after the TestFlight
+upload. Sentry matches a crash to its symbols by debug id, so nothing needs a release name.
+
+The token stays sentry-cli's (`sentry-cli login`): a second credential store inside snakelane is
+what "one auth method, one place" rules out, and sentry-cli already keeps one. A missing
+sentry-cli or sign-in is caught before the test gate (`sentry-cli info --no-defaults`, which
+checks the token alone), because finding it after the archive costs the whole build.
+
+A failed upload after the TestFlight upload only warns: the build is already with Apple, and
+failing the ship there would read as if it hadn't gone. The warning names `ship symbols`, which
+re-sends the last archive's dSYMs and does fail on error.
+
 ### The release lint reads App Store Connect, not the files
 
 `ship release` submits the listing App Store Connect holds and never pushes text itself, so the

@@ -109,7 +109,7 @@ snakelane ship beta                # test → archive → TestFlight
 - [x] `status`: versions, review in progress and the latest TestFlight build, in one view
 - [x] One auth method: a [team API key](https://developer.apple.com/documentation/appstoreconnectapi/creating-api-keys-for-app-store-connect-api) installed once with `snakelane auth setup`; no environment
    variables, no Apple ID sign-in
-- [ ] Upload dSYMs to Sentry after a ship
+- [x] Upload dSYMs to Sentry after a ship (`sentry` in `snakelane.yml`; `ship symbols` retries)
 - [ ] Slack notification when a ship finishes or fails
 - [ ] Code signing for CI runners (under discussion: Xcode's automatic signing covers a Mac
    today)

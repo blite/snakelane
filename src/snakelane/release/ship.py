@@ -4,12 +4,14 @@
     snakelane ship beta [--platform macos] [--skip-tests]
     snakelane ship release [--platform macos] [--skip-tests] [--no-submit]
     snakelane ship bump-version [--bump minor|patch|major | --version 1.6]
+    snakelane ship symbols [--platform macos]
 
 `beta`: refuse a marketing version already live, test, archive, check the archive carries the
 post-action's build number, upload, wait for processing, write git subjects into "What to Test".
 `release`: the same through the upload, then attach the build to the editable version, apply the
-release settings and submit (`--no-submit` stops short). The build number is bump.py's job, never
-this module's. Why: docs/design/release.md#shipping
+release settings and submit (`--no-submit` stops short). Both send the archive's dSYMs to Sentry
+after the upload when the app has a `sentry` block (symbols.py); `symbols` re-sends the last one.
+The build number is bump.py's job, never this module's. Why: docs/design/release.md#shipping
 
 snakelane.yml keys:
     "scheme" / "team_id" / "bundle_id"   (required) archived scheme, export signing team, ASC lookup.
@@ -29,6 +31,7 @@ snakelane.yml keys:
         "type"              after_approval | manual | scheduled
         "date"              for scheduled: ISO time with timezone, e.g. "2026-11-03T09:00:00-08:00"
         "phased"            true: 7-day phased release; false: everyone at once
+    "sentry"                where dSYMs go after the upload; see symbols.py.
 """
 
 from __future__ import annotations
@@ -63,7 +66,7 @@ from ..listing import lint
 from ..listing.push import build_push_plan, diff_plan_against_live, fetch_live_state
 from ..project import App
 from ..xcode import run, run_logged, sweep_test_devices
-from . import bump
+from . import bump, symbols
 
 DEFAULT_TEST_DEVICE = "iPhone 17 Pro Max"
 MAC_TEST_DESTINATION = "platform=macOS,arch=arm64"
@@ -78,6 +81,11 @@ MARKETING_SETTING = re.compile(r"MARKETING_VERSION = ([\d.]+);")
 def build_dir(app: App) -> Path:
     (path := app.root / "build").mkdir(exist_ok=True)
     return path
+
+
+def archive_for(app: App, platform: str) -> Path:
+    """Where `ship` archives `platform`, and where `ship symbols` finds the last one."""
+    return build_dir(app) / f"{app.scheme}-{platform}.xcarchive"
 
 
 def load_app(app_arg: str | None) -> App:
@@ -356,9 +364,10 @@ def release_findings(app: App, platform: str) -> list[lint.Finding]:
 
 def ship_build(app: App, platform: str, skip_tests: bool) -> tuple[asc.Client, str, dict[str, Any] | None, str]:
     """Test, archive Release, upload, wait: (client, ASC app id, processed build or None, marketing version)."""
+    symbols.preflight(app)
     if not skip_tests:
         run_tests(app, platform)
-    archive_path = build_dir(app) / f"{app.scheme}-{platform}.xcarchive"
+    archive_path = archive_for(app, platform)
     if archive_path.exists():
         shutil.rmtree(archive_path)
     # The post-action must move and stamp the number: docs/design/release.md#no-build-number-bump-in-ship
@@ -369,6 +378,8 @@ def ship_build(app: App, platform: str, skip_tests: bool) -> tuple[asc.Client, s
     short_version, build_number = bump.archived_versions(archive_path)
     upload(app, archive_path)
     print(f"uploaded {short_version} ({build_number}) to TestFlight ({platform})")
+    if problem := symbols.upload(app, archive_path, platform):
+        print(f"warning: {problem}")
     client = asc.Client()
     app_id = find_app(client, app.config)["id"]
     return client, app_id, wait_for_build(client, app_id, build_number, platform), short_version
@@ -427,6 +438,19 @@ def release(
     if no_submit:
         return print("staged (--no-submit): version + build are set, review not requested")
     submit_for_review(client, app_id, version["id"], platform, resolved.config)
+
+
+@cli.command("symbols")
+def send_symbols(app: AppOption = None, platform: PLATFORM = "ios") -> None:
+    """Upload the last archive's dSYMs to Sentry (ship does this itself; this retries it)."""
+    resolved = load_app(app)
+    if symbols.sentry_config(resolved) is None:
+        raise SystemExit(f'{resolved.config_path} has no "sentry" block, so there is nowhere to send dSYMs')
+    if not (archive := archive_for(resolved, platform)).exists():
+        raise SystemExit(f"no archive at {archive}: `ship beta` or `ship release` makes one")
+    symbols.preflight(resolved)
+    if problem := symbols.upload(resolved, archive, platform):
+        raise SystemExit(problem)
 
 
 @cli.command("bump-version")

@@ -8,7 +8,14 @@ snakelane ship beta                  # test → archive → upload to TestFlight
 snakelane ship release               # … → attach to the version → submit
 snakelane ship release --no-submit   # attach the build, don't submit
 snakelane ship bump-version --bump minor
+snakelane ship symbols               # re-send the last archive's dSYMs to Sentry
 ```
+
+With a [`sentry`](../reference/config.md) block, `beta` and `release` upload the archive's dSYMs
+to Sentry after the TestFlight upload, through `sentry-cli` and its own sign-in (`brew install
+getsentry/tools/sentry-cli`, then `sentry-cli login`). Both are checked before the tests run. If
+the upload fails after the build has gone to Apple, `ship` warns rather than failing;
+`ship symbols` sends them again.
 
 `release` never pushes text, so what goes to review is the listing App Store Connect already
 holds. It sends every Game Center record waiting for review with the version (see

@@ -59,6 +59,15 @@ release:                         # how `ship release` lets the version out (abse
   phased: true                   # 7-day phased release to automatic updates; false = everyone
 ```
 
+```yaml
+sentry:                          # absent = no dSYM upload; `ship beta|release` send the
+  org: example-org               #   archive's dSYMs after the TestFlight upload
+  project: example-app
+  url: https://sentry.example.com   # self-hosted only; default sentry.io
+```
+
+The token is sentry-cli's own (`sentry-cli login`, in `~/.sentryclirc`), never a key here.
+
 ## Screenshots (`shoot`, `frame`, `check`)
 
 ```yaml

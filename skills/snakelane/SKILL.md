@@ -115,7 +115,7 @@ snakelane frame --theme <name>            # try a look; writes .snakelane/, not 
 snakelane gamecenter images show         # each .gamekit image vs ASC: new/changed/unchanged/skipped
 snakelane gamecenter images push [--dry-run] [--yes] [--new-version]
 
-snakelane ship test | beta | release [--no-submit] | bump-version
+snakelane ship test | beta | release [--no-submit] | bump-version | symbols
 snakelane bump --dry-run                  # the number the next archive would get
 snakelane bump --post-action              # print the scheme's Archive post-action
 snakelane packs list | package | upload --dry-run   # Background Assets packs (Apple-hosted
@@ -414,6 +414,9 @@ tools' entries alone. Team-scoped: one key serves every app. Dry runs need none 
   moves the file and refuses to overwrite a different installed key; if it refuses, ask the
   user — replacing a key means the old one may need revoking in App Store Connect.
 - A 401 from any command: run `snakelane auth check` before suspecting anything else.
+- **Sentry is sentry-cli's sign-in, not snakelane's.** An app with a `sentry` block needs
+  `sentry-cli` installed and `sentry-cli login` done once; never put a Sentry token in
+  `snakelane.yml`, an environment variable or a script. The user creates the token.
 
 ## Stays manual in App Store Connect
 
