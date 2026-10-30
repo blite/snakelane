@@ -16,6 +16,7 @@ snakelane.yml keys:
 
 from __future__ import annotations
 
+import json
 import shutil
 import subprocess
 from pathlib import Path
@@ -59,11 +60,19 @@ def preflight(app: App) -> None:
     if shutil.which("sentry-cli") is None:
         raise SystemExit("sentry is set but sentry-cli isn't installed: brew install getsentry/tools/sentry-cli, "
                          "then sentry-cli login")
-    # `--no-defaults` checks the token alone; the org and project come from snakelane.yml.
-    check = subprocess.run([*cli_base(config), "info", "--no-defaults"], capture_output=True, text=True)
-    if check.returncode:
-        raise SystemExit(f"sentry-cli can't sign in to {config.get('url') or 'sentry.io'}: run sentry-cli login "
-                         "with a token that may upload debug files (project:releases)")
+    # Only a missing token stops the ship. Sentry being down or unreachable mustn't: the upload
+    # after TestFlight only warns, and `ship symbols` retries it.
+    check = subprocess.run([*cli_base(config), "info", "--config-status-json"], capture_output=True, text=True)
+    try:
+        auth = json.loads(check.stdout)["auth"]
+    except (ValueError, KeyError, TypeError):
+        auth = None
+    if auth is not None and not auth.get("type"):
+        raise SystemExit("sentry-cli isn't signed in: run sentry-cli login with a token that may upload "
+                         "debug files (project:releases)")
+    if auth is None or not auth.get("successful"):
+        print(f"warning: couldn't confirm the Sentry token with {config.get('url') or 'sentry.io'}; shipping "
+              "anyway. If the dSYM upload fails, `snakelane ship symbols` retries it.")
 
 
 def upload(app: App, archive: Path, platform: str) -> str | None:

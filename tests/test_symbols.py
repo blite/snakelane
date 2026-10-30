@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 from pathlib import Path
 
@@ -58,14 +59,27 @@ def test_preflight_stops_before_the_archive_without_sentry_cli_or_a_sign_in(
     monkeypatch.setattr(symbols.shutil, "which", lambda name: "/opt/homebrew/bin/sentry-cli")
     seen: list[list[str]] = []
 
-    def info(cmd: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
-        seen.append(cmd)
-        return subprocess.CompletedProcess(cmd, 1, "", "")
+    def status(auth: dict):
+        def info(cmd: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+            seen.append(cmd)
+            return subprocess.CompletedProcess(cmd, 0, json.dumps({"auth": auth}), "")
+        return info
 
-    monkeypatch.setattr(symbols.subprocess, "run", info)
+    monkeypatch.setattr(symbols.subprocess, "run", status({"type": None, "successful": False}))
     with pytest.raises(SystemExit, match="sentry-cli login"):
         symbols.preflight(app)
-    assert seen == [["sentry-cli", "info", "--no-defaults"]]  # the token only, never passed by snakelane
+    assert seen == [["sentry-cli", "info", "--config-status-json"]]  # snakelane never passes the token
+
+
+def test_an_unreachable_sentry_warns_instead_of_stopping_the_ship(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+    app = make_app(tmp_path, sentry=SENTRY)
+    monkeypatch.setattr(symbols.shutil, "which", lambda name: "/opt/homebrew/bin/sentry-cli")
+    unreachable = json.dumps({"auth": {"type": "token", "successful": False}})
+    monkeypatch.setattr(symbols.subprocess, "run",
+                        lambda cmd, **kwargs: subprocess.CompletedProcess(cmd, 0, unreachable, ""))
+    symbols.preflight(app)
+    assert "couldn't confirm the Sentry token" in capsys.readouterr().out
 
 
 def test_a_failed_upload_is_reported_with_the_retry_not_raised(

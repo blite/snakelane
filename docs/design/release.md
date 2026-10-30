@@ -100,8 +100,10 @@ upload. Sentry matches a crash to its symbols by debug id, so nothing needs a re
 
 The token stays sentry-cli's (`sentry-cli login`): a second credential store inside snakelane is
 what "one auth method, one place" rules out, and sentry-cli already keeps one. A missing
-sentry-cli or sign-in is caught before the test gate (`sentry-cli info --no-defaults`, which
-checks the token alone), because finding it after the archive costs the whole build.
+sentry-cli or sign-in is caught before the test gate, because finding it after the archive costs
+the whole build. The check reads `sentry-cli info --config-status-json`, which says whether a
+token is configured even when Sentry can't be reached: an outage or a blocking network only
+warns, so it can't stop a TestFlight ship that doesn't need Sentry to succeed.
 
 A failed upload after the TestFlight upload only warns: the build is already with Apple, and
 failing the ship there would read as if it hadn't gone. The warning names `ship symbols`, which

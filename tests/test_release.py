@@ -201,6 +201,8 @@ def test_an_existing_app_is_not_told_it_is_on_its_first_upload(tmp_path: Path) -
     assert "first upload" not in no_certificate
     assert "Manage Certificates" in no_certificate
     assert f"open {archive}" in no_certificate
+    # A new app on a Mac without a certificate needs one before Organizer, or the next ship fails again.
+    assert "Manage Certificates" in ship.signing_failure_message(app, archive, "no-profile")
     lacking = ship.signing_failure_message(app, archive, "profile-lacks-certificate")
     assert "first upload" not in lacking
     assert "doesn't include this Mac's Apple Distribution certificate" in lacking

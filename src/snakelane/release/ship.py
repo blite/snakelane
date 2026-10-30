@@ -190,6 +190,11 @@ def signing_failure_message(app: App, archive_path: Path, problem: str) -> str:
     if problem == "no-certificate":
         steps.append("add one in Xcode → Settings → Accounts → your team → Manage Certificates → + → "
                      "Apple Distribution")
+    elif problem == "no-profile":
+        # Xcode builds the new profile around whatever certificates exist; with none on this Mac
+        # it uses the cloud one, and the next ship fails as no-certificate.
+        steps.append("if this Mac has no Apple Distribution certificate, add one first in Xcode → Settings → "
+                     "Accounts → your team → Manage Certificates → + → Apple Distribution")
     steps.append(
         f"upload this archive from Xcode: open {shlex.quote(str(archive_path))}, then Distribute App → App "
         "Store Connect → Upload. Xcode signs as your Apple ID and remakes the App Store profile with this "

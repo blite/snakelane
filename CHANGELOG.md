@@ -15,7 +15,8 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 - **dSYMs go to Sentry after a ship.** With a `sentry` block (`org`, `project`, optional `url`)
   in `snakelane.yml`, `ship beta` and `ship release` run `sentry-cli debug-files upload` on the
   archive's dSYMs after the TestFlight upload. sentry-cli and its sign-in are checked before the
-  tests; a failed upload after the build has gone to Apple warns instead of failing.
+  tests (an unreachable Sentry only warns); a failed upload after the build has gone to Apple
+  warns instead of failing.
   `ship symbols` re-sends the last archive's. Apps without the key change nothing; **an app
   that wants it** adds the block, installs sentry-cli and runs `sentry-cli login` once.
 
