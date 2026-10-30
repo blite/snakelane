@@ -5,12 +5,13 @@ from __future__ import annotations
 
 import functools
 import json
+import math
 import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
+from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont, ImageOps
 
 from ...project import App
 from .style import Style, Theme
@@ -339,6 +340,12 @@ def fit_block(app: App, style: Style, lines: list[list[Run]], width: int, canvas
     ink_top, ink_bottom = ink(font)
     if top + ink_top < pad or top + ink_bottom > pad + area:
         top = pad + (area - (ink_bottom - ink_top)) / 2 - ink_top
+    if style.bottom:
+        # Mirrored: the gap a top caption leaves between its ink and the canvas edge, kept below
+        # the last line instead of above the first. Laid out top-down, a bottom caption's last
+        # line sat half that distance from the edge.
+        # Why: docs/design/framing.md#a-bottom-caption-mirrors-a-top-one
+        top = band_h - crown - (top + ink_top) - ink_bottom
     placed = []
     for line in lines:
         placed.append((c.margin if c.align == "left" else (width - font.width(measure, line)) / 2, top, line))
@@ -478,15 +485,35 @@ def callout_layer(app: App, style: Style, text: str, size: tuple[int, int], ink:
     return layer
 
 
+def device_outline(box: tuple[float, float, float, float], radius: float, curve: float,
+                   steps: int = 48) -> list[tuple[float, float]]:
+    """The points round a rectangle whose corners are superellipse quarters reaching `radius` along
+    each edge: |x|^curve + |y|^curve = 1 within each corner's square. 2 is a circular arc."""
+    x0, y0, x1, y1 = box
+    radius = min(radius, (x1 - x0) / 2, (y1 - y0) / 2)
+    points = []
+    # Clockwise from the top-right corner; each quarter runs from one edge to the next.
+    for cx, cy, sx, sy, start in ((x1 - radius, y0 + radius, 1, -1, 90), (x1 - radius, y1 - radius, 1, 1, 0),
+                                  (x0 + radius, y1 - radius, -1, 1, 270), (x0 + radius, y0 + radius, -1, -1, 180)):
+        for i in range(steps + 1):
+            t = math.radians(start - 90 * i / steps)
+            c, s = math.cos(t), math.sin(t)
+            points.append((cx + sx * radius * abs(c) ** (2 / curve), cy + sy * radius * abs(s) ** (2 / curve)))
+    return points
+
+
 def card(app: App, style: Style, shot, canvas_h: int):
-    """The capture as a card: rounded corners and the theme's outline, as an RGBA layer."""
-    radius = round(shot.width * float(style.device.get("radius", 0.07)))
-    corners = (0, 0, shot.width * SUPERSAMPLE - 1, shot.height * SUPERSAMPLE - 1)
+    """The capture as a card: the device's own corners and the theme's outline, as an RGBA layer."""
+    radius = shot.width * float(style.device.get("radius", 0.07))
+    curve = float(style.device.get("curve", 2.0))
+    box = (0, 0, shot.width * SUPERSAMPLE - 1, shot.height * SUPERSAMPLE - 1)
     layer = shot.convert("RGBA")
-    layer.putalpha(smooth_mask(shot.size, lambda d, k: d.rounded_rectangle(corners, radius * k, fill=255)))
+    mask = smooth_mask(shot.size, lambda d, k: d.polygon(device_outline(box, radius * k, curve), fill=255))
+    layer.putalpha(mask)
     if outline := style.theme.outline:
+        # Stroked on the edge at twice the width, then kept to the card: `width` of it, inside.
         stroke = px(outline.get("width", 6), canvas_h)
-        ring = smooth_mask(shot.size, lambda d, k: d.rounded_rectangle(
-            corners, radius * k, outline=255, width=stroke * k))
-        layer.paste((*rgb(app, outline.get("color", "#FFFFFF")), 255), (0, 0), ring)
+        ring = smooth_mask(shot.size, lambda d, k: d.line(
+            (pts := device_outline(box, radius * k, curve)) + pts[:1], fill=255, width=stroke * k * 2, joint="curve"))
+        layer.paste((*rgb(app, outline.get("color", "#FFFFFF")), 255), (0, 0), ImageChops.multiply(ring, mask))
     return layer

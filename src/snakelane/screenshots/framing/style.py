@@ -14,9 +14,16 @@ LAYOUTS = ("full-bleed", "stacked", "device")
 SHAPES = ("band", "arch", "callout", "headline")
 FITS = ("scale", "crop")
 FRAMING_KEYS = {"captions", "targets", "slots", "layout", "fit", "caption", "theme", "device", "decorate"}
-SLOT_KEYS = {"layout", "fit", "caption", "bias", "rotate"}
+SLOT_KEYS = {"layout", "fit", "caption", "bias", "rotate", "image"}
 CALLOUT_KEYS = {"edge", "centre", "width", "height", "radius", "lip", "shadow"}
-DEVICE_KEYS = {"width", "radius", "gap", "bleed"}
+DEVICE_KEYS = {"width", "radius", "curve", "gap", "bleed"}
+# A device card's corners as the hardware draws its screen: `radius` is how far the corner reaches
+# along each edge, as a share of the capture's width, and `curve` the superellipse it follows (2 is
+# a circle). Measured off the simulators' own screen masks (`simctl io screenshot --mask=alpha`):
+# an iPhone's corner is continuous, easing out of the edge, an iPad's a plain arc. The defaults are
+# snakelane's default devices, the 6.5" iPhone 14 Plus and the 13" iPad Pro.
+# Why: docs/design/framing.md#a-card-has-its-devices-corners
+DEVICE_CORNERS = {"iphone": {"radius": 0.139, "curve": 2.26}, "ipad": {"radius": 0.029, "curve": 2.0}}
 
 
 @dataclass(frozen=True)
@@ -122,7 +129,7 @@ def device_for(cfg: dict[str, Any], deck: str | None) -> dict[str, Any]:
     corner radius is far too round on a landscape Mac window); a deck without an entry gets the default."""
     resolved = {key: per_deck(f"framing.device.{key}", value, deck)
                 for key, value in (cfg.get("device") or {}).items() if key != "_comment"}
-    return {key: value for key, value in resolved.items() if value is not None}
+    return {**DEVICE_CORNERS.get(deck or "", {}), **{key: value for key, value in resolved.items() if value is not None}}
 
 
 def style_for(cfg: dict[str, Any], slot: dict[str, Any], deck: str | None) -> Style:

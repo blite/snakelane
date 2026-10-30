@@ -514,3 +514,69 @@ def test_a_target_no_slot_takes_is_a_warning(app: project.App, capsys: pytest.Ca
         capture(app, "iphone", n)
     frame.frame_deck(app, "en-US")
     assert "1000x2000 fits no App Store Connect slot" in capsys.readouterr().out
+
+
+def test_a_fixed_image_is_framed_in_place_of_a_capture(app: project.App, tmp_path: Path) -> None:
+    capture(app, "iphone", 1)
+    capture(app, "iphone", 2)
+    art = app.root / "art" / "pip.png"
+    art.parent.mkdir()
+    Image.new("RGB", (1284, 2778), "red").save(art)
+    styled(app, slots={"3": {"image": {"iphone": "art/pip.png"}}})
+    assert frame.frame_deck(app, "en-US") == 3
+    framed = project.DeckTree.for_deck(app, "iphone").framed("en-US") / "ss-03.jpg"
+    assert Image.open(framed).getpixel((642, 1600))[0] > 200, "the red art, not a white capture"
+    # Another deck isn't given it: a shot the iPhone deck has and the iPad's doesn't is fine.
+    capture(app, "ipad", 1)
+    assert frame.frame_deck(app, "en-US") == 4
+
+
+def test_a_fixed_image_that_is_missing_says_where(app: project.App) -> None:
+    capture(app, "iphone", 1)
+    styled(app, slots={"2": {"image": "art/missing.png"}})
+    with pytest.raises(SystemExit, match=r'framing.slots.2.image": no file at art/missing.png'):
+        frame.frame_deck(app, "en-US")
+
+
+def test_a_device_card_has_its_devices_corners() -> None:
+    from snakelane.screenshots.framing.style import device_for
+
+    # Measured off the simulators: an iPhone's continuous corner, an iPad's plain arc.
+    assert device_for({}, "iphone") == {"radius": 0.139, "curve": 2.26}
+    assert device_for({}, "ipad") == {"radius": 0.029, "curve": 2.0}
+    assert device_for({}, "mac") == {}
+    assert device_for({"device": {"radius": {"iphone": 0.1}}}, "iphone")["radius"] == 0.1, "config wins"
+
+
+def test_a_continuous_corner_eases_out_of_the_edge() -> None:
+    import math
+
+    from snakelane.screenshots.framing.draw import device_outline
+
+    def inset_at_45(curve: float) -> float:
+        # The top-right corner's point on the diagonal: how far it sits in from the corner.
+        points = device_outline((0, 0, 1000, 1000), 100, curve, steps=90)[:91]
+        x, y = min(points, key=lambda p: abs((1000 - p[0]) - p[1]))
+        return math.hypot(1000 - x, y)
+
+    circle = inset_at_45(2.0)
+    assert abs(circle - 100 * (math.sqrt(2) - 1)) < 1.5, "an arc's middle is r(√2 − 1) in from the corner"
+    assert inset_at_45(2.26) < circle, "a superellipse keeps more of the corner than a circle the same size"
+
+
+def test_a_bottom_caption_keeps_a_top_captions_edge_gap(app: project.App) -> None:
+    def edge_gap(position: str) -> int:
+        styled(app, captions={"1": ["Two lines", "of caption"], "2": "Two", "3": "Three"},
+               caption={"position": position}, theme={"fill": "#000000", "text": "#FFFFFF"})
+        frame.frame_deck(app, "en-US", decks=["iphone"])
+        shot = Image.open(project.DeckTree.for_deck(app, "iphone").framed("en-US") / "ss-01.jpg").convert("L")
+        rows = [y for y in (*range(400), *range(shot.height - 400, shot.height))
+                if shot.crop((0, y, shot.width, y + 1)).getextrema()[1] > 200]
+        return rows[0] if position == "top" else shot.height - 1 - rows[-1]
+
+    for n in (1, 2, 3):
+        capture(app, "iphone", n)
+    app.config["screenshots"]["framing"]["layout"] = "device"
+    # A dark capture, so the only bright ink near the edges is the caption's.
+    Image.new("RGB", (1284, 2778), "black").save(project.DeckTree.for_deck(app, "iphone").raw("en-US") / "ss-01.png")
+    assert abs(edge_gap("top") - edge_gap("bottom")) <= 3

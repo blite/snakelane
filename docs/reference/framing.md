@@ -252,7 +252,10 @@ screenshots:
 
     layout: stacked                     # full-bleed | stacked | device
     fit: scale                          # scale | crop (default crop for full-bleed)
-    device: {width: 0.84, radius: 0.07, gap: 0.02, bleed: false}   # layout: device
+    device: {width: 0.84, radius: 0.07, curve: 2.0, gap: 0.02, bleed: false}   # layout: device
+    # radius: how far a corner reaches along each edge, a share of the capture's width; curve: the
+    # superellipse it follows, 2 a circle. Default: the device's own (iphone 0.139 / 2.26, ipad
+    # 0.029 / 2.0, measured off the simulators), else 0.07 / 2.0.
     # any device value per deck: radius: {iphone: 0.07, mac: 0.012}; a deck left out gets the default
 
     caption:
@@ -295,6 +298,7 @@ screenshots:
       "2": {rotate: 90, caption: {shape: callout}}       # rotate: degrees, anticlockwise
       "4": {caption: {position: bottom}}
       "9": {bias: 0.62}                  # key art: full-bleed, crop toward the bottom, no reserve
+      "5": {image: {iphone: metadata/screenshots/art/pip.png}}  # a checked-in picture in place of a capture
 ```
 
 Colours are `"#RRGGBB"`, `[r, g, b]`, or `{colorset: App/Assets.xcassets/…/brand.colorset}`,

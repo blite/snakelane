@@ -6,6 +6,21 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **A bottom caption keeps the same edge gap as a top one.** A caption of several lines at the
+  bottom was laid out as if at the top, leaving its last line half as far from the canvas edge.
+  It is now the top caption's reflection. Decks with several-line bottom captions move slightly.
+
+- **Device cards have the device's own corners.** An iPhone card's corners are now the screen's
+  continuous curve at its real size (13.9% of the width, superellipse 2.26, measured off the
+  simulator's screen mask) and an iPad card's a 2.9% arc, instead of a 7% circle on both. A new
+  `framing.device.curve` sets the shape (2 is a circle). **Decks with `layout: device` look
+  different on the next frame**; an app that wants the old corners sets `radius: 0.07, curve: 2`.
+
+- **A slot can show a checked-in picture instead of a capture.** `framing.slots.N.image` names
+  an image (from the repo root, or per deck as `{iphone: …}`) that `frame` uses as that slot's
+  raw capture in every locale, captioned and framed like the rest. For shots no simulator can
+  take: the iPhone simulator has no Picture in Picture. Only snakelane's own framing reads it.
+
 - **A signing failure says which one it is.** `ship` called every export that couldn't sign "a
   new app's first upload", because all of them print "Cloud signing permission error". It now
   tells apart a missing profile, a Mac with no Apple Distribution certificate, and a profile

@@ -156,6 +156,46 @@ bottom. It was full-bleed with a different crop position, so it became the slot'
 A slot with a `bias` is key art, which reserves nothing. The
 file's top-level position and depth are the most common slot's, for apps that read only one.
 
+### A bottom caption mirrors a top one
+
+Lines are set top-down from the band's capture-facing edge, which for a top caption is the
+canvas edge. A bottom caption kept the same offsets, so the space a top caption leaves above
+its first line ended up between the capture and its first line, and its last line sat half as
+far from the canvas edge (22 px against 43 on Cloudless Cam's iPhone deck). A several-line
+bottom caption is now placed as the top one's reflection: the same gap, below the last line.
+A one-line caption is centred on its ink and needed nothing.
+
+### A card has its device's corners
+
+A device card used to be a rectangle with circular corners at 7% of its width, which reads as a
+phone at a glance and as wrong beside a real one: an iPhone's screen corner is continuous, easing
+out of the straight edge rather than meeting it at a tangent, and twice that size. The simulator
+hands over the real outline (`xcrun simctl io <device> screenshot --mask=alpha`), so the defaults
+are measured rather than guessed. Fitting each mask's corner to a superellipse quarter:
+
+| Device | Reach along each edge | Curve | A circle that size misses by (rms) |
+|---|---|---|---|
+| iPhone 14 Plus (6.5") | 179 px of 1284, 13.9% | 2.26 | 8 px |
+| iPhone 17 Pro | 211 px of 1206, 17.5% | 2.31 | 10 px |
+| iPad Pro 13" (M5) | 60 px of 2064, 2.9% | 2.0 | nothing: a plain arc |
+
+The defaults are the default devices'. `radius` keeps its meaning, the corner's reach, so a
+deck that set one keeps its size and only gains the shape; the Mac deck, a window not a screen,
+keeps the old circle.
+
+### A fixed image stands in for a capture
+
+Some shots can't be taken in a simulator. Cloudless Cam's Picture in Picture shot is the first:
+the iPhone simulator has no Picture in Picture at all, only the iPad one does. The picture is
+drawn once from the app's real parts and checked in, and a slot's `image` names it. `frame`
+treats it as that slot's capture in every locale, so it gets the deck's caption, layout and
+theme like any other shot, and the deck's captions are checked against it the same way. The
+captions are what change between languages, so the drawing has no words in it.
+
+Per deck, because the art is drawn at one deck's size: `{iphone: …}` leaves the other decks
+to their captures. Only snakelane's own framing reads it. A `frame: test` app's reframe test
+draws over what the shoot captured, so it never sees the image.
+
 ## The gallery
 
 ### Where the idea came from

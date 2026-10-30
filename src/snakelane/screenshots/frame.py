@@ -5,7 +5,8 @@
 Reads .snakelane/<app>/raw/<platform>/<locale>/<device>/*, writes
 metadata/<platform>/screenshots/<locale>/<device>/ss-NN.jpg. Settings: snakelane.yml's
 `screenshots.framing` (keys: docs/reference/framing.md; reasons: docs/design/framing.md).
-A raw file's slot is its `ss-NN` name; a capture without a caption is an error. `framing.captions`
+A raw file's slot is its `ss-NN` name; a capture without a caption is an error. A slot's `image`
+is a checked-in picture framed in place of a capture, for a shot no simulator can take. `framing.captions`
 is one {slot: caption} map for every locale, or {locale: {slot: caption}}; a locale without an
 entry gets the primary locale's. A deck key (iphone, ipad, duo, mac) holds that deck's own captions in
 either form; a deck without one uses the rest. Without `framing.targets`, a deck is framed at its
@@ -26,7 +27,7 @@ from ..args import AppOption, PlatformOption, command_app, resolve_platform, run
 from ..project import IMAGE_SUFFIXES, App, DeckTree, resolve_app
 from .framing import decorate
 from .framing.draw import caption_band, ink_of, parse_caption
-from .framing.style import DECKS, check_framing, style_for, theme_of
+from .framing.style import DECKS, check_framing, per_deck, style_for, theme_of
 from .framing.themes import THEMES
 from .media import SCREENSHOT_DISPLAY_TYPES, deck_files, save_jpeg, screenshot_dimensions
 
@@ -144,6 +145,28 @@ def slot_of(path: Path) -> int | None:
     return int(m.group(1)) if (m := re.fullmatch(r"ss-(\d+)", path.stem)) else None
 
 
+def fixed_images(app: App, cfg: dict[str, Any], deck: str) -> dict[int, Path]:
+    """Slot -> the checked-in picture `framing.slots.N.image` gives `deck`, framed in place of a
+    capture: drawn once for a shot no simulator can take (an iPhone simulator has no Picture in
+    Picture). A path from the repo root, or per deck {iphone: …}.
+    Why: docs/design/framing.md#a-fixed-image-stands-in-for-a-capture"""
+    found = {}
+    for n, slot in slots_of(cfg).items():
+        if (value := per_deck(f"framing.slots.{n}.image", slot.get("image"), deck)) is None:
+            continue
+        if not (path := app.root / str(value)).is_file():
+            raise SystemExit(f'snakelane.yml "framing.slots.{n}.image": no file at {value}')
+        found[n] = path
+    return found
+
+
+def deck_shots(app: App, cfg: dict[str, Any], deck: str, raw: Path) -> dict[int, Path]:
+    """Slot -> picture for one deck: its `ss-NN` captures, and its fixed images over them."""
+    captured = {n: p for p in deck_files([raw], IMAGE_SUFFIXES, "raw", quiet=True)
+                if (n := slot_of(p)) is not None} if raw.is_dir() else {}
+    return {**captured, **fixed_images(app, cfg, deck)}
+
+
 def banner_handoff(app: App, deck: str, locale: str | None = None) -> dict[str, Any]:
     """Per slot, what the app leaves empty for the caption (`depth`: share of height, lip and rule
     included); the top-level pair is the commonest. Why: docs/design/framing.md#the-banner-handoff"""
@@ -190,9 +213,9 @@ def frame_deck(app: App, locale: str = "en-US", decks: list[str] | None = None, 
         tree = DeckTree.for_deck(app, platform)
         raw = tree.raw(locale)
         framed = app.work_dir / "themes" / theme / platform / locale if theme else tree.framed(locale)
-        # The deck is exactly the `ss-NN` files (an `unused-06-alt.png` kept beside them is not).
-        shots = [p for p in deck_files([raw], IMAGE_SUFFIXES, "raw", quiet=True) if slot_of(p) is not None] \
-            if raw.is_dir() else []
+        # The deck is exactly the `ss-NN` files (an `unused-06-alt.png` kept beside them is not),
+        # plus any fixed images.
+        shots = deck_shots(app, cfg, platform, raw)
         if not shots:
             if decks:
                 print(f"{platform:7s} no captures in {raw}")
@@ -201,7 +224,7 @@ def frame_deck(app: App, locale: str = "en-US", decks: list[str] | None = None, 
         group = caption_group(cfg, platform)
         framed_groups.add(group)
         target = targets.get(platform)
-        if target is None and (odd := deck_canvas(shots)) is not None:
+        if target is None and (odd := deck_canvas(list(shots.values()))) is not None:
             target, outliers = odd
             print(f"{platform:7s} -> {target[0]}x{target[1]}, its captures' size ({', '.join(outliers)} "
                   f"differ{'s' if len(outliers) == 1 else ''}; set framing.targets to choose)")
@@ -210,8 +233,8 @@ def frame_deck(app: App, locale: str = "en-US", decks: list[str] | None = None, 
         if target is not None and theme is None and tuple(target) not in SCREENSHOT_DISPLAY_TYPES:
             print(f"          warning: {target[0]}x{target[1]} fits no App Store Connect slot; "
                   "the screenshot push will refuse this deck")
-        for src in shots:
-            if (n := slot_of(src)) not in deck:
+        for n, src in sorted(shots.items()):
+            if n not in deck:
                 raise SystemExit(f"{src.name}: no caption for shot {n} in {CAPTIONS}")
             style = style_for(cfg, slots.get(n, {}), platform)
             image, note, box = compose(app, style, src, deck[n], target)
@@ -238,10 +261,7 @@ def frame_deck(app: App, locale: str = "en-US", decks: list[str] | None = None, 
             continue
         if (group := caption_group(cfg, other)) not in framed_groups:
             continue
-        raw = DeckTree.for_deck(app, other).raw(locale)
-        if raw.is_dir():
-            produced.setdefault(group, set()).update(
-                n for p in deck_files([raw], IMAGE_SUFFIXES, "raw", quiet=True) if (n := slot_of(p)) is not None)
+        produced.setdefault(group, set()).update(deck_shots(app, cfg, other, DeckTree.for_deck(app, other).raw(locale)))
     for group in sorted(framed_groups, key=lambda g: g or ""):
         captioned = caption_sets(cfg, group)[captions_source(app, cfg, locale, group)]
         if missing := sorted(set(captioned) - produced.get(group, set())):
