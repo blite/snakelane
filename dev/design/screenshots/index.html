@@ -1234,6 +1234,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#a-blank-capture-fails-the-shoot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A blank capture fails the shoot
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-mac-lane-checks-for-developer-mode-and-automation-mode" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2332,6 +2343,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#a-blank-capture-fails-the-shoot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A blank capture fails the shoot
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-mac-lane-checks-for-developer-mode-and-automation-mode" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3064,6 +3086,15 @@
 already have captured a shot or two in a bad state. The extract keeps the newest capture of each
 slot (the attachment's <code>timestamp</code>), which is the passing attempt's; it used to keep whichever
 the manifest listed last.</p>
+<h3 id="a-blank-capture-fails-the-shoot">A blank capture fails the shoot<a class="headerlink" href="#a-blank-capture-fails-the-shoot" title="Permanent link">&para;</a></h3>
+<p>A test can pass with nothing captured. Jigsaw's first Mac shoot (2026-10-28) passed all seven
+tests and filed seven 544x340 white rectangles: its window had opened on a Studio Display beside
+the MacBook, and XCUITest captures a window on a second display blank and small (HeartsNoAds
+had met the wrong size there, which is why <code>ScreenshotWindowSizer</code> places the window on the
+primary display; Jigsaw's own window code predated it). Screen Recording access is not needed. A passing shoot discards the deck it set aside,
+so the previous hand-made deck was lost with it. The extract now looks at every capture before
+filing any: one flat colour, or a Mac capture under 1280x800 (the smallest Mac size App Store
+Connect takes), exits the pass, and the failed shoot puts the previous deck back.</p>
 <h3 id="the-mac-lane-checks-for-developer-mode-and-automation-mode">The Mac lane checks for developer mode and Automation Mode<a class="headerlink" href="#the-mac-lane-checks-for-developer-mode-and-automation-mode" title="Permanent link">&para;</a></h3>
 <p>Both switches are administrator actions, so the shoot prints the commands rather than running them. They are once per machine, though an OS upgrade turns Automation Mode back off. Without developer mode the failure arrives after the whole project has built, as "The test runner failed to initialize for UI testing (Underlying Error: Authentication canceled…)", which names a dialog rather than the switch. Without Automation Mode every synthesized click and key is dropped after about five seconds with no error. The no-authentication setting is used because a run that asks for a password part-way through is a run nobody is watching.</p>
 <p>The iOS lane needs neither switch, because the simulator is not the host.</p>

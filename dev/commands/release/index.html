@@ -1589,7 +1589,13 @@ snakelane<span class="w"> </span>ship<span class="w"> </span>beta<span class="w"
 snakelane<span class="w"> </span>ship<span class="w"> </span>release<span class="w">               </span><span class="c1"># … → attach to the version → submit</span>
 snakelane<span class="w"> </span>ship<span class="w"> </span>release<span class="w"> </span>--no-submit<span class="w">   </span><span class="c1"># attach the build, don't submit</span>
 snakelane<span class="w"> </span>ship<span class="w"> </span>bump-version<span class="w"> </span>--bump<span class="w"> </span>minor
+snakelane<span class="w"> </span>ship<span class="w"> </span>symbols<span class="w">               </span><span class="c1"># re-send the last archive's dSYMs to Sentry</span>
 </code></pre></div>
+<p>With a <a href="../../reference/config/"><code>sentry</code></a> block, <code>beta</code> and <code>release</code> upload the archive's dSYMs
+to Sentry after the TestFlight upload, through <code>sentry-cli</code> and its own sign-in (<code>brew install
+getsentry/tools/sentry-cli</code>, then <code>sentry-cli login</code>). Both are checked before the tests run. If
+the upload fails after the build has gone to Apple, <code>ship</code> warns rather than failing;
+<code>ship symbols</code> sends them again.</p>
 <p><code>release</code> never pushes text, so what goes to review is the listing App Store Connect already
 holds. It sends every Game Center record waiting for review with the version (see
 <a href="../gamecenter/#sending-the-records-to-review"><code>gamecenter submit</code></a>). <code>release</code> lints that listing first, and warns when your local files differ from it.</p>

@@ -1290,10 +1290,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#a-new-apps-first-export" class="md-nav__link">
+  <a href="#export-signing-failures" class="md-nav__link">
     <span class="md-ellipsis">
       
-        A new app's first export
+        Export signing failures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dsyms-to-sentry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        dSYMs to Sentry
       
     </span>
   </a>
@@ -1935,10 +1946,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#a-new-apps-first-export" class="md-nav__link">
+  <a href="#export-signing-failures" class="md-nav__link">
     <span class="md-ellipsis">
       
-        A new app's first export
+        Export signing failures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dsyms-to-sentry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        dSYMs to Sentry
       
     </span>
   </a>
@@ -2289,18 +2311,50 @@ the post-action already did, and how two machines end up disagreeing about what 
 A Homebrew rsync 3.4 or later ahead of it rejects the flags, and the export fails with "Copy
 failed" after a good archive (Jigsaw). The key path passed to the export is absolute because
 xcodebuild rejects a relative or tilde'd path with an unhelpful auth error.</p>
-<h3 id="a-new-apps-first-export">A new app's first export<a class="headerlink" href="#a-new-apps-first-export" title="Permanent link">&para;</a></h3>
-<p>A brand-new bundle id has no App Store provisioning profile. With no Apple Distribution
-certificate in the keychain (the normal state with Xcode-managed signing), <code>-exportArchive</code>
-has to make one with Apple's cloud-managed certificate, and an App Manager API key may not:
-the export fails with "Cloud signing permission error" and "No profiles for '<bundle id>'
-were found", after a good archive (FreeCell, 2026-10). The family's older apps never showed
-it because each already had an Xcode-made "iOS Team Store Provisioning Profile" from an
-upload through Organizer.</p>
-<p><code>ship</code> recognises those two lines (<code>FIRST_EXPORT_SIGNS</code>) and replaces xcodebuild's traceback
-with the two ways past it: upload that archive from Organizer once, or give the key the Admin
-role. It does not try either itself: one is a person signing in as their Apple ID, the other
-a change to what the key may do.</p>
+<h3 id="export-signing-failures">Export signing failures<a class="headerlink" href="#export-signing-failures" title="Permanent link">&para;</a></h3>
+<p><code>ship</code> exports with the App Store Connect key, never the user's Apple ID, so it can sign only
+with an Apple Distribution certificate in this Mac's keychain that the app's App Store profile
+includes. Apple's cloud-managed certificate, which is how Xcode's own uploads sign, is off limits
+to an App Manager key. Three different problems stop the export there, and they need different
+words:</p>
+<ul>
+<li><strong>No profile</strong> ("No profiles for '<bundle id>'"): a new bundle id's first upload (FreeCell,
+  2026-10). The family's older apps never showed it because each already had a profile.</li>
+<li><strong>No certificate</strong> ('No signing certificate "iOS Distribution" found'): the Mac has never had
+  an Apple Distribution certificate, because every upload so far went through Xcode's cloud
+  signing (Cloudless Cam, 2026-10-30).</li>
+<li><strong>Profile without the certificate</strong> ("Provisioning profile … doesn't include signing
+  certificate"): the certificate was made after Xcode built the profile around the cloud one.
+  Cloudless Cam hit this an hour after the previous case, once its certificate existed.</li>
+</ul>
+<p>All three also print "Cloud signing permission error", because the export tries the cloud
+certificate first. The first version matched that line and called every one of them a first
+upload, which sent an app with a dozen builds in TestFlight looking for a missing profile.
+<code>SIGNING_PROBLEMS</code> names each by its own line and leaves anything else as xcodebuild's error.</p>
+<p>The fix is the same Xcode step for all three, after adding the certificate in Xcode → Settings
+→ Accounts when there isn't one: upload that archive from Organizer. Xcode signs as the Apple ID
+and remakes its managed "Team Store" profile with every Apple Distribution certificate the team
+has. Cloudless Cam's iOS profile went from the cloud certificate alone to both after one upload,
+so later exports have a certificate they're allowed to sign with. Each platform has its own profile (the Mac one was
+untouched). The Admin role on the key is the other way out; it widens what a leaked key could
+do, so the message offers it second. <code>ship</code> does neither itself: one is the user signing in as
+their Apple ID, the other a change to what the key may do.</p>
+<h3 id="dsyms-to-sentry">dSYMs to Sentry<a class="headerlink" href="#dsyms-to-sentry" title="Permanent link">&para;</a></h3>
+<p>An app that reports crashes to Sentry needs each build's dSYMs there too, or its stack traces
+stay as addresses. Apple gets them through <code>uploadSymbols</code> on the export; Sentry doesn't, and
+uploading them by hand after every ship is the step that gets forgotten (Cloudless Cam,
+2026-10, the first app to report to Sentry). With a <code>sentry</code> block, <code>ship beta</code> and <code>ship
+release</code> run <code>sentry-cli debug-files upload</code> on the archive's <code>dSYMs/</code> right after the TestFlight
+upload. Sentry matches a crash to its symbols by debug id, so nothing needs a release name.</p>
+<p>The token stays sentry-cli's (<code>sentry-cli login</code>): a second credential store inside snakelane is
+what "one auth method, one place" rules out, and sentry-cli already keeps one. A missing
+sentry-cli or sign-in is caught before the test gate, because finding it after the archive costs
+the whole build. The check reads <code>sentry-cli info --config-status-json</code>, which says whether a
+token is configured even when Sentry can't be reached: an outage or a blocking network only
+warns, so it can't stop a TestFlight ship that doesn't need Sentry to succeed.</p>
+<p>A failed upload after the TestFlight upload only warns: the build is already with Apple, and
+failing the ship there would read as if it hadn't gone. The warning names <code>ship symbols</code>, which
+re-sends the last archive's dSYMs and does fail on error.</p>
 <h3 id="the-release-lint-reads-app-store-connect-not-the-files">The release lint reads App Store Connect, not the files<a class="headerlink" href="#the-release-lint-reads-app-store-connect-not-the-files" title="Permanent link">&para;</a></h3>
 <p><code>ship release</code> submits the listing App Store Connect holds and never pushes text itself, so the
 lint gate checks the live listing. It also warns when the local files differ: a fix not yet
