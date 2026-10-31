@@ -586,8 +586,9 @@ def test_a_bottom_caption_keeps_a_top_captions_edge_gap(app: project.App) -> Non
 def test_caption_sizing_can_differ_per_deck() -> None:
     from snakelane.screenshots.framing.style import style_for
 
-    cfg = {"layout": "device", "caption": {"size": {"duo": 100}, "pad": {"duo": 50}, "depth": {"duo": 0.12}}}
+    cfg = {"layout": "device", "caption": {"size": {"duo": 100}, "pad": {"duo": 50}, "depth": {"duo": 0.12},
+                                           "margin": {"duo": 140}}}
     duo = style_for(cfg, {}, "duo").caption
-    assert (duo.size, duo.pad, duo.depth) == (100, 50, 0.12)
+    assert (duo.size, duo.pad, duo.depth, duo.margin) == (100, 50, 0.12, 140)
     phone = style_for(cfg, {}, "iphone").caption
-    assert (phone.size, phone.pad, phone.depth) == (None, 30, 0.10), "a deck left out gets the default"
+    assert (phone.size, phone.pad, phone.depth, phone.margin) == (None, 30, 0.10, 110), "a deck left out gets the default"

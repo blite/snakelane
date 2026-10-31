@@ -154,7 +154,7 @@ def style_for(cfg: dict[str, Any], slot: dict[str, Any], deck: str | None) -> St
     caption["position"] = "top" if position is None else position
     # Sizing can differ per deck too: a Duo's outer display is short and wide, so a caption sized
     # to the band's depth grows to its edges; a fixed type size with padding keeps a gap.
-    for key in ("depth", "size", "pad"):
+    for key in ("depth", "size", "pad", "margin"):
         if key in caption and (value := per_deck(f"framing.caption.{key}", caption[key], deck)) is None:
             del caption[key]
         elif key in caption:

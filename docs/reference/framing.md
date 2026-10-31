@@ -263,7 +263,7 @@ screenshots:
       position: top                     # top | bottom, or per deck {iphone: top, mac: bottom}
       depth: 0.10                       # the caption's share of the canvas height
       size: null                        # instead of depth: a type size; the band grows to fit
-                                        # depth, size and pad per deck too: size: {duo: 100}
+                                        # depth, size, pad and margin per deck too: size: {duo: 100}
       min_size: 52                      # with size: the smallest it shrinks to
       pad: 30                           # with size: space above and below the type
       margin: 110                       # left margin, and the side margins with size
