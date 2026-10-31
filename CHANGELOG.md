@@ -6,6 +6,10 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **`shoot` warns when a simulator makes a non-default size**, as `store screenshots push` does: a
+  deck shot on an iPhone 14 Plus (6.5", 1284x2778) is flagged as it's captured, not first at the
+  upload, with the advice to re-shoot on iPhone 17 Pro (6.3", the slot App Store Connect requires).
+
 - **Caption `depth`, `size` and `pad` can be set per deck,** like `position`:
   `size: {duo: 100}`. An iPhone Duo's outer display is short and wide, so a caption sized to the
   band grew to its top edge.

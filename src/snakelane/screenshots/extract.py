@@ -15,7 +15,7 @@ from pathlib import Path
 from PIL import Image
 
 from ..project import DeckTree
-from .media import save_jpeg
+from .media import save_jpeg, screenshot_dimensions, size_warnings
 
 # "<NN-Name>[_framed]_<seq>_<UUID>.png" from `xcresulttool export attachments`; `01-Home` -> `ss-01.jpg`.
 # Why: docs/design/screenshots.md#shot-names-may-contain-hyphens
@@ -84,5 +84,10 @@ def extract_deck(xcresult: Path, tree: DeckTree, locale: str = "en-US", label: s
     if stats["raw"] + stats["framed"] == 0:
         raise SystemExit(f"no NN-Name attachments in {xcresult} — did the screenshot test run, "
                          "and does it name its attachments `NN-Name` / `NN-Name_framed`?")
+    # Said at shoot time, not first at the push: a whole deck shot on the wrong simulator is
+    # cheaper to notice before it's framed in every language.
+    captures = sorted(tree.raw(locale).glob("ss-*.jpg")) + sorted(tree.framed(locale).glob("ss-*.jpg"))
+    for line in size_warnings([screenshot_dimensions(p) for p in captures]):
+        print(f"warning: {line} (`screenshots.devices` in the config picks the simulator)")
     return stats
 
