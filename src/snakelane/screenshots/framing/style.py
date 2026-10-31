@@ -23,7 +23,8 @@ DEVICE_KEYS = {"width", "radius", "curve", "gap", "bleed"}
 # an iPhone's corner is continuous, easing out of the edge, an iPad's a plain arc. The defaults are
 # snakelane's default devices, the 6.5" iPhone 14 Plus and the 13" iPad Pro.
 # Why: docs/design/framing.md#a-card-has-its-devices-corners
-DEVICE_CORNERS = {"iphone": {"radius": 0.139, "curve": 2.26}, "ipad": {"radius": 0.029, "curve": 2.0}}
+DEVICE_CORNERS = {"iphone": {"radius": 0.139, "curve": 2.26}, "ipad": {"radius": 0.029, "curve": 2.0},
+                  "duo": {"radius": 0.016, "curve": 2.0}}
 
 
 @dataclass(frozen=True)
@@ -151,6 +152,13 @@ def style_for(cfg: dict[str, Any], slot: dict[str, Any], deck: str | None) -> St
     caption.pop("_comment", None)
     position = per_deck("framing.caption.position", caption.get("position", "top"), deck)
     caption["position"] = "top" if position is None else position
+    # Sizing can differ per deck too: a Duo's outer display is short and wide, so a caption sized
+    # to the band's depth grows to its edges; a fixed type size with padding keeps a gap.
+    for key in ("depth", "size", "pad"):
+        if key in caption and (value := per_deck(f"framing.caption.{key}", caption[key], deck)) is None:
+            del caption[key]
+        elif key in caption:
+            caption[key] = value
     c = Caption(**caption)
     if c.shape not in SHAPES:
         raise SystemExit(f"framing.caption.shape must be one of {', '.join(SHAPES)}, not {c.shape!r}")

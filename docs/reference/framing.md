@@ -255,7 +255,7 @@ screenshots:
     device: {width: 0.84, radius: 0.07, curve: 2.0, gap: 0.02, bleed: false}   # layout: device
     # radius: how far a corner reaches along each edge, a share of the capture's width; curve: the
     # superellipse it follows, 2 a circle. Default: the device's own (iphone 0.139 / 2.26, ipad
-    # 0.029 / 2.0, measured off the simulators), else 0.07 / 2.0.
+    # 0.029 / 2.0, duo 0.016 / 2.0, measured off the simulators), else 0.07 / 2.0.
     # any device value per deck: radius: {iphone: 0.07, mac: 0.012}; a deck left out gets the default
 
     caption:
@@ -263,6 +263,7 @@ screenshots:
       position: top                     # top | bottom, or per deck {iphone: top, mac: bottom}
       depth: 0.10                       # the caption's share of the canvas height
       size: null                        # instead of depth: a type size; the band grows to fit
+                                        # depth, size and pad per deck too: size: {duo: 100}
       min_size: 52                      # with size: the smallest it shrinks to
       pad: 30                           # with size: space above and below the type
       margin: 110                       # left margin, and the side margins with size

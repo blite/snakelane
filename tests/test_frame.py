@@ -544,6 +544,7 @@ def test_a_device_card_has_its_devices_corners() -> None:
     # Measured off the simulators: an iPhone's continuous corner, an iPad's plain arc.
     assert device_for({}, "iphone") == {"radius": 0.139, "curve": 2.26}
     assert device_for({}, "ipad") == {"radius": 0.029, "curve": 2.0}
+    assert device_for({}, "duo") == {"radius": 0.016, "curve": 2.0}, "a Duo's outer display is nearly square"
     assert device_for({}, "mac") == {}
     assert device_for({"device": {"radius": {"iphone": 0.1}}}, "iphone")["radius"] == 0.1, "config wins"
 
@@ -580,3 +581,13 @@ def test_a_bottom_caption_keeps_a_top_captions_edge_gap(app: project.App) -> Non
     # A dark capture, so the only bright ink near the edges is the caption's.
     Image.new("RGB", (1284, 2778), "black").save(project.DeckTree.for_deck(app, "iphone").raw("en-US") / "ss-01.png")
     assert abs(edge_gap("top") - edge_gap("bottom")) <= 3
+
+
+def test_caption_sizing_can_differ_per_deck() -> None:
+    from snakelane.screenshots.framing.style import style_for
+
+    cfg = {"layout": "device", "caption": {"size": {"duo": 100}, "pad": {"duo": 50}, "depth": {"duo": 0.12}}}
+    duo = style_for(cfg, {}, "duo").caption
+    assert (duo.size, duo.pad, duo.depth) == (100, 50, 0.12)
+    phone = style_for(cfg, {}, "iphone").caption
+    assert (phone.size, phone.pad, phone.depth) == (None, 30, 0.10), "a deck left out gets the default"

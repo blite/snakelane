@@ -6,6 +6,12 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **Caption `depth`, `size` and `pad` can be set per deck,** like `position`:
+  `size: {duo: 100}`. An iPhone Duo's outer display is short and wide, so a caption sized to the
+  band grew to its top edge.
+- **iPhone Duo cards get the Duo's own corners** (0.016 / 2.0, measured off the simulator's outer
+  display), not the 0.07 default.
+
 - **A bottom caption keeps the same edge gap as a top one.** A caption of several lines at the
   bottom was laid out as if at the top, leaving its last line half as far from the canvas edge.
   It is now the top caption's reflection. Decks with several-line bottom captions move slightly.
