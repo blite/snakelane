@@ -9,6 +9,8 @@ names. The parts read here:
     resources.leaderboardLocalizations as achievementLocalizations
     resources.gameActivityDefaultImages {vendorIdentifier: {localID, url}}  one per activity, no locale
     resources.achievements             [{vendorIdentifier, points, …}]  for lint's points check
+    resources.leaderboards             [{vendorIdentifier, recurrenceRule, recurrenceDuration, …}]
+                                       for lint's recurrence check
 
 A localID is mapped to its record and locale through the localizations, never by splitting the
 string: a vendor identifier may itself contain hyphens.
@@ -18,6 +20,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -33,6 +36,13 @@ SIZES = {"achievement": (1024, 1024), "leaderboard": (1024, 1024), "activity": (
 # refuses one, shows nothing and creates nothing. Why: docs/design/foundations.md#game-center-points
 MAX_ACHIEVEMENT_POINTS = 100
 MAX_TOTAL_POINTS = 1_000
+
+# What App Store Connect takes for a recurring leaderboard, which Xcode's editor doesn't check: a
+# rule of minutes, hours or days only (no FREQ=WEEKLY), and a duration with a time part (PT168H,
+# not P7D). A week is FREQ=DAILY;INTERVAL=7 for PT168H.
+# Why: docs/design/foundations.md#recurring-leaderboards
+RECURRENCE_RULE = re.compile(r"FREQ=(MINUTELY|HOURLY|DAILY);INTERVAL=[1-9][0-9]*")
+RECURRENCE_DURATION = re.compile(r"P(?:[0-9]+D)?T(?=[0-9])(?:[0-9]+H)?(?:[0-9]+M)?(?:[0-9]+S)?")
 
 
 @dataclass(frozen=True)
@@ -89,6 +99,27 @@ def points_problems(bundle: Path) -> list[tuple[str, str]]:
     if (total := sum(a.get("points") or 0 for a in achievements)) > MAX_TOTAL_POINTS:
         problems.append(("achievements", f"{total} points in all: App Store Connect takes at most "
                          f"{MAX_TOTAL_POINTS:,} for an app"))
+    return problems
+
+
+def recurrence_problems(bundle: Path) -> list[tuple[str, str]]:
+    """(vendor identifier, why) for every recurring leaderboard App Store Connect would refuse: a
+    rule other than minutes, hours or days, or a duration without a time part. Xcode's sync sends
+    them unchecked and, when ASC refuses one, leaves the board off ASC without a word."""
+    problems = []
+    for board in read_resources(bundle).get("leaderboards") or []:
+        rule, duration = board.get("recurrenceRule"), board.get("recurrenceDuration")
+        if rule is None and duration is None:
+            continue
+        vendor_id = board.get("vendorIdentifier", "?")
+        if not RECURRENCE_RULE.fullmatch(rule or ""):
+            problems.append((vendor_id, f"recurrence rule {rule!r}: App Store Connect takes only "
+                             "FREQ=MINUTELY, HOURLY or DAILY with an INTERVAL (a week is "
+                             "FREQ=DAILY;INTERVAL=7), and Xcode's sync fails without a word"))
+        if not RECURRENCE_DURATION.fullmatch(duration or ""):
+            problems.append((vendor_id, f"recurrence duration {duration!r}: App Store Connect takes an ISO "
+                             "8601 duration with a time part (PT24H a day, PT168H a week, not P7D), and "
+                             "Xcode's sync fails without a word"))
     return problems
 
 

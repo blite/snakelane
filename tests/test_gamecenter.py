@@ -253,6 +253,18 @@ def test_a_replacement_deletes_then_uploads_and_shouts_if_the_upload_fails(
     assert "old image was DELETED and the upload FAILED" in capsys.readouterr().out
 
 
+def test_recurrence_durations_need_a_time_part(tmp_path: Path) -> None:
+    folder = make_bundle(tmp_path / "Game.gamekit")
+    data = json.loads((folder / gamekit.RESOURCES).read_text())
+    rule = "FREQ=HOURLY;INTERVAL=6"
+    for duration, ok in [("PT6H", True), ("PT30M", True), ("P1DT12H", True), ("P1D", False), ("PT", False),
+                         ("P1W", False), (None, False)]:
+        data["resources"]["leaderboards"] = [{"vendorIdentifier": LB, "recurrenceRule": rule,
+                                              "recurrenceDuration": duration}]
+        (folder / gamekit.RESOURCES).write_text(json.dumps(data))
+        assert (gamekit.recurrence_problems(folder) == []) is ok, duration
+
+
 def test_points_within_app_store_connect_s_caps_are_no_problem(tmp_path: Path) -> None:
     folder = make_bundle(tmp_path / "Game.gamekit")
     data = json.loads((folder / gamekit.RESOURCES).read_text())

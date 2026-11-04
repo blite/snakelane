@@ -224,6 +224,30 @@ def test_an_app_without_a_gamekit_has_no_opinion(app: project.App) -> None:
     assert not [f for f in lint.run(app, "ios") if f.rule == "gamecenter-points"]
 
 
+def gamekit_with_boards(folder: Path, boards: list[dict[str, str]]) -> Path:
+    """A .gamekit holding only these leaderboards, as Xcode writes the file."""
+    import json
+
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "gameCenterResources.json").write_text(json.dumps({"resources": {"leaderboards": boards}}))
+    return folder
+
+
+def test_a_weekly_rule_or_a_day_duration_is_an_error(tmp_path: Path) -> None:
+    # Word Search, 2026-11-04: Xcode's editor wrote both, and its sync left the board off ASC.
+    gamekit_with_boards(tmp_path / "Game.gamekit", [
+        {"vendorIdentifier": "lb.week", "recurrenceRule": "FREQ=WEEKLY;INTERVAL=1", "recurrenceDuration": "P7D"},
+        {"vendorIdentifier": "lb.fixed", "recurrenceRule": "FREQ=DAILY;INTERVAL=7", "recurrenceDuration": "PT168H"},
+        {"vendorIdentifier": "lb.day", "recurrenceRule": "FREQ=DAILY;INTERVAL=1", "recurrenceDuration": "PT24H"},
+        {"vendorIdentifier": "lb.all-time"},
+    ])
+    found = [f for f in lint.run(make_app(tmp_path), "ios") if f.rule == "gamecenter-recurrence"]
+    assert [(f.where, f.severity, f.message.split(":")[0]) for f in found] == [
+        ("gamecenter/lb.week", "error", "recurrence rule 'FREQ=WEEKLY;INTERVAL=1'"),
+        ("gamecenter/lb.week", "error", "recurrence duration 'P7D'"),
+    ]
+
+
 def test_a_missing_metadata_folder_stops_instead_of_linting_clean(tmp_path: Path) -> None:
     # TowerDefense, 2026-10-16: the files were still in Metadata/PicnicDefense/ and lint said "clean".
     app = make_app(tmp_path)

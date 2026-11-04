@@ -318,7 +318,14 @@ achievement and leaderboard image (1024×1024) per locale, and each activity's d
   in Xcode or on the website); `ship release` still submits the version without it. Don't run it without the user's go-ahead: it writes to ASC.
 - **Run `snakelane lint` before syncing.** Its `gamecenter-points` rule catches an achievement
   over 100 points or a total over 1,000: App Store Connect refuses either, and Xcode's sync then
-  creates nothing and shows no error (Pyramid Solitaire, 2026-10-15).
+  creates nothing and shows no error (Pyramid Solitaire, 2026-10-15). Its `gamecenter-recurrence`
+  rule catches a recurring leaderboard App Store Connect refuses: no `FREQ=WEEKLY` (a week is
+  `FREQ=DAILY;INTERVAL=7`) and no duration without a time part (a week is `PT168H`, not `P7D`).
+  Xcode's sync then leaves that board off, and may leave every record without its localizations
+  (Word Search, 2026-11-04). Start a board at midnight UTC, never in the past.
+- **After a sync, check it took:** `snakelane gamecenter images show` reports any record or locale
+  App Store Connect is missing. A sync that created the records but not their localizations shows
+  every image as "no en-US localization".
 - Images are compared by **pixels**: App Store Connect re-encodes uploads, so bytes and
   checksums never match.
 - A record whose newest version is **LIVE** can't take a new image in place. `--new-version`

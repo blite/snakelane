@@ -6,6 +6,10 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **`lint` checks a `.gamekit`'s recurring leaderboards** (`gamecenter-recurrence`, an error): App
+  Store Connect refuses `FREQ=WEEKLY` and a duration with no time part like `P7D`, and Xcode's
+  sync then leaves the board off without a word. A week is `FREQ=DAILY;INTERVAL=7` for `PT168H`.
+
 - **`shoot` warns when a simulator makes a non-default size**, as `store screenshots push` does: a
   deck shot on an iPhone 14 Plus (6.5", 1284x2778) is flagged as it's captured, not first at the
   upload, with the advice to re-shoot on iPhone 17 Pro (6.3", the slot App Store Connect requires).

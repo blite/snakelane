@@ -30,6 +30,7 @@ snakelane lint --strict --json   # warnings fail too; machine-readable
 | `keyword-format` | warning | spaces after commas, duplicates, words already in the name or subtitle |
 | `price-reference` | error | "free", "buy", "sale", "one-time", "$4.99"… in the name, subtitle, keywords or a `framing.captions` screenshot caption ([2.3.7](https://developer.apple.com/app-store/review/guidelines/#2.3.7)) |
 | `gamecenter-points` | error | an achievement in the `.gamekit` worth more than 100 points, or more than 1,000 in all: App Store Connect refuses it, and Xcode's sync then creates nothing and shows no error. The bundle is `gamecenter.gamekit`, else the repo's only one ([why](../design/foundations.md#game-center-points)) |
+| `gamecenter-recurrence` | error | a recurring leaderboard in the `.gamekit` whose rule isn't `FREQ=MINUTELY`, `HOURLY` or `DAILY` (no `FREQ=WEEKLY`; a week is `FREQ=DAILY;INTERVAL=7`), or whose duration has no time part (`P7D`; a week is `PT168H`): App Store Connect refuses it, and Xcode's sync leaves the board off without an error ([why](../design/foundations.md#recurring-leaderboards)) |
 
 To turn a rule off for one app, put it in that app's config:
 
