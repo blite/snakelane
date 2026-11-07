@@ -1427,6 +1427,39 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#a-bottom-caption-mirrors-a-top-one" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A bottom caption mirrors a top one
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-card-has-its-devices-corners" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A card has its device's corners
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-fixed-image-stands-in-for-a-capture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A fixed image stands in for a capture
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2067,6 +2100,39 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#a-bottom-caption-mirrors-a-top-one" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A bottom caption mirrors a top one
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-card-has-its-devices-corners" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A card has its device's corners
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-fixed-image-stands-in-for-a-capture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A fixed image stands in for a capture
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2294,6 +2360,62 @@ fits no App Store slot is a warning at frame time.</p>
 bottom. It was full-bleed with a different crop position, so it became the slot's <code>bias</code>.
 A slot with a <code>bias</code> is key art, which reserves nothing. The
 file's top-level position and depth are the most common slot's, for apps that read only one.</p>
+<h3 id="a-bottom-caption-mirrors-a-top-one">A bottom caption mirrors a top one<a class="headerlink" href="#a-bottom-caption-mirrors-a-top-one" title="Permanent link">&para;</a></h3>
+<p>Lines are set top-down from the band's capture-facing edge, which for a top caption is the
+canvas edge. A bottom caption kept the same offsets, so the space a top caption leaves above
+its first line ended up between the capture and its first line, and its last line sat half as
+far from the canvas edge (22 px against 43 on Cloudless Cam's iPhone deck). A several-line
+bottom caption is now placed as the top one's reflection: the same gap, below the last line.
+A one-line caption is centred on its ink and needed nothing.</p>
+<h3 id="a-card-has-its-devices-corners">A card has its device's corners<a class="headerlink" href="#a-card-has-its-devices-corners" title="Permanent link">&para;</a></h3>
+<p>A device card used to be a rectangle with circular corners at 7% of its width, which reads as a
+phone at a glance and as wrong beside a real one: an iPhone's screen corner is continuous, easing
+out of the straight edge rather than meeting it at a tangent, and twice that size. The simulator
+hands over the real outline (<code>xcrun simctl io &lt;device&gt; screenshot --mask=alpha</code>), so the defaults
+are measured rather than guessed. Fitting each mask's corner to a superellipse quarter:</p>
+<table>
+<thead>
+<tr>
+<th>Device</th>
+<th>Reach along each edge</th>
+<th>Curve</th>
+<th>A circle that size misses by (rms)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>iPhone 14 Plus (6.5")</td>
+<td>179 px of 1284, 13.9%</td>
+<td>2.26</td>
+<td>8 px</td>
+</tr>
+<tr>
+<td>iPhone 17 Pro</td>
+<td>211 px of 1206, 17.5%</td>
+<td>2.31</td>
+<td>10 px</td>
+</tr>
+<tr>
+<td>iPad Pro 13" (M5)</td>
+<td>60 px of 2064, 2.9%</td>
+<td>2.0</td>
+<td>nothing: a plain arc</td>
+</tr>
+</tbody>
+</table>
+<p>The defaults are the default devices'. <code>radius</code> keeps its meaning, the corner's reach, so a
+deck that set one keeps its size and only gains the shape; the Mac deck, a window not a screen,
+keeps the old circle.</p>
+<h3 id="a-fixed-image-stands-in-for-a-capture">A fixed image stands in for a capture<a class="headerlink" href="#a-fixed-image-stands-in-for-a-capture" title="Permanent link">&para;</a></h3>
+<p>Some shots can't be taken in a simulator. Cloudless Cam's Picture in Picture shot is the first:
+the iPhone simulator has no Picture in Picture at all, only the iPad one does. The picture is
+drawn once from the app's real parts and checked in, and a slot's <code>image</code> names it. <code>frame</code>
+treats it as that slot's capture in every locale, so it gets the deck's caption, layout and
+theme like any other shot, and the deck's captions are checked against it the same way. The
+captions are what change between languages, so the drawing has no words in it.</p>
+<p>Per deck, because the art is drawn at one deck's size: <code>{iphone: …}</code> leaves the other decks
+to their captures. Only snakelane's own framing reads it. A <code>frame: test</code> app's reframe test
+draws over what the shoot captured, so it never sees the image.</p>
 <h2 id="the-gallery">The gallery<a class="headerlink" href="#the-gallery" title="Permanent link">&para;</a></h2>
 <h3 id="where-the-idea-came-from">Where the idea came from<a class="headerlink" href="#where-the-idea-came-from" title="Permanent link">&para;</a></h3>
 <p>The search preview and gallery idea came from storescreens-cli, on 2026-10-02. The before/after

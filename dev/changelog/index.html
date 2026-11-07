@@ -1655,6 +1655,43 @@ behaviour bumps the minor version. Each release is tagged <code>vX.Y.Z</code>.</
 <h2 id="unreleased">Unreleased<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
 <ul>
 <li>
+<p><strong><code>lint</code> checks a <code>.gamekit</code>'s recurring leaderboards</strong> (<code>gamecenter-recurrence</code>, an error): App
+  Store Connect refuses <code>FREQ=WEEKLY</code> and a duration with no time part like <code>P7D</code>, and Xcode's
+  sync then leaves the board off without a word. A week is <code>FREQ=DAILY;INTERVAL=7</code> for <code>PT168H</code>.</p>
+</li>
+<li>
+<p><strong><code>shoot</code> warns when a simulator makes a non-default size</strong>, as <code>store screenshots push</code> does: a
+  deck shot on an iPhone 14 Plus (6.5", 1284x2778) is flagged as it's captured, not first at the
+  upload, with the advice to re-shoot on iPhone 17 Pro (6.3", the slot App Store Connect requires).</p>
+</li>
+<li>
+<p><strong>Caption <code>depth</code>, <code>size</code> and <code>pad</code> can be set per deck,</strong> like <code>position</code>:
+  <code>size: {duo: 100}</code>. An iPhone Duo's outer display is short and wide, so a caption sized to the
+  band grew to its top edge.</p>
+</li>
+<li>
+<p><strong>iPhone Duo cards get the Duo's own corners</strong> (0.016 / 2.0, measured off the simulator's outer
+  display), not the 0.07 default.</p>
+</li>
+<li>
+<p><strong>A bottom caption keeps the same edge gap as a top one.</strong> A caption of several lines at the
+  bottom was laid out as if at the top, leaving its last line half as far from the canvas edge.
+  It is now the top caption's reflection. Decks with several-line bottom captions move slightly.</p>
+</li>
+<li>
+<p><strong>Device cards have the device's own corners.</strong> An iPhone card's corners are now the screen's
+  continuous curve at its real size (13.9% of the width, superellipse 2.26, measured off the
+  simulator's screen mask) and an iPad card's a 2.9% arc, instead of a 7% circle on both. A new
+  <code>framing.device.curve</code> sets the shape (2 is a circle). <strong>Decks with <code>layout: device</code> look
+  different on the next frame</strong>; an app that wants the old corners sets <code>radius: 0.07, curve: 2</code>.</p>
+</li>
+<li>
+<p><strong>A slot can show a checked-in picture instead of a capture.</strong> <code>framing.slots.N.image</code> names
+  an image (from the repo root, or per deck as <code>{iphone: …}</code>) that <code>frame</code> uses as that slot's
+  raw capture in every locale, captioned and framed like the rest. For shots no simulator can
+  take: the iPhone simulator has no Picture in Picture. Only snakelane's own framing reads it.</p>
+</li>
+<li>
 <p><strong>A signing failure says which one it is.</strong> <code>ship</code> called every export that couldn't sign "a
   new app's first upload", because all of them print "Cloud signing permission error". It now
   tells apart a missing profile, a Mac with no Apple Distribution certificate, and a profile

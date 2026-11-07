@@ -1629,6 +1629,11 @@ lint: 3 error(s), 2 warning(s)
 <td>error</td>
 <td>an achievement in the <code>.gamekit</code> worth more than 100 points, or more than 1,000 in all: App Store Connect refuses it, and Xcode's sync then creates nothing and shows no error. The bundle is <code>gamecenter.gamekit</code>, else the repo's only one (<a href="../../design/foundations/#game-center-points">why</a>)</td>
 </tr>
+<tr>
+<td><code>gamecenter-recurrence</code></td>
+<td>error</td>
+<td>a recurring leaderboard in the <code>.gamekit</code> whose rule isn't <code>FREQ=MINUTELY</code>, <code>HOURLY</code> or <code>DAILY</code> (no <code>FREQ=WEEKLY</code>; a week is <code>FREQ=DAILY;INTERVAL=7</code>), or whose duration has no time part (<code>P7D</code>; a week is <code>PT168H</code>): App Store Connect refuses it, and Xcode's sync leaves the board off without an error (<a href="../../design/foundations/#recurring-leaderboards">why</a>)</td>
+</tr>
 </tbody>
 </table>
 <p>To turn a rule off for one app, put it in that app's config:</p>
