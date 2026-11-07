@@ -14,4 +14,4 @@ site/
 /local/
 
 # Local editor/agent preview config.
-/.claude/
+.claude/
