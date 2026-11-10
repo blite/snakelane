@@ -110,6 +110,38 @@ API refuses. An unchanged file is found in the library by a hash of its bytes an
 uploading again, and a slot already showing it is left alone. App Store Connect has no API for the
 crop preview: check it in App Store Connect's product page preview tool before submitting.
 
+## Product page optimizations
+
+A [product page optimization](https://developer.apple.com/help/app-store-connect/create-product-page-optimization-tests/overview-of-product-page-optimization)
+tests up to three treatments of the product page against the live one, each shown to a share of
+visitors. `store ppo push` creates the test and its treatments and places each treatment's creative
+assets, for art that should earn its place before it goes on the page for everyone:
+
+```text
+metadata/ppo/<test>/experiment.yml
+    name: Search result art      the test's name in App Store Connect: how it is found again
+    traffic: 50                  percent of visitors shown a treatment, split between them
+    treatments:                  folder -> treatment name, up to three
+      table: Table mid-trick
+metadata/ppo/<test>/<folder>/creative/<locale>/, .../creative/default/
+    the treatment's search-result.*, product-page-header.*, universal.png, named and checked
+    as for the version; creative/<platform>/ overrides
+```
+
+```bash
+snakelane store ppo push --dry-run
+snakelane store ppo push
+snakelane store ppo show
+```
+
+A test is found by name and platform, a treatment by name, and what's missing is created. Only a
+test still being prepared is written: once it is submitted App Store Connect locks it, and a
+finished test's name is refused rather than reused, so the next test gets a new name. The files go
+through the App Asset Library as the version's do, uploaded once and found again by their bytes.
+
+Sending the test to review and starting it are done in App Store Connect, and so are treatment
+screenshots and app icons, which the push doesn't handle yet.
+
 ## In-app purchases and subscriptions
 
 `metadata/purchases/iap.yml` holds everything the app sells: one-time purchases under

@@ -6,6 +6,13 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **`store ppo push | show`: product page optimization tests.** `metadata/ppo/<test>/experiment.yml`
+  names a test, its traffic and up to three treatments, and each treatment's folder holds
+  `creative/<locale>/` and `creative/default/` as the version does. The push creates the test, its
+  treatments and their localizations and places the creative assets; it never submits or starts a
+  test, and treatment screenshots and icons are still made in App Store Connect. Nothing changes
+  for an app without a `ppo/` folder.
+
 - **`lint` checks a `.gamekit`'s recurring leaderboards** (`gamecenter-recurrence`, an error): App
   Store Connect refuses `FREQ=WEEKLY` and a duration with no time part like `P7D`, and Xcode's
   sync then leaves the board off without a word. A week is `FREQ=DAILY;INTERVAL=7` for `PT168H`.

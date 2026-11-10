@@ -300,6 +300,20 @@ The product page header and search-result asset (October 2026) have exact sizes,
 
 A placement doesn't say which asset backs it, and the library takes no checksum, so neither side can tell whether a slot already shows the local file. Each upload's `referenceName` carries a hash of its bytes: a re-run finds the asset in the library, asks it which placements it backs, and writes nothing when the slot's placement is among them. The same file in two slots or locales is uploaded once. A slot holds one placement per localization, so a changed file's old placement is deleted before the new one is made.
 
+### Product page optimizations
+
+Apple's App Store creative assets (2026-10) are meant to be tried before they ship: a new search
+result image replaces the first screenshots in every search, the most-seen picture of the app.
+Spades put its search result on the 1.7 version page and took it off again the same day
+(2026-11-10), wanting it measured first, and snakelane could place creatives only on the version.
+The API takes a placement on a treatment localization as it does on a version localization, so
+`store ppo push` reuses the creative push's upload and placement and adds the test around it.
+
+It stops short of review and starting. A treatment with new art is reviewed, alone or with a
+version, and starting a test changes what live visitors see, which belongs to a person in App Store
+Connect rather than to a sync. A finished test's name isn't reused because its results stay
+under it; editing it would read as the same experiment.
+
 ### `media show`
 
 The fastlane migration tables mapped `show_screenshots` to this command before any copy implemented it. It answers the question the stale-set sweep raises: which display classes ASC holds right now, and how many files are in each.

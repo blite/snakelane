@@ -70,6 +70,19 @@ class Spec:
 
 
 @dataclass(frozen=True)
+class Target:
+    """A localization that holds placements: a version's, or a product page optimization treatment's."""
+    resource: str       # its resource type, the path segment: appStoreVersionLocalizations
+    relationship: str   # how a placement names it: appStoreVersionLocalization
+    id: str
+    label: str          # how the run names it: "en-US", "Table art en-US"
+
+
+def version_target(asvl_id: str, locale: str) -> Target:
+    return Target("appStoreVersionLocalizations", "appStoreVersionLocalization", asvl_id, locale)
+
+
+@dataclass(frozen=True)
 class RefData:
     """What the reference data says about the two creative slots."""
     specs: tuple[Spec, ...]
@@ -147,8 +160,13 @@ def find_slot_file(dirs: list[Path], stem: str) -> Path | None:
 
 
 def locale_plan(folder: Path, platform: str, locale: str) -> dict[str, Path]:
-    """Placement type -> file for one locale. A slot's own file outranks `universal.png` at any depth."""
-    dirs = creative_dirs(folder, platform, locale)
+    """Placement type -> file for one locale."""
+    return slots_in(creative_dirs(folder, platform, locale))
+
+
+def slots_in(dirs: list[Path]) -> dict[str, Path]:
+    """Placement type -> file, from folders most specific first. A slot's own file outranks
+    `universal.png` at any depth."""
     plan = {kind: path for stem, kind in SLOTS.items() if (path := find_slot_file(dirs, stem))}
     if (universal := find_slot_file(dirs, UNIVERSAL)) is not None:
         for kind in SLOTS.values():
@@ -296,10 +314,10 @@ def wait_until_placeable(client: asc.Client, assets: dict[str, tuple[str, str]],
     return failures
 
 
-def live_slots(client: asc.Client, asvl_id: str) -> dict[str, list[dict[str, Any]]]:
+def live_slots(client: asc.Client, target: Target) -> dict[str, list[dict[str, Any]]]:
     """The localization's creative placements, by placement type."""
     slots: dict[str, list[dict[str, Any]]] = {}
-    for placement in client.get_all(f"/v1/appStoreVersionLocalizations/{asvl_id}/placements"):
+    for placement in client.get_all(f"/v1/{target.resource}/{target.id}/placements"):
         if (kind := asc.attributes(placement).get("placementType")) in SLOTS.values():
             slots.setdefault(kind, []).append(placement)
     return slots
@@ -310,13 +328,13 @@ def placement_ids(client: asc.Client, path: Path, asset_id: str) -> set[str]:
     return {p["id"] for p in client.get_all(f"/v1/{asset_resource(path)}/{asset_id}/placements")}
 
 
-def place(client: asc.Client, path: Path, asset_id: str, placement_type: str, group: str, asvl_id: str) -> str:
+def place(client: asc.Client, path: Path, asset_id: str, placement_type: str, group: str, target: Target) -> str:
     media = "video" if asset_resource(path) == "appAssetLibraryVideos" else "image"
     return client.post("/v1/appAssetLibraryPlacements", {"data": {
         "type": "appAssetLibraryPlacements",
         "attributes": {"placementType": placement_type, "placementGroup": group},
         "relationships": {media: asc.relationship(asset_resource(path), asset_id),
-                          "appStoreVersionLocalization": asc.relationship("appStoreVersionLocalizations", asvl_id)},
+                          target.relationship: asc.relationship(target.resource, target.id)},
     }})["data"]["id"]
 
 
@@ -391,13 +409,19 @@ def apply_plan(client: asc.Client, app_id: str, version: dict[str, Any], plan: d
     asvls = keyed(client, f"/v1/appStoreVersions/{version['id']}/appStoreVersionLocalizations")
     if missing := [locale for locale in plan if locale not in asvls]:
         raise asc.ASCError(f"no AppStoreVersionLocalization for {', '.join(missing)}: add the language in App Store Connect")
+    assets = upload_missing(client, app_id, [p for slots in plan.values() for p in slots.values()])
+    return sum(place_slots(client, version_target(asvls[locale]["id"], locale), slots, assets, ref)
+               for locale, slots in plan.items())
+
+
+def upload_missing(client: asc.Client, app_id: str, paths: list[Path]) -> dict[Path, str]:
+    """Each distinct file's asset id in the App Asset Library, uploading (once, however many slots
+    and locales use it) what isn't there, and waiting until Apple can place it."""
     library_id = client.get(f"/v1/apps/{app_id}/assetLibrary")["data"]["id"]
     in_library = library_assets(client, library_id)
-
-    # Upload each distinct file once, however many slots and locales use it.
     assets: dict[Path, str] = {}
     new: dict[str, tuple[str, str]] = {}
-    for path in sorted({p for slots in plan.values() for p in slots.values()}):
+    for path in sorted(set(paths)):
         data = path.read_bytes()
         name = reference_name(path, data)
         if (found := in_library.get(name)) is not None:
@@ -413,25 +437,28 @@ def apply_plan(client: asc.Client, app_id: str, version: dict[str, Any], plan: d
             for failure in failures:
                 print(red(f"  ✗ {failure}"))
             raise SystemExit("creative assets were not placed: nothing live was changed")
+    return assets
 
+
+def place_slots(client: asc.Client, target: Target, slots: dict[str, Path], assets: dict[Path, str],
+                ref: RefData) -> int:
+    """Make each of the target's slots show its file; returns how many placements changed."""
+    live = live_slots(client, target)
     changed = 0
-    for locale, slots in plan.items():
-        asvl_id = asvls[locale]["id"]
-        live = live_slots(client, asvl_id)
-        for kind, path in sorted(slots.items()):
-            asset_id = assets[path]
-            current = live.get(kind, [])
-            backing = placement_ids(client, path, asset_id) if not asc.planned(asset_id) else set()
-            if current and all(p["id"] in backing for p in current):
-                print(dim(f"  {locale} {SLOT_NAMES[kind]}: {path.name} is already live"))
-                continue
-            # One per localization: the old placement goes before the new one can be made.
-            for old in current:
-                client.delete(f"/v1/appAssetLibraryPlacements/{old['id']}")
-                client.report(f"  removed {locale}'s previous {SLOT_NAMES[kind]} ({old['id']})")
-            placement_id = place(client, path, asset_id, kind, ref.groups[kind], asvl_id)
-            client.report(green(f"  ✓ {locale} {SLOT_NAMES[kind]}: {path.name} ({placement_id})"))
-            changed += 1
+    for kind, path in sorted(slots.items()):
+        asset_id = assets[path]
+        current = live.get(kind, [])
+        backing = placement_ids(client, path, asset_id) if not asc.planned(asset_id) else set()
+        if current and all(p["id"] in backing for p in current):
+            print(dim(f"  {target.label} {SLOT_NAMES[kind]}: {path.name} is already live"))
+            continue
+        # One per localization: the old placement goes before the new one can be made.
+        for old in current:
+            client.delete(f"/v1/appAssetLibraryPlacements/{old['id']}")
+            client.report(f"  removed {target.label}'s previous {SLOT_NAMES[kind]} ({old['id']})")
+        placement_id = place(client, path, asset_id, kind, ref.groups[kind], target)
+        client.report(green(f"  ✓ {target.label} {SLOT_NAMES[kind]}: {path.name} ({placement_id})"))
+        changed += 1
     return changed
 
 
@@ -444,13 +471,10 @@ def cmd_creative_show(args: SimpleNamespace) -> None:
     show(app_config, resolve_platform(app_config, args.platform))
 
 
-def show(app_config: dict[str, Any], platform: str) -> None:
-    """The live creative placements per locale on the editable version, and the files behind them."""
-    client = asc.Client()
-    app = find_app(client, app_config)
-    version = find_editable_version(client, app["id"], platform)
-    library_id = client.get(f"/v1/apps/{app['id']}/assetLibrary")["data"]["id"]
-    # Which asset backs which placement, from the assets' side: a placement doesn't say.
+def placement_labels(client: asc.Client, app_id: str) -> dict[str, str]:
+    """Placement id -> "file [state]" for every creative asset in the library. A placement doesn't
+    say which asset backs it, so the assets are asked."""
+    library_id = client.get(f"/v1/apps/{app_id}/assetLibrary")["data"]["id"]
     backing: dict[str, str] = {}
     for kind in ("images", "videos"):
         for asset in client.get_all(f"/v1/appAssetLibraries/{library_id}/{kind}"):
@@ -459,13 +483,22 @@ def show(app_config: dict[str, Any], platform: str) -> None:
             label = f"{asc.attributes(asset).get('fileName')} [{asc.attributes(asset).get('state')}]"
             for placement in client.get_all(f"/v1/appAssetLibrary{kind.capitalize()}/{asset['id']}/placements"):
                 backing[placement["id"]] = label
+    return backing
+
+
+def show(app_config: dict[str, Any], platform: str) -> None:
+    """The live creative placements per locale on the editable version, and the files behind them."""
+    client = asc.Client()
+    app = find_app(client, app_config)
+    version = find_editable_version(client, app["id"], platform)
+    backing = placement_labels(client, app["id"])
     print(f"--- creative assets for {app_config['bundle_id']} ({platform}, {version_string(version)}) ---")
     asvls = keyed(client, f"/v1/appStoreVersions/{version['id']}/appStoreVersionLocalizations")
     for locale in app_config["locales"]:
         if (asvl := asvls.get(locale)) is None:
             print(f"  [{locale}] (no AppStoreVersionLocalization yet)")
             continue
-        live = live_slots(client, asvl["id"])
+        live = live_slots(client, version_target(asvl["id"], locale))
         for kind in SLOTS.values():
             placements = live.get(kind) or []
             shown = ", ".join(backing.get(p["id"], p["id"]) for p in placements) or "(none)"

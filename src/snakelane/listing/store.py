@@ -18,6 +18,8 @@ file, else it is skipped, never pushed blank. Why: docs/design/foundations.md#bl
     screenshots/<platform>/<locale>/      ss-NN.jpg and ap-NN.m4v; in iphone/, ipad/ and duo/ for iOS
     creative/<locale>/, creative/default/  search-result.*, product-page-header.*, universal.png
                                           (store creative; creative/<platform>/ overrides)
+    ppo/<test>/experiment.yml, ppo/<test>/<treatment>/creative/
+                                          product page optimization tests (`store ppo`)
     release/asset_packs.json              the asset pack record
 
 An app still in the flat layout (no listing/) reads as before; `snakelane migrate-layout` moves it.
@@ -53,6 +55,7 @@ from ..connect import asc
 from ..purchases.iap import cmd_iap_push, cmd_iap_show
 from ..purchases.subscriptions import cmd_subs_pull, cmd_subs_push, cmd_subs_show
 from ..screenshots.creative import cmd_creative_push, cmd_creative_show
+from ..screenshots.ppo import cmd_ppo_push, cmd_ppo_show
 from ..screenshots.upload import (
     MEDIA,
     cmd_media_push,
@@ -64,7 +67,7 @@ from ..screenshots.upload import (
 from .push import cmd_pull, cmd_push, cmd_show
 
 cli = command_app("Push, pull and show the listing, screenshots, App Previews, creative assets, in-app "
-                  "purchases and subscriptions.")
+                  "purchases, subscriptions and product page optimizations.")
 media = command_app("Screenshots, App Previews and creative assets (the product page header and search-result "
                     "asset), pushed together; --only picks some.")
 screenshots = command_app("Screenshot decks.")
@@ -72,9 +75,10 @@ previews = command_app("App Previews: their own App Store Connect resource, thou
                        "the deck folders.")
 iap = command_app("One-time in-app purchases (iap.yml's products).")
 subs = command_app("Auto-renewable subscriptions (iap.yml's subscription_groups).")
+ppo = command_app("Product page optimization tests (ppo/): treatments' creative assets against the live page.")
 creative = command_app("Creative assets: the product page header and the search-result image or video, "
                        "through the App Asset Library.")
-for sub_app, sub_name in ((media, "media"), (iap, "iap"), (subs, "subs")):
+for sub_app, sub_name in ((media, "media"), (iap, "iap"), (subs, "subs"), (ppo, "ppo")):
     cli.add_typer(sub_app, name=sub_name)
 for sub_app, sub_name in ((screenshots, "screenshots"), (previews, "previews"), (creative, "creative")):
     cli.add_typer(sub_app, name=sub_name, hidden=True)
@@ -171,6 +175,18 @@ def creative_push(app: AppOption = None, platform: PlatformOption = None, dry_ru
 def creative_show(app: AppOption = None, platform: PlatformOption = None) -> None:
     """Same as `store media show --only creative`."""
     call(cmd_creative_show, locals())
+
+
+@ppo.command("push")
+def ppo_push(app: AppOption = None, platform: PlatformOption = None, dry_run: DRY_RUN = False) -> None:
+    """Create or update each test in ppo/ and place its treatments' creative assets. Never submits or starts one."""
+    call(cmd_ppo_push, locals())
+
+
+@ppo.command("show")
+def ppo_show(app: AppOption = None, platform: PlatformOption = None) -> None:
+    """List the tests: state, traffic, treatments and their creative placements (read-only)."""
+    call(cmd_ppo_show, locals())
 
 
 @iap.command("show")
