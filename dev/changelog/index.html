@@ -1655,6 +1655,14 @@ behaviour bumps the minor version. Each release is tagged <code>vX.Y.Z</code>.</
 <h2 id="unreleased">Unreleased<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
 <ul>
 <li>
+<p><strong><code>store ppo push | show</code>: product page optimization tests.</strong> <code>metadata/ppo/&lt;test&gt;/experiment.yml</code>
+  names a test, its traffic and up to three treatments, and each treatment's folder holds
+  <code>creative/&lt;locale&gt;/</code> and <code>creative/default/</code> as the version does. The push creates the test, its
+  treatments and their localizations and places the creative assets; it never submits or starts a
+  test, and treatment screenshots and icons are still made in App Store Connect. Nothing changes
+  for an app without a <code>ppo/</code> folder.</p>
+</li>
+<li>
 <p><strong><code>lint</code> checks a <code>.gamekit</code>'s recurring leaderboards</strong> (<code>gamecenter-recurrence</code>, an error): App
   Store Connect refuses <code>FREQ=WEEKLY</code> and a duration with no time part like <code>P7D</code>, and Xcode's
   sync then leaves the board off without a word. A week is <code>FREQ=DAILY;INTERVAL=7</code> for <code>PT168H</code>.</p>

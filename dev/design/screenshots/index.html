@@ -1913,6 +1913,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#product-page-optimizations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Product page optimizations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#media-show" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3022,6 +3033,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#product-page-optimizations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Product page optimizations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#media-show" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3220,6 +3242,17 @@ the staging code in the app doesn't change.</p>
 <p>The product page header and search-result asset (October 2026) have exact sizes, a no-alpha rule and per-format limits that App Store Connect enforces after upload. Apple's guide to the App Asset Library asks integrations to read them from <code>GET /v1/appAssetLibraryRefData</code> instead of hard-coding them, and the two sources already disagree: the help page lists JPEG for the 21:9 header, and the reference data takes PNG only (2026-10-18). So <code>creative push</code> reads the specs on every run and checks each file against them before the first write; a file Apple would refuse stops the push with the spec it missed.</p>
 <h3 id="creative-assets-are-found-by-content">Creative assets are found by content<a class="headerlink" href="#creative-assets-are-found-by-content" title="Permanent link">&para;</a></h3>
 <p>A placement doesn't say which asset backs it, and the library takes no checksum, so neither side can tell whether a slot already shows the local file. Each upload's <code>referenceName</code> carries a hash of its bytes: a re-run finds the asset in the library, asks it which placements it backs, and writes nothing when the slot's placement is among them. The same file in two slots or locales is uploaded once. A slot holds one placement per localization, so a changed file's old placement is deleted before the new one is made.</p>
+<h3 id="product-page-optimizations">Product page optimizations<a class="headerlink" href="#product-page-optimizations" title="Permanent link">&para;</a></h3>
+<p>Apple's App Store creative assets (2026-10) are meant to be tried before they ship: a new search
+result image replaces the first screenshots in every search, the most-seen picture of the app.
+Spades put its search result on the 1.7 version page and took it off again the same day
+(2026-11-10), wanting it measured first, and snakelane could place creatives only on the version.
+The API takes a placement on a treatment localization as it does on a version localization, so
+<code>store ppo push</code> reuses the creative push's upload and placement and adds the test around it.</p>
+<p>It stops short of review and starting. A treatment with new art is reviewed, alone or with a
+version, and starting a test changes what live visitors see, which belongs to a person in App Store
+Connect rather than to a sync. A finished test's name isn't reused because its results stay
+under it; editing it would read as the same experiment.</p>
 <h3 id="media-show"><code>media show</code><a class="headerlink" href="#media-show" title="Permanent link">&para;</a></h3>
 <p>The fastlane migration tables mapped <code>show_screenshots</code> to this command before any copy implemented it. It answers the question the stale-set sweep raises: which display classes ASC holds right now, and how many files are in each.</p>
 
