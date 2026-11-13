@@ -1455,11 +1455,26 @@ Apple hosts and your app downloads after install, instead of shipping it in the 
 levels, picture sets, models. Each pack is its own App Store Connect resource with its own
 review. It isn't an in-app purchase, though a purchase may be what unlocks one.</p>
 <div class="highlight"><pre><span></span><code>snakelane<span class="w"> </span>packs<span class="w"> </span>list<span class="w">                 </span><span class="c1"># packs and their upload state</span>
-snakelane<span class="w"> </span>packs<span class="w"> </span>package<span class="w"> </span>&lt;theme&gt;<span class="w">      </span><span class="c1"># build one pack's .aar, locally</span>
+snakelane<span class="w"> </span>packs<span class="w"> </span>package<span class="w"> </span>&lt;theme&gt;<span class="w">      </span><span class="c1"># build one pack's .aar, locally; adds its record row</span>
+snakelane<span class="w"> </span>packs<span class="w"> </span>package<span class="w"> </span>&lt;theme&gt;<span class="w"> </span>--available-from<span class="w"> </span><span class="m">1</span>.9
 snakelane<span class="w"> </span>packs<span class="w"> </span>upload<span class="w"> </span>--dry-run
 snakelane<span class="w"> </span>packs<span class="w"> </span>upload<span class="w"> </span>&lt;theme&gt;<span class="w">       </span><span class="c1"># asks in a terminal; there is no --yes</span>
-snakelane<span class="w"> </span>packs<span class="w"> </span>status<span class="w">               </span><span class="c1"># what App Store Connect holds</span>
+snakelane<span class="w"> </span>packs<span class="w"> </span>status<span class="w"> </span><span class="o">[</span>&lt;theme&gt;<span class="w"> </span>…<span class="o">]</span><span class="w">   </span><span class="c1"># each pack's versions and processing state</span>
 </code></pre></div>
+<p><code>package</code> gives a pack with no row in the record (<code>metadata/release/asset_packs.json</code>) a new
+row: its item count, the archive's size, <code>uploaded: false</code>. The release that enables the pack,
+<code>available_from_version</code>, is never guessed. Pass <code>--available-from</code>, or set it in the record
+afterwards; <code>upload</code> refuses a row without one, because the id freezes there. A row that
+already exists is left as it is, apart from filling a null <code>available_from_version</code> from
+<code>--available-from</code>.</p>
+<p><code>status</code> asks App Store Connect (read-only) for every recorded pack's versions, latest first:</p>
+<div class="highlight"><pre><span></span><code>  villages1  v1   READY_FOR_TESTING      10/27/26, 1:24:00 PM
+  unicorns1  v2   READY_FOR_TESTING      11/13/26, 7:56:47 AM
+             v1   SUPERSEDED             8/17/26, 9:27:24 AM
+  houses1    no versions at App Store Connect
+</code></pre></div>
+<p>A pack is ready for review once its latest version is <code>READY_FOR_TESTING</code>. If it is still
+processing, don't submit the build: a reviewer would see a failed download.</p>
 <div class="admonition warning">
 <p class="admonition-title">Pack ids are permanent</p>
 <p>An asset pack id freezes at its first upload, and a pack's platforms only ever grow. So

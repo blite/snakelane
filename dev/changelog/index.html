@@ -1654,6 +1654,13 @@ major version is 0, a change that needs new <code>snakelane.yml</code> keys or c
 behaviour bumps the minor version. Each release is tagged <code>vX.Y.Z</code>.</p>
 <h2 id="unreleased">Unreleased<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
 <ul>
+<li><strong><code>packs package</code> adds the pack's record row.</strong> A pack the record didn't list used to build
+  and then fail at <code>upload</code> as unknown. <code>package</code> now appends its row (item count, archive size,
+  <code>uploaded: false</code>) and never rewrites an existing one. <code>available_from_version</code> stays null
+  unless you pass <code>--available-from &lt;version&gt;</code>, and <code>upload</code> still refuses null.</li>
+<li><strong><code>packs status</code> shows each pack's versions and processing state</strong> (<code>READY_FOR_TESTING</code>,
+  <code>SUPERSEDED</code>, …), latest first, for every pack in the record or the themes you name. It no
+  longer prints altool's raw pack list. <code>status</code> now takes several themes.</li>
 <li>
 <p><strong><code>store ppo push | show</code>: product page optimization tests.</strong> <code>metadata/ppo/&lt;test&gt;/experiment.yml</code>
   names a test, its traffic and up to three treatments, and each treatment's folder holds

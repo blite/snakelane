@@ -1510,6 +1510,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#package-writes-the-row-but-not-the-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        package writes the row, but not the release
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#status-lists-versions-not-packs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        status lists versions, not packs
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2166,6 +2188,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#package-writes-the-row-but-not-the-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        package writes the row, but not the release
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#status-lists-versions-not-packs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        status lists versions, not packs
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2455,7 +2499,20 @@ loop stopped, and the pack that needed sending never was.</p>
 pack's <code>contentVersion</code>, so there is one number for one thing. This works because <code>pack.json</code>
 ships in the binary, not the archive: the next build carries the new number, and the app can
 invalidate caches exactly when the content was replaced. <code>archive_bytes</code> is also recorded at
-upload rather than at package time, so it names the size of what is live.</p>
+upload, so it names the size of what is live. <code>package</code> measures it only for a row it creates,
+before anything has been sent.</p>
+<h3 id="package-writes-the-row-but-not-the-release">package writes the row, but not the release<a class="headerlink" href="#package-writes-the-row-but-not-the-release" title="Permanent link">&para;</a></h3>
+<p>Until 2026-11-13 <code>package</code> built an archive for a pack the record did not list, and <code>upload</code>
+then refused it as unknown; Jigsaw's <code>houses1</code>, <code>patterns1</code> and <code>islands1</code> each needed a row
+added by hand. <code>package</code> now adds the row. It leaves <code>available_from_version</code> null unless
+<code>--available-from</code> is passed, because the pack id freezes at upload and only a person knows
+which release turns the pack on. An existing row is the record of what was sent, so <code>package</code>
+never rewrites it.</p>
+<h3 id="status-lists-versions-not-packs">status lists versions, not packs<a class="headerlink" href="#status-lists-versions-not-packs" title="Permanent link">&para;</a></h3>
+<p><code>altool --list-asset-packs</code> prints names and creation dates only. Whether an upload had
+finished processing (Jigsaw's <code>unicorns1</code> version 2, 2026-11-13) needed
+<code>--list-asset-pack-versions</code> for each pack, so <code>status</code> runs that for every pack in the record
+and prints each version's state.</p>
 <h2 id="in-app-purchases-and-subscriptions">In-app purchases and subscriptions<a class="headerlink" href="#in-app-purchases-and-subscriptions" title="Permanent link">&para;</a></h2>
 <h3 id="creation-behind-create">Creation behind --create<a class="headerlink" href="#creation-behind-create" title="Permanent link">&para;</a></h3>
 <p>Product ids, like Game Center ids, can never be reused once they have existed, even after
