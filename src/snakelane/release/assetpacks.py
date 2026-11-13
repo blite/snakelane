@@ -3,11 +3,13 @@
 A pack is content Apple hosts and the app downloads after install, reviewed on its own; not an
 in-app purchase, though one may unlock it.
 
-    snakelane packs list | package <theme> | status [<theme>]
+    snakelane packs list | package <theme> [--available-from <version>] | status [<theme> …]
     snakelane packs upload --dry-run
     snakelane packs upload <theme> [<theme> …] [--new-version]
 
-`package` stages files so each archive path equals its app-bundle path, then runs `ba-package`.
+`package` stages files so each archive path equals its app-bundle path, then runs `ba-package`, and
+adds the pack's row to the record if it has none (an existing row is never rewritten).
+`status` asks altool for each recorded pack's versions and their processing state.
 Pack ids and contents are permanent from the first upload; `upload` needs a person at a TTY (no
 `--yes`). Why: docs/design/release.md#background-assets-packs
 
@@ -39,6 +41,7 @@ import re
 import shutil
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Annotated, Any
@@ -56,6 +59,8 @@ MAX_PACKS_PER_SUBMISSION = 10
 BA_PLATFORMS = {"ios": "iOS", "macos": "macOS", "tvos": "tvOS", "visionos": "visionOS"}
 # altool reports the version App Store Connect assigned among its `= KEY: value` summary lines.
 APPLE_VERSION = re.compile(r"^=\s*ASSET PACK VERSION:\s*(\d+)\s*$", re.MULTILINE)
+SUMMARY_LINE = re.compile(r"^=\s*([A-Za-z ]+?):\s*(.*?)\s*$")
+RELEASE = re.compile(r"^\d+(\.\d+){0,2}$")
 
 
 @dataclass
@@ -176,7 +181,40 @@ def manifest_platforms(packs: Packs) -> list[str]:
     return [BA_PLATFORMS[p.lower()] for p in declared]
 
 
-def cmd_package(packs: Packs, theme: str) -> None:
+def add_row(packs: Packs, theme: str, asset_pack_id: str, pictures: int, archive_bytes: int,
+            available_from: str | None) -> str:
+    """Give a newly packaged pack its record row, so `upload` can find it; return what happened.
+
+    An existing row is the record of what was sent and stays as it is, except that a null
+    available_from_version may be filled from an explicit --available-from. The release is never
+    guessed: the id freezes at upload, and `upload` refuses a row without one.
+
+    Why: docs/design/release.md#package-writes-the-row-but-not-the-release"""
+    if available_from is not None and not RELEASE.match(available_from):
+        raise SystemExit(f"--available-from {available_from}: expected a version like 1.9")
+    doc = packs.read_record()
+    rows = doc.setdefault("packs", [])
+    if row := next((r for r in rows if r.get("asset_pack_id") == asset_pack_id or r.get("theme") == theme), None):
+        if row.get("asset_pack_id") != asset_pack_id:
+            raise SystemExit(f"{packs.rel(packs.record)} has {theme} as {row.get('asset_pack_id')}, but "
+                             f"{theme}/pack.json says {asset_pack_id}; ids freeze at upload, so fix whichever is wrong")
+        if available_from is None or row.get("available_from_version") == available_from:
+            return f"record: {asset_pack_id} already has a row; left as it is"
+        if row.get("available_from_version"):
+            return (f"record: {asset_pack_id} is already available from {row['available_from_version']}; left as "
+                    f"it is, not changed to {available_from} — edit the record if that is what you mean")
+        row["available_from_version"] = available_from
+        message = f"record: {asset_pack_id} available from {available_from}"
+    else:
+        rows.append({"asset_pack_id": asset_pack_id, "theme": theme, "available_from_version": available_from,
+                     "pictures": pictures, "archive_bytes": archive_bytes, "uploaded": False})
+        message = f"record: added {asset_pack_id} ({pictures} items"
+        message += f", available from {available_from})" if available_from else ")"
+    packs.record.write_text(json.dumps(doc, indent=2, ensure_ascii=False) + "\n")
+    return message
+
+
+def cmd_package(packs: Packs, theme: str, available_from: str | None = None) -> None:
     pack = packs.pack(theme)
     if pack.get("delivery") != "backgroundAsset":
         raise SystemExit(f"{theme} is delivery={pack.get('delivery', 'bundled')}; only an asset pack is packaged, "
@@ -207,6 +245,11 @@ def cmd_package(packs: Packs, theme: str) -> None:
     print(green(f"  ✓ {theme}: archive verified"))
     print(f"\n{packs.rel(archive)}  —  {archive.stat().st_size / 1_000_000:.1f} MB")
     print(f"asset pack id: {asset_pack_id}  (frozen at first upload)")
+    print(add_row(packs, theme, asset_pack_id, len(selectors), archive.stat().st_size, available_from))
+    if not next(r for r in packs.read_record()["packs"]
+                if r["asset_pack_id"] == asset_pack_id).get("available_from_version"):
+        print(red(f"  available_from_version is null: set it in {packs.rel(packs.record)} to the release that "
+                  f"enables {theme}, or re-run with --available-from <version>; upload refuses it until then"))
     print("\nServe it to a device — its own terminal, because the keychain prompts:")
     print(f"  xcrun ba-serve serve {packs.rel(archive)} --host <ip> --port 63748")
     print("\nThen upload it — from your own terminal, because the confirmation is typed:")
@@ -364,15 +407,57 @@ def mark_uploaded(packs: Packs, row: dict[str, Any], apple_version: int | None, 
     print(f"  {theme}: contentVersion {current} -> {apple_version} (ships with the next build)")
 
 
-def status(packs: Packs, theme: str | None) -> None:
-    """List the asset packs App Store Connect holds. Read-only."""
+def parse_versions(text: str) -> list[dict[str, Any]]:
+    """altool --list-asset-pack-versions' `= Key: value` blocks, one per version, latest first."""
+    versions: list[dict[str, Any]] = []
+    for line in text.splitlines():
+        if not (found := SUMMARY_LINE.match(line)):
+            continue
+        key, value = found.group(1).strip().lower().replace(" ", "_"), found.group(2)
+        if key == "version_id":
+            versions.append({"version_id": value})
+        elif versions and key in ("version", "state", "date_created", "platforms"):
+            versions[-1][key] = int(value) if key == "version" and value.isdigit() else value
+    return sorted(versions, key=lambda v: v.get("version") if isinstance(v.get("version"), int) else -1,
+                  reverse=True)
+
+
+def pack_versions(app_id: str, pack_id: str, flags: list[str]) -> list[dict[str, Any]] | str:
+    """The pack's versions at App Store Connect, or altool's complaint when it fails."""
+    result = subprocess.run(["xcrun", "altool", "--list-asset-pack-versions", "--apple-id", app_id,
+                             "--asset-pack-identifier", pack_id, *flags], capture_output=True, text=True)
+    if result.returncode:
+        errors = [line.split("] ", 1)[-1] for line in result.stderr.splitlines() if "ERROR:" in line]
+        return (errors or result.stdout.strip().splitlines() or [f"altool exit {result.returncode}"])[0]
+    return parse_versions(result.stdout)
+
+
+def status(packs: Packs, themes: list[str]) -> None:
+    """Each recorded pack's versions at App Store Connect and their state, latest first. Read-only.
+
+    Why: docs/design/release.md#status-lists-versions-not-packs"""
+    if not (rows := rows_for(packs, themes) if themes else packs.read_record().get("packs", [])):
+        return print(f"no asset packs in {packs.rel(packs.record)}")
     app_id, flags = apple_id(packs), altool_auth_flags()
-    subprocess.run(["xcrun", "altool", "--list-asset-packs", "--apple-id", app_id, *flags], check=True)
-    if theme:
-        pack_id = rows_for(packs, [theme])[0]["asset_pack_id"]
-        print(f"\n=== versions of {pack_id}")
-        subprocess.run(["xcrun", "altool", "--list-asset-pack-versions", "--apple-id", app_id,
-                        "--asset-pack-identifier", pack_id, *flags], check=True)
+    with ThreadPoolExecutor(max_workers=4) as pool:  # each altool call is seconds of network wait
+        answers = list(pool.map(lambda row: pack_versions(app_id, row["asset_pack_id"], flags), rows))
+    width = max(len(row["asset_pack_id"]) for row in rows)
+    for row, versions in zip(rows, answers, strict=True):
+        name = row["asset_pack_id"].ljust(width)
+        if isinstance(versions, str):
+            print(red(f"  {name}  altool: {versions}"))
+            continue
+        if not versions:
+            note = "  (the record says uploaded)" if row.get("uploaded") else ""
+            print(f"  {name}  no versions at App Store Connect{note}")
+            continue
+        for index, version in enumerate(versions):
+            state = version.get("state", "?")
+            line = (f"  {name if index == 0 else ' ' * width}  v{version.get('version', '?'):<3} "
+                    f"{state:<22} {version.get('date_created', '')}")
+            print(green(line) if index == 0 and state == "READY_FOR_TESTING" else line)
+        if (recorded := row.get("apple_version")) is not None and recorded != versions[0].get("version"):
+            print(red(f"  {' ' * width}  the record says version {recorded}"))
 
 
 cli = command_app("Package and upload Apple-hosted Background Assets packs. Configured by the "
@@ -391,9 +476,12 @@ def list_packs(app: AppOption = None) -> None:
 
 @cli.command()
 def package(theme: Annotated[str, typer.Argument(help="a folder under the manifests folder, e.g. animals")],
-            app: AppOption = None) -> None:
-    """Build one pack's .aar, locally."""
-    cmd_package(packs_for(app), theme)
+            app: AppOption = None,
+            available_from: Annotated[str | None, typer.Option(
+                "--available-from", help="the release that enables the pack, for a new record row "
+                "(or one whose value is null); never guessed")] = None) -> None:
+    """Build one pack's .aar, locally, and give it a record row if it has none."""
+    cmd_package(packs_for(app), theme, available_from)
 
 
 @cli.command("upload")
@@ -411,10 +499,11 @@ def upload_packs(
 
 
 @cli.command("status")
-def status_packs(theme: Annotated[str | None, typer.Argument(help="also list this pack's versions")] = None,
+def status_packs(themes: Annotated[list[str] | None, typer.Argument(
+                     help="themes or asset pack ids; default: every pack in the record")] = None,
                  app: AppOption = None) -> None:
-    """List the asset packs App Store Connect holds."""
-    status(packs_for(app), theme)
+    """Each pack's versions at App Store Connect and their processing state, latest first."""
+    status(packs_for(app), themes or [])
 
 
 def main(argv: list[str] | None = None) -> None:

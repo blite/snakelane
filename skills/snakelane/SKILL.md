@@ -124,6 +124,8 @@ snakelane bump --dry-run                  # the number the next archive would ge
 snakelane bump --post-action              # print the scheme's Archive post-action
 snakelane packs list | package | upload --dry-run   # Background Assets packs (Apple-hosted
                                                     # downloadable content; not IAPs)
+snakelane packs package <theme> [--available-from 1.9]   # also adds the pack's record row
+snakelane packs status [<theme>]          # versions and processing state, read-only
 ```
 
 Every command has `--help`. Everything app-specific is a key in `snakelane.yml`;

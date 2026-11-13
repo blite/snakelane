@@ -240,7 +240,24 @@ Since PuzzleReef on 2026-09-12, the version Apple assigns at upload is written b
 pack's `contentVersion`, so there is one number for one thing. This works because `pack.json`
 ships in the binary, not the archive: the next build carries the new number, and the app can
 invalidate caches exactly when the content was replaced. `archive_bytes` is also recorded at
-upload rather than at package time, so it names the size of what is live.
+upload, so it names the size of what is live. `package` measures it only for a row it creates,
+before anything has been sent.
+
+### package writes the row, but not the release
+
+Until 2026-11-13 `package` built an archive for a pack the record did not list, and `upload`
+then refused it as unknown; Jigsaw's `houses1`, `patterns1` and `islands1` each needed a row
+added by hand. `package` now adds the row. It leaves `available_from_version` null unless
+`--available-from` is passed, because the pack id freezes at upload and only a person knows
+which release turns the pack on. An existing row is the record of what was sent, so `package`
+never rewrites it.
+
+### status lists versions, not packs
+
+`altool --list-asset-packs` prints names and creation dates only. Whether an upload had
+finished processing (Jigsaw's `unicorns1` version 2, 2026-11-13) needed
+`--list-asset-pack-versions` for each pack, so `status` runs that for every pack in the record
+and prints each version's state.
 
 ## In-app purchases and subscriptions
 

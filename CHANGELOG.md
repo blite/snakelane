@@ -6,6 +6,13 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **`packs package` adds the pack's record row.** A pack the record didn't list used to build
+  and then fail at `upload` as unknown. `package` now appends its row (item count, archive size,
+  `uploaded: false`) and never rewrites an existing one. `available_from_version` stays null
+  unless you pass `--available-from <version>`, and `upload` still refuses null.
+- **`packs status` shows each pack's versions and processing state** (`READY_FOR_TESTING`,
+  `SUPERSEDED`, …), latest first, for every pack in the record or the themes you name. It no
+  longer prints altool's raw pack list. `status` now takes several themes.
 - **`store ppo push | show`: product page optimization tests.** `metadata/ppo/<test>/experiment.yml`
   names a test, its traffic and up to three treatments, and each treatment's folder holds
   `creative/<locale>/` and `creative/default/` as the version does. The push creates the test, its
