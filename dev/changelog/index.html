@@ -1661,6 +1661,9 @@ behaviour bumps the minor version. Each release is tagged <code>vX.Y.Z</code>.</
 <li><strong><code>packs status</code> shows each pack's versions and processing state</strong> (<code>READY_FOR_TESTING</code>,
   <code>SUPERSEDED</code>, …), latest first, for every pack in the record or the themes you name. It no
   longer prints altool's raw pack list. <code>status</code> now takes several themes.</li>
+<li><strong>Thai captions draw in Thai.</strong> The built-in themes' Latin fonts have no Thai glyphs, so a Thai
+  caption drew as empty boxes. A caption with Thai in it now switches, whole, to Sukhumvit Set Bold
+  (<code>SCRIPT_FONTS</code> in <code>framing/style.py</code>); every other caption keeps its theme's font.</li>
 <li>
 <p><strong><code>store ppo push | show</code>: product page optimization tests.</strong> <code>metadata/ppo/&lt;test&gt;/experiment.yml</code>
   names a test, its traffic and up to three treatments, and each treatment's folder holds
