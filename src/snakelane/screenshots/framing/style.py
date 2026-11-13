@@ -4,10 +4,11 @@ Every key: docs/reference/framing.md."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, fields
+import re
+from dataclasses import dataclass, field, fields, replace
 from typing import Any
 
-from .themes import THEMES
+from .themes import SUPPLEMENTAL, THEMES
 
 DECKS = ("iphone", "ipad", "duo", "mac")
 LAYOUTS = ("full-bleed", "stacked", "device")
@@ -114,6 +115,25 @@ def theme_of(value: Any) -> Theme:
     if theme.case not in ("as-written", "upper"):
         raise SystemExit(f'framing.theme.case must be "as-written" or "upper", not {theme.case!r}')
     return theme
+
+
+# Scripts the built-in themes' Latin fonts have no glyphs for, and the macOS font a caption in one
+# switches to, whole (one face per caption keeps its line metrics even). Bold only: these fonts have
+# no italic. Pillow without raqm can't shape Arabic or Hebrew, so they have no entry.
+SCRIPT_FONTS: list[tuple[re.Pattern[str], dict[str, Any]]] = [
+    (re.compile("[\u0E00-\u0E7F]"), {"font": f"{SUPPLEMENTAL}/SukhumvitSet.ttc", "font_face": "Bold"}),  # Thai
+]
+
+
+def for_text(style: Style, text: str | list[str]) -> Style:
+    """`style`, with its theme's font swapped for one that has the script `text` is written in."""
+    text = "\n".join(text) if isinstance(text, list) else text
+    for script, font in SCRIPT_FONTS:
+        if script.search(text):
+            theme = replace(style.theme, **font, bold_face=None, italic_face=None, italic_font=None,
+                            bold_italic_face=None)
+            return replace(style, theme=theme)
+    return style
 
 
 def per_deck(where: str, value: Any, deck: str | None) -> Any:

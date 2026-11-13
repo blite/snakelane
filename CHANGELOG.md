@@ -13,6 +13,9 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 - **`packs status` shows each pack's versions and processing state** (`READY_FOR_TESTING`,
   `SUPERSEDED`, …), latest first, for every pack in the record or the themes you name. It no
   longer prints altool's raw pack list. `status` now takes several themes.
+- **Thai captions draw in Thai.** The built-in themes' Latin fonts have no Thai glyphs, so a Thai
+  caption drew as empty boxes. A caption with Thai in it now switches, whole, to Sukhumvit Set Bold
+  (`SCRIPT_FONTS` in `framing/style.py`); every other caption keeps its theme's font.
 - **`store ppo push | show`: product page optimization tests.** `metadata/ppo/<test>/experiment.yml`
   names a test, its traffic and up to three treatments, and each treatment's folder holds
   `creative/<locale>/` and `creative/default/` as the version does. The push creates the test, its

@@ -27,7 +27,7 @@ from ..args import AppOption, PlatformOption, command_app, resolve_platform, run
 from ..project import IMAGE_SUFFIXES, App, DeckTree, resolve_app
 from .framing import decorate
 from .framing.draw import caption_band, ink_of, parse_caption
-from .framing.style import DECKS, check_framing, per_deck, style_for, theme_of
+from .framing.style import DECKS, check_framing, for_text, per_deck, style_for, theme_of
 from .framing.themes import THEMES
 from .media import SCREENSHOT_DISPLAY_TYPES, deck_files, save_jpeg, screenshot_dimensions
 
@@ -174,7 +174,7 @@ def banner_handoff(app: App, deck: str, locale: str | None = None) -> dict[str, 
     width, height = tuple((cfg.get("targets") or {}).get(deck) or DECK_CANVAS[deck])
     slots, handed = slots_of(cfg), {}
     for n, text in sorted(captions(app, cfg, locale, deck).items()):
-        style = style_for(cfg, slots.get(n, {}), deck)
+        style = for_text(style_for(cfg, slots.get(n, {}), deck), text)
         if not style.caption_over_capture:
             handed[str(n)] = {"position": "none", "depth": 0}
             continue
@@ -236,7 +236,7 @@ def frame_deck(app: App, locale: str = "en-US", decks: list[str] | None = None, 
         for n, src in sorted(shots.items()):
             if n not in deck:
                 raise SystemExit(f"{src.name}: no caption for shot {n} in {CAPTIONS}")
-            style = style_for(cfg, slots.get(n, {}), platform)
+            style = for_text(style_for(cfg, slots.get(n, {}), platform), deck[n])
             image, note, box = compose(app, style, src, deck[n], target)
             if hook:
                 image = decorate.apply(hook, image, decorate.shot_for(
