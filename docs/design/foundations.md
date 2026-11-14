@@ -128,6 +128,14 @@ App Store Connect refused release notes for 1.2 with a 409 mid-push: "What's New
 
 Apple never creates a version's `appStoreReviewDetail` on a fresh app; fetching it 404s until the web UI saves the version or someone POSTs the record. The old Fastfile carried an `ensure_app_store_review_detail_exists` helper because deliver probed the resource and crashed on the 404. snakelane creates it on the first push, so the probe and the fix are the same code path. The create sends the full card, not just the changed fields, or the rest would be dropped.
 
+### One refused locale doesn't stop the push
+
+Apple refuses an app name another app already uses (HTTP 409, "already being used"), and with many
+locales one can clash while the rest are fine. So a refusal is recorded against its locale and the
+push goes on: a refused name is retried without the name, so that locale's subtitle and URLs still
+land, and the run ends with every refusal listed by locale and a non-zero exit. A network failure
+(Apple never answered) still stops at once: after it the live state is unknown.
+
 ### The review contact is required on every write
 
 FreeCell's first `store push` (2026-10-09) changed only the review notes and got a 409 from App Store Connect: `contactFirstName`, `contactLastName`, `contactEmail` and `contactPhone` were all required, and the phone had to start with `+` and a country code. Apple validates the whole card on every write, not just the attributes sent, so notes alone fail while the card has no contact. The 409 came after the listing text had already been written, which left the push half done. `store push` now checks before writing anything: the phone and email format offline, and, once it has read the live card, that every contact field has a value locally or already on App Store Connect.

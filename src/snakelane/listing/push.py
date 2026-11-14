@@ -6,7 +6,7 @@ from __future__ import annotations
 import contextlib
 import json
 import sys
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -220,6 +220,28 @@ def upsert_localization(client: asc.Client, resource: dict[str, Any] | None, lab
     print(f"✓ {label} {'created' if created else 'updated'}: {', '.join(attrs)}")
 
 
+NAME_IN_USE = "already being used"
+
+
+def upsert_locale_or_report(refused: list[tuple[str, str, str]], locale: str,
+                            write: Callable[[dict[str, Any]], None], attrs: dict[str, Any]) -> None:
+    """`write(attrs)`, recording a refusal against `locale` instead of stopping the push. A name another
+    app already uses is retried without the name, so the locale's other fields still land."""
+    try:
+        write(attrs)
+    except asc.TransientNetworkError:
+        raise  # Apple never answered: the live state is unknown, so stop here as before
+    except asc.ASCError as error:
+        if error.status == 409 and NAME_IN_USE in str(error) and "name" in attrs:
+            refused.append((locale, f"name {attrs['name']!r}", "already used by another app — choose another"))
+            print(red(f"✗ {locale}: name {attrs['name']!r} is already used by another app"))
+            if rest := {k: v for k, v in attrs.items() if k != "name"}:
+                upsert_locale_or_report(refused, locale, write, rest)
+            return
+        refused.append((locale, ", ".join(attrs), str(error).splitlines()[0][:200]))
+        print(red(f"✗ {locale}: {', '.join(attrs)} refused — {str(error).splitlines()[0][:200]}"))
+
+
 def cmd_push(args: SimpleNamespace) -> None:
     app = project.resolve_app(args.app)
     folder, app_config = app.folder, app.config
@@ -289,22 +311,32 @@ def cmd_push(args: SimpleNamespace) -> None:
         client.patch(f"/v1/appStoreVersions/{version['id']}",
                      asc.resource_body("appStoreVersions", {"copyright": changes["copyright"]}, id_=version["id"]))
         print(f"✓ AppStoreVersion[{version_string}] copyright updated")
+    # One locale Apple refuses doesn't stop the rest: each refusal is reported against its locale, the
+    # push goes on, and it ends non-zero. A name already used by another app (HTTP 409) is retried
+    # without the name, so that locale's subtitle and URLs still land.
+    # Why: docs/design/foundations.md#one-refused-locale-doesnt-stop-the-push
+    refused: list[tuple[str, str, str]] = []
     for locale, fields in changes["per_locale"].items():
         attrs = {home: {LISTING[s].api: v for s, v in fields.items() if LISTING[s].home == home}
                  for home in ("app", "version")}
         if info_attrs := attrs["app"]:
-            upsert_localization(client, live["info_loc_resources"].get(locale), f"AppInfoLocalization[{locale}]",
-                                "appInfoLocalizations", ("appInfo", "appInfos", app_info["id"]), locale, info_attrs)
+            upsert_locale_or_report(refused, locale, lambda a, locale=locale: upsert_localization(
+                client, live["info_loc_resources"].get(locale), f"AppInfoLocalization[{locale}]",
+                "appInfoLocalizations", ("appInfo", "appInfos", app_info["id"]), locale, a), info_attrs)
         if asvl_attrs := attrs["version"]:
-            upsert_localization(client, live["asvl_resources"].get(locale),
-                                f"AppStoreVersionLocalization[{locale}, {version_string}]",
-                                "appStoreVersionLocalizations", ("appStoreVersion", "appStoreVersions", version["id"]),
-                                locale, asvl_attrs)
+            upsert_locale_or_report(refused, locale, lambda a, locale=locale: upsert_localization(
+                client, live["asvl_resources"].get(locale), f"AppStoreVersionLocalization[{locale}, {version_string}]",
+                "appStoreVersionLocalizations", ("appStoreVersion", "appStoreVersions", version["id"]), locale, a),
+                asvl_attrs)
     if changes["review"]:  # the full card: a create with only the delta would drop the rest
         push_review_detail(client, version, plan["review"])
+    if refused:
+        print(red(f"\n✗ App Store Connect refused {len(refused)} field set(s); every other change was written:"))
+        for locale, what, reason in refused:
+            print(red(f"  {locale}: {what} — {reason}"))
 
     print("\nverifying against a fresh read of App Store Connect…")
-    if not verify_push(changes, fetch_live_state(client, app_info["id"], version, locales)):
+    if not verify_push(changes, fetch_live_state(client, app_info["id"], version, locales)) or refused:
         raise SystemExit(red("\nMetadata push finished WITH MISMATCHES — see above."))  # non-zero for CI and agents
     print(green("\nMetadata push complete."))
 
