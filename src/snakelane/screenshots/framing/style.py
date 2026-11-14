@@ -4,11 +4,12 @@ Every key: docs/reference/framing.md."""
 
 from __future__ import annotations
 
+import functools
 import re
 from dataclasses import dataclass, field, fields, replace
 from typing import Any
 
-from .themes import SUPPLEMENTAL, THEMES
+from .themes import FONTS, SUPPLEMENTAL, THEMES
 
 DECKS = ("iphone", "ipad", "duo", "mac")
 LAYOUTS = ("full-bleed", "stacked", "device")
@@ -118,18 +119,63 @@ def theme_of(value: Any) -> Theme:
 
 
 # Scripts the built-in themes' Latin fonts have no glyphs for, and the macOS font a caption in one
-# switches to, whole (one face per caption keeps its line metrics even). Bold only: these fonts have
-# no italic. Pillow without raqm can't shape Arabic or Hebrew, so they have no entry.
+# switches to, whole (one face per caption keeps its line metrics even), when the theme's own font
+# lacks a letter of it. Bold or heavier only: these
+# fonts have no italic. Avenir Next has no Cyrillic, and lacks Vietnamese's stacked marks (ư, ợ, ề),
+# so both take SF Pro Heavy, the nearest weight. Arabic is shaped by Pillow's raqm layout, which
+# needs libraqm (`brew install libraqm`) where Pillow can find it — `DYLD_LIBRARY_PATH=/opt/homebrew/lib`
+# for a uv-installed snakelane; `for_text` stops rather than draw Arabic unjoined and backwards.
 SCRIPT_FONTS: list[tuple[re.Pattern[str], dict[str, Any]]] = [
     (re.compile("[\u0E00-\u0E7F]"), {"font": f"{SUPPLEMENTAL}/SukhumvitSet.ttc", "font_face": "Bold"}),  # Thai
+    (re.compile("[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]"),
+     {"font": f"{FONTS}/SFArabic.ttf", "font_face": "Heavy"}),  # Arabic
+    (re.compile("[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]"),
+     {"font": f"{FONTS}/AppleSDGothicNeo.ttc", "font_face": "Heavy"}),  # Korean
+    (re.compile("[\u0400-\u04FF\u01A0-\u01B0\u1EA0-\u1EFF]"),
+     {"font": f"{FONTS}/SFNS.ttf", "font_face": "Heavy"}),  # Cyrillic, Vietnamese
 ]
+ARABIC = re.compile("[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]")
+
+
+@functools.cache
+def _glyphs(font: str, face: str | None) -> Any:
+    """A Pillow font for `font`'s `face`: a collection's member or a variable font's instance."""
+    from PIL import ImageFont
+    for index in range(64):
+        try:
+            loaded = ImageFont.truetype(font, 48, index=index)
+        except OSError:
+            break
+        if face is None or loaded.getname()[1] == face:
+            return loaded
+        try:
+            names = [n.decode() if isinstance(n, bytes) else n for n in loaded.get_variation_names()]
+        except OSError:
+            continue
+        if face in names:
+            loaded.set_variation_by_name(face)
+            return loaded
+    return ImageFont.truetype(font, 48)
+
+
+def _covers(font: str, face: str | None, chars: set[str]) -> bool:
+    """Whether `font`'s `face` draws every one of `chars` (none is its missing-glyph box)."""
+    loaded = _glyphs(font, face)
+    missing = bytes(loaded.getmask("\U0010FFFD"))
+    return all(bytes(loaded.getmask(c)) != missing for c in chars)
 
 
 def for_text(style: Style, text: str | list[str]) -> Style:
     """`style`, with its theme's font swapped for one that has the script `text` is written in."""
     text = "\n".join(text) if isinstance(text, list) else text
+    if ARABIC.search(text):
+        from PIL import features
+        if not features.check("raqm"):
+            raise SystemExit("an Arabic caption needs Pillow's raqm layout: brew install libraqm, and run "
+                             "snakelane with DYLD_LIBRARY_PATH=/opt/homebrew/lib")
     for script, font in SCRIPT_FONTS:
-        if script.search(text):
+        found = set(script.findall(text))
+        if found and not _covers(style.theme.font, style.theme.font_face, found):
             theme = replace(style.theme, **font, bold_face=None, italic_face=None, italic_font=None,
                             bold_italic_face=None)
             return replace(style, theme=theme)
