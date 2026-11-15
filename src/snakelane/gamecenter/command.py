@@ -1,7 +1,11 @@
-"""`snakelane gamecenter`: Game Center resources from Xcode's `.gamekit` bundle — their images, and
-sending the records to App Review.
+"""`snakelane gamecenter`: Game Center resources from Xcode's `.gamekit` bundle — their text and
+images, and sending the records to App Review.
 
-Xcode's Game Center editor syncs records and text to App Store Connect, but not the images, so
+`gamecenter sync` is the one command: each record's localized text and images, written where they
+differ from its newest version (a new version when that is LIVE), then every record waiting for
+review into the draft review submission (gamecenter/sync.py). The steps also run alone.
+Xcode's Game Center editor creates the records, but leaves images and a live record's new
+languages behind, so
 `gamecenter images push` uploads them: diff (pixels) against live, confirm, write, re-read.
 `gamecenter submit` adds every record waiting for review to the app's draft review submission,
 beside the app version, without submitting it (gamecenter/review.py).
@@ -24,6 +28,7 @@ from ..args import AppOption, PlatformOption, command_app, run
 from ..listing.store import call
 from .images import cmd_push, cmd_show
 from .review import cmd_submit
+from .sync import cmd_sync
 
 cli = command_app("Game Center resources from Xcode's .gamekit bundle.")
 images = command_app("Achievement, leaderboard and activity images: Xcode's sync leaves them out.")
@@ -47,6 +52,19 @@ def images_push(app: AppOption = None,
                 ) -> None:
     """Upload new and changed images: compare pixels with live, confirm, upload, re-read and verify."""
     call(cmd_push, locals())
+
+
+@cli.command("sync")
+def sync(app: AppOption = None, platform: PlatformOption = None,
+         dry_run: Annotated[bool, typer.Option("--dry-run", help="read App Store Connect and print the "
+                                                                 "writes; write nothing")] = False,
+         yes: Annotated[bool, typer.Option("--yes", help="skip the confirmation (non-tty runs)")] = False,
+         without_version: Annotated[bool, typer.Option(
+             "--without-version", help="leave the app version out of the draft")] = False,
+         ) -> None:
+    """Make App Store Connect match the .gamekit: localized text and images, a new version where the
+    newest is LIVE, and every record waiting for review into the draft submission; never submits."""
+    call(cmd_sync, locals())
 
 
 @cli.command("submit")

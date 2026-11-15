@@ -8,7 +8,9 @@ names. The parts read here:
     resources.leaderboardImages        as achievementImages
     resources.leaderboardLocalizations as achievementLocalizations
     resources.gameActivityDefaultImages {vendorIdentifier: {localID, url}}  one per activity, no locale
-    resources.achievements             [{vendorIdentifier, points, …}]  for lint's points check
+    resources.gameActivityLocalizations as achievementLocalizations
+    resources.achievements             [{vendorIdentifier, points, archived, …}]  for lint's points check
+                                       and to leave archived records out of `sync`
     resources.leaderboards             [{vendorIdentifier, recurrenceRule, recurrenceDuration, …}]
                                        for lint's recurrence check
 
@@ -43,6 +45,32 @@ MAX_TOTAL_POINTS = 1_000
 # Why: docs/design/foundations.md#recurring-leaderboards
 RECURRENCE_RULE = re.compile(r"FREQ=(MINUTELY|HOURLY|DAILY);INTERVAL=[1-9][0-9]*")
 RECURRENCE_DURATION = re.compile(r"P(?:[0-9]+D)?T(?=[0-9])(?:[0-9]+H)?(?:[0-9]+M)?(?:[0-9]+S)?")
+
+
+# Each kind's localized text, as the bundle and App Store Connect both name the fields.
+LOCALIZATIONS = {"achievement": "achievementLocalizations", "leaderboard": "leaderboardLocalizations",
+                 "activity": "gameActivityLocalizations"}
+RECORDS = {"achievement": "achievements", "leaderboard": "leaderboards", "activity": "gameActivities"}
+TEXT_FIELDS = {
+    "achievement": ("name", "beforeEarnedDescription", "afterEarnedDescription"),
+    "leaderboard": ("name", "description", "formatterOverride", "formatterSuffix", "formatterSuffixSingular"),
+    "activity": ("name", "description"),
+}
+
+
+@dataclass(frozen=True)
+class Text:
+    """One record's words in one locale; `fields` holds only what the bundle sets (a blank or
+    missing field is no opinion, never pushed)."""
+
+    kind: str
+    vendor_id: str
+    locale: str
+    fields: tuple[tuple[str, str], ...]
+
+    @property
+    def values(self) -> dict[str, str]:
+        return dict(self.fields)
 
 
 @dataclass(frozen=True)
@@ -141,6 +169,25 @@ def read_bundle(bundle: Path) -> tuple[list[Image], list[str]]:
     for vendor_id, entry in sorted((resources.get("gameActivityDefaultImages") or {}).items()):
         images.append(Image("activity", vendor_id, None, bundle / entry["url"]))
     return images, problems
+
+
+def read_texts(bundle: Path) -> list[Text]:
+    """Every localization the bundle holds, archived records left out."""
+    resources = read_resources(bundle)
+    texts: list[Text] = []
+    for kind, key in LOCALIZATIONS.items():
+        records = resources.get(RECORDS[kind]) or []
+        archived = {r.get("vendorIdentifier") for r in (records if isinstance(records, list) else [])
+                    if r.get("archived")}
+        for vendor_id, items in sorted((resources.get(key) or {}).items()):
+            if vendor_id in archived:
+                continue
+            for item in items or []:
+                if not item.get("locale"):
+                    continue
+                fields = tuple((f, item[f]) for f in TEXT_FIELDS[kind] if item.get(f) not in (None, ""))
+                texts.append(Text(kind, vendor_id, item["locale"], fields))
+    return texts
 
 
 def localized_ids(localizations: dict[str, Any]) -> dict[str, tuple[str, str]]:

@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import sys
 from dataclasses import dataclass, field
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, NamedTuple
 
@@ -188,13 +189,23 @@ def print_plan(targets: list[Target]) -> None:
             print((green(line) if t.status == "new" else line) + where)
 
 
-def make_version(client: asc.Client, target: Target) -> None:
-    """A new version of a record whose newest is LIVE; ASC copies the live one's localizations and
-    image into it, so the parent and live image are read again from the new one."""
-    kind, rel = target.kind, target.image.kind
+def create_version(client: asc.Client, kind_name: str, record: dict[str, Any]) -> dict[str, Any]:
+    """The next version of a record whose newest is LIVE; ASC copies the live one's localizations
+    and images into it."""
+    kind = KINDS[kind_name]
     created = client.post(f"/{kind.versions_api}/{kind.version_type}", asc.resource_body(
-        kind.version_type, {}, relationships={rel: asc.relationship(kind.record_type, target.record["id"])}))["data"]
-    client.report(f"  created {target.image.kind} {target.image.vendor_id} version {created['id']}")
+        kind.version_type, {}, relationships={kind_name: asc.relationship(kind.record_type, record["id"])}))["data"]
+    client.report(f"  created {kind_name} {asc.attributes(record).get('vendorIdentifier')} version {created['id']}")
+    return created
+
+
+def make_version(client: asc.Client, target: Target) -> None:
+    """A new version for `target`'s record; the parent and live image are read again from it."""
+    adopt_version(client, target, create_version(client, target.image.kind, target.record))
+
+
+def adopt_version(client: asc.Client, target: Target, created: dict[str, Any]) -> None:
+    """Point `target` at a version just created, reading its copied localization and image."""
     target.version, target.new_version = created, False
     if asc.planned(created["id"]):
         print(dim(f"  [dry-run] then: delete the {target.image.locale or 'default'} image ASC copies into the new "
@@ -254,9 +265,13 @@ def verify(client: asc.Client, targets: list[Target]) -> bool:
     return ok
 
 
-def local_images(app: project.App) -> list[Image]:
+def bundle_path(app: project.App) -> Path:
+    return gamekit.find_bundle(app.root, (app.config.get("gamecenter") or {}).get("gamekit"))
+
+
+def local_images(app: project.App, required: bool = True) -> list[Image]:
     """The bundle's images, refused before any network call if one would be rejected."""
-    bundle = gamekit.find_bundle(app.root, (app.config.get("gamecenter") or {}).get("gamekit"))
+    bundle = bundle_path(app)
     print(f"→ {bundle.relative_to(app.root) if bundle.is_relative_to(app.root) else bundle}")
     images, problems = gamekit.read_bundle(bundle)
     problems += [f"{image.label}: {p}" for image in images
@@ -265,7 +280,7 @@ def local_images(app: project.App) -> list[Image]:
         for problem in problems:
             print(red(f"  ✗ {problem}"))
         raise SystemExit("fix the .gamekit images above — nothing was read from or written to App Store Connect")
-    if not images:
+    if not images and required:
         raise SystemExit("the .gamekit names no achievement, leaderboard or activity images")
     return images
 

@@ -116,6 +116,7 @@ snakelane check                           # refuse a deck shot from a DEBUG buil
 snakelane frame                           # caption raw shots in Python (Pillow)
 snakelane frame --theme <name>            # try a look; writes .snakelane/, not the deck
 
+snakelane gamecenter sync [--dry-run] [--yes]   # .gamekit text + images → ASC, new versions, draft submission
 snakelane gamecenter images show         # each .gamekit image vs ASC: new/changed/unchanged/skipped
 snakelane gamecenter images push [--dry-run] [--yes] [--new-version]
 
@@ -308,7 +309,14 @@ Don't mark `--reviewed` on your own translation without the user's go-ahead.
 `references/gotchas.md` has the full list — simulator clone sets, preview specs, the
 Xcode-project traps — read it when a push fails or an upload bounces later.
 
-## Game Center images
+## Game Center
+
+**`snakelane gamecenter sync` is the one command after editing the `.gamekit`** (`--dry-run`
+first, and only with the user's go-ahead, since it writes to ASC): each record's localized text and
+images go to its newest version, with a new version made where that one is live, then every
+record waiting for review joins the draft review submission (created if needed, never
+submitted). Xcode's sync is still what creates a record; it leaves out images and a live
+record's new languages without a word (Klondike Solitaire, 2026-11-15).
 
 Xcode's Game Center editor writes a `*.gamekit` bundle and syncs its records and text to App
 Store Connect, but not the images. `snakelane gamecenter images push` uploads them: every

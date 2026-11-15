@@ -91,6 +91,9 @@ snakelane ship beta                # test → archive → TestFlight
 
 **Game Center**
 
+- [x] `gamecenter sync`: the `.gamekit`'s localized text and images made true on App Store
+   Connect, a new version where the newest is live, and every changed record in the draft review
+   submission, in one run (never submitted)
 - [x] `gamecenter images push`: the achievement, leaderboard and activity images in Xcode's
    `.gamekit` bundle, which Xcode's own sync leaves out; compared by pixels, confirmed, uploaded
    and read back

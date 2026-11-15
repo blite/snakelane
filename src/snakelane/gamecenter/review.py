@@ -137,6 +137,31 @@ def preparing_version(client: asc.Client, app_id: str, platform: str) -> dict[st
     return next((v for v in versions if asc.attributes(v).get("appStoreState") in VERSION_PENDING), None)
 
 
+def queue(client: asc.Client, app_id: str, todo: list[Item], version: dict[str, Any] | None,
+          platform: str) -> None:
+    """Put the app version (if any) and `todo` in the platform's draft review submission, creating
+    the draft if there is none. Never submits."""
+    submission = draft(client, app_id, platform)
+    if version:
+        try:
+            client.post("/v1/reviewSubmissionItems", {"data": {"type": "reviewSubmissionItems", "relationships": {
+                "reviewSubmission": asc.relationship("reviewSubmissions", submission["id"]),
+                "appStoreVersion": asc.relationship("appStoreVersions", version["id"]),
+            }}})
+        except asc.ASCError as error:
+            if error.status != 409:
+                raise
+            raise SystemExit(
+                f"App Store Connect won't take version {asc.attributes(version).get('versionString')} for review "
+                "yet: it is missing something review needs, usually the listing text (`snakelane store push`), "
+                "the screenshots (`snakelane store media push`) or a build. The draft submission is "
+                "kept and reused next run; no Game Center record was added.\n" + str(error)) from None
+        print(f"  {'would add' if client.dry_run else 'added'} app version {asc.attributes(version).get('versionString')}")
+    if refused := add(client, submission["id"], todo):
+        raise SystemExit("App Store Connect refused these, so they are not in the draft; finish them on "
+                         "its website or in Xcode and run again:\n  " + "\n  ".join(refused))
+
+
 def cmd_submit(args: SimpleNamespace) -> None:
     app = project.resolve_app(args.app)
     platform = resolve_platform(app.config, args.platform)
@@ -163,25 +188,7 @@ def cmd_submit(args: SimpleNamespace) -> None:
         if input("\nAdd them to the review submission? [y/N] ").strip().lower() not in ("y", "yes"):
             print("aborted — nothing added")
             return
-    submission = draft(client, app_id, platform)
-    if version:
-        try:
-            client.post("/v1/reviewSubmissionItems", {"data": {"type": "reviewSubmissionItems", "relationships": {
-                "reviewSubmission": asc.relationship("reviewSubmissions", submission["id"]),
-                "appStoreVersion": asc.relationship("appStoreVersions", version["id"]),
-            }}})
-        except asc.ASCError as error:
-            if error.status != 409:
-                raise
-            raise SystemExit(
-                f"App Store Connect won't take version {asc.attributes(version).get('versionString')} for review "
-                "yet: it is missing something review needs, usually the listing text (`snakelane store push`), "
-                "the screenshots (`snakelane store media push`) or a build. The draft submission is "
-                "kept and reused next run; no Game Center record was added.\n" + str(error)) from None
-        print(f"  {'would add' if client.dry_run else 'added'} app version {asc.attributes(version).get('versionString')}")
-    if refused := add(client, submission["id"], todo):
-        raise SystemExit("App Store Connect refused these, so they are not in the draft; finish them on "
-                         "its website or in Xcode and run again:\n  " + "\n  ".join(refused))
+    queue(client, app_id, todo, version, platform)
     if client.dry_run:
         print("\n[dry-run] nothing was written to App Store Connect.")
         return

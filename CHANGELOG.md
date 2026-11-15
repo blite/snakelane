@@ -6,6 +6,15 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **`gamecenter sync`: the `.gamekit`, made true on App Store Connect in one run.** Xcode's sync
+  creates records but leaves out images, and the languages a live record gains (Klondike
+  Solitaire's eight new ones never arrived). `sync` compares each record's localized text and
+  images with its newest version, makes the next version where that one is live, adds missing
+  locales, updates differing fields, uploads changed images, reads them back, and adds every
+  record waiting for review (and the app version) to the draft review submission, creating it if
+  needed. Never submits. An achievement language with no picture in the bundle gets the primary
+  locale's, since App Store Connect refuses an achievement for review until every language has
+  one. `images push` and `submit` are unchanged.
 - **`packs package` adds the pack's record row.** A pack the record didn't list used to build
   and then fail at `upload` as unknown. `package` now appends its row (item count, archive size,
   `uploaded: false`) and never rewrites an existing one. `available_from_version` stays null
