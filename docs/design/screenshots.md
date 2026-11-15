@@ -78,6 +78,14 @@ In `framed/`, every image goes, because the push uploads every image there and t
 
 Only images are cleared, because the deck folders also hold the App Preview (`ap-01.*`), which takes minutes to record. Without the clear, a device change left the old set beside the new one, and the next push uploaded both: twelve near-duplicate shots in one ASC set. A full run sweeps every locale folder so a dropped locale stops shipping its old shots; a `--locales` run touches only the locales it re-shoots.
 
+### Reshooting single shots
+
+`shoot --shots 05,06` exists because one bad frame used to cost a whole pass. Shooting Spider's Mac deck in nine locales (2026-11-15), another app's window was in front for four frames and a stray click hid the bar in a fifth; each meant reshooting six shots in that locale to replace one, and a failure anywhere put the entire previous deck back. A single-shot run asks xcodebuild for only those shots' test methods, sets aside only their raw and framed files, frames only them, and on failure restores only them: the rest of the deck is never moved.
+
+The methods are found by name. A deck's test already attaches `NN-Name`, and the tests that do it are named `testNN…` in every app that uses this, so the class's source under the project's folder is read for `func testNN…` rather than building first to ask xcodebuild to enumerate. A slot can have two methods, one per platform behind `#if os(…)` (Spider's `test04Layout` on iOS and `test04OnTop` on the Mac); both are asked for, since xcodebuild skips an `-only-testing` id the build doesn't have. Because of that, a shot that didn't come back is checked afterwards and fails the run. `screenshots.shot_tests` names the method for an app whose tests aren't numbered.
+
+It touches only the locales it shoots, never every locale folder: no pass refills the others. And it says how old the shots it left are, because a deck reshot in part can mix builds; that date is the raw capture's where there is one.
+
 ### Two devices cannot share a deck folder
 
 Extracted filenames carry no device label, because the folder is the device class. Two devices mapped to the same folder would silently overwrite each other's `ss-NN` files and produce a deck that is half one phone and half another, so the shoot refuses.

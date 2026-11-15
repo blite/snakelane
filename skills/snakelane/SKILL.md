@@ -105,6 +105,7 @@ snakelane store iap show | iap push [--dry-run] [--create] [--product ID]
 snakelane store subs show | subs push [--dry-run] [--create]
 
 snakelane shoot [--dry-run]         # generate the deck from the UI test
+snakelane shoot --shots 05,06 [--locales …]   # reshoot only those shots; the rest of the deck stays
 snakelane frame                   # redraw captions over raw/ without re-shooting
 snakelane preview [--dry-run] [--encode-only]   # record ap-01.m4v from the video UI test, with sound
 snakelane gallery --open                  # review page: decks, store mocks, lint, translations
@@ -241,6 +242,10 @@ Don't mark `--reviewed` on your own translation without the user's go-ahead.
 - The display slot is inferred from **pixel size**; filenames set order only. A leading `_`
   excludes a file — and so removes it from ASC on the next push, because a push makes the
   remote set mirror the local folder (an *empty* locale folder deletes that locale's sets).
+- One bad frame doesn't need a whole pass: `shoot --shots 05` (with `--locales`, `--device` or
+  `--platform` as needed) runs only that shot's test method (`func test05…`, or the one
+  `screenshots.shot_tests` names) and replaces only `ss-05`. It reports how old the shots it left
+  are; reshoot the whole deck when the app's look has changed since.
 - `shoot` sets the previous deck aside in `screenshots/.previous-shoot/` and puts it
   back if any pass fails, so a failed shoot never leaves a half or empty deck for a push to
   upload. A `.previous-shoot/` left behind means a shoot was killed: it holds the last good

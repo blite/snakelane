@@ -185,9 +185,11 @@ def banner_handoff(app: App, deck: str, locale: str | None = None) -> dict[str, 
     return {"version": 1, "deck": deck, **common, "slots": handed}
 
 
-def frame_deck(app: App, locale: str = "en-US", decks: list[str] | None = None, theme: str | None = None) -> int:
+def frame_deck(app: App, locale: str = "en-US", decks: list[str] | None = None, theme: str | None = None,
+               only: set[int] | None = None) -> int:
     """Frame `locale`'s raw captures in `decks` (default: all with raws); return the count.
-    With `theme`, output goes to .snakelane/, not the deck."""
+    With `theme`, output goes to .snakelane/, not the deck. `only` frames just those shots
+    (`shoot --shots`) and leaves the other framed files untouched."""
     from .framing.compose import compose
 
     cfg = framing(app)
@@ -236,6 +238,9 @@ def frame_deck(app: App, locale: str = "en-US", decks: list[str] | None = None, 
         for n, src in sorted(shots.items()):
             if n not in deck:
                 raise SystemExit(f"{src.name}: no caption for shot {n} in {CAPTIONS}")
+            if only is not None and n not in only:
+                produced.setdefault(group, set()).add(n)  # framed already, by the shoot that took it
+                continue
             style = for_text(style_for(cfg, slots.get(n, {}), platform), deck[n])
             image, note, box = compose(app, style, src, deck[n], target)
             if hook:

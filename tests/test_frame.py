@@ -34,6 +34,17 @@ def test_a_caption_no_deck_produced_fails_the_run(app: project.App) -> None:
         frame.frame_deck(app, "en-US")
 
 
+def test_framing_only_some_shots_leaves_the_others_framed_files_alone(app: project.App) -> None:
+    for n in (1, 2, 3):
+        capture(app, "iphone", n)
+    framed = project.DeckTree.for_deck(app, "iphone").framed("en-US")
+    framed.mkdir(parents=True)
+    (framed / "ss-01.jpg").write_text("framed by the shoot that took it")
+    assert frame.frame_deck(app, "en-US", decks=["iphone"], only={2}) == 1  # `shoot --shots 2`
+    assert (framed / "ss-01.jpg").read_text() == "framed by the shoot that took it"
+    assert sorted(p.name for p in framed.iterdir()) == ["ss-01.jpg", "ss-02.jpg"]
+
+
 def mac_capture(app: project.App, n: int, locale: str = "en-US") -> None:
     raw = project.DeckTree.for_deck(app, "mac").raw(locale)
     raw.mkdir(parents=True, exist_ok=True)

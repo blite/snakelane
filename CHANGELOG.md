@@ -6,6 +6,13 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **`shoot --shots 05,06` reshoots single shots.** Only those shots' test methods run, and only
+  their raw and framed files are replaced; the rest of the deck is left alone whether the run
+  passes or fails. It works with `--locales`, `--device` and `--platform`. A shot's method is
+  found by its number (`func test05…` in the screenshot test class's source); an app whose
+  methods aren't numbered names them in the new `screenshots.shot_tests` key. The run ends by
+  saying how old the shots it left are, since a deck reshot in part can mix builds. A whole
+  shoot is unchanged.
 - **`gamecenter sync`: the `.gamekit`, made true on App Store Connect in one run.** Xcode's sync
   creates records but leaves out images, and the languages a live record gains (Klondike
   Solitaire's eight new ones never arrived). `sync` compares each record's localized text and

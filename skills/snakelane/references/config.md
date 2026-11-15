@@ -83,6 +83,8 @@ screenshots:
   env: {}                        # extra TEST_RUNNER_ variables
   frame: test                    # test (UI test draws captions) | snakelane | none
   reframe_test: null             # UI test that re-frames raws on disk
+  shot_tests: {}                 # `shoot --shots`: {"05": testWin} (or a list) where a shot's
+                                 #   method isn't named testNN…; default: found by that name
   mac: {}                        # present = enable --platform macos; {frame: snakelane} has
                                  #   snakelane caption the Mac deck while the UI test draws iOS's;
                                  #   scheme, test, test_plan (null for none), destination override

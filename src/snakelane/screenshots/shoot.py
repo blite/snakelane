@@ -11,10 +11,15 @@ snakelane.yml "screenshots" (all optional; full reference in the skill's referen
     env               extra test-runner variables (TEST_RUNNER_ prefix added); default {}
     frame             who draws captions: "test" (default; reframe runs reframe_test) | "snakelane" | "none"
     reframe_test      -only-testing id of the UI test that re-frames raws on disk (frame "test")
+    shot_tests        {slot: test method, or a list of them} for `shoot --shots`, where a shot's method
+                      isn't named testNN…; default: the testNN… methods found in the test class's source
     framing           `snakelane frame`'s settings — see screenshots/frame.py
     mac               enables --platform macos: {} or {"scheme", "test", "test_plan", "reframe_test", "destination",
                       "frame"}; "frame" and "test_plan" override the top-level ones for the Mac deck
     check             `snakelane check` settings — see screenshots/check.py
+
+`shoot --shots 05,06` runs only those shots' test methods and replaces only those files; the rest of
+the deck stays as it was, pass or fail. Why: docs/design/screenshots.md#reshooting-single-shots
 
 The runner gets TEST_RUNNER_SNAKELANE_{LOCALE, LANGUAGE, PLATFORM, DEVICE, REFRAME_LOCALE, BANNER}; an iOS
 runner does not reliably see them, so the language key and band depth also travel in
@@ -26,10 +31,12 @@ from __future__ import annotations
 
 import functools
 import json
+import os
 import re
 import shutil
 import subprocess
 from dataclasses import dataclass, field, fields, replace
+from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Annotated, Any
@@ -97,6 +104,7 @@ class ShotsConfig:  # snakelane.yml's "screenshots", defaults applied
     frame: str
     reframe_test: str | None
     mac: dict[str, Any] | None
+    shot_tests: dict[str, list[str]] = field(default_factory=dict)
 
     @property
     def writes_locale_file(self) -> bool:
@@ -131,7 +139,12 @@ def load_config(app: App) -> ShotsConfig:
         raise SystemExit('screenshots.mac is an object ({} for all defaults)')
     if mac and (mac_frame := mac.get("frame")) not in (None, "test", "snakelane", "none"):
         raise SystemExit(f'screenshots.mac.frame must be "test", "snakelane" or "none", not {mac_frame!r}')
+    shot_tests = raw.get("shot_tests") or {}
+    if not isinstance(shot_tests, dict):
+        raise SystemExit("screenshots.shot_tests is an object of slot → test method (or a list of them)")
     return ShotsConfig(
+        shot_tests={slot_number(str(k)): [v] if isinstance(v, str) else [str(m) for m in v]
+                    for k, v in shot_tests.items()},
         scheme=raw.get("scheme") or app.scheme,
         test=raw["test"] if "test" in raw else f"{app.scheme}UITests/{app.scheme}UITestsScreenshotsUITests",
         **{key: raw.get(key) for key in ("test_plan", "reframe_test")},
@@ -141,6 +154,65 @@ def load_config(app: App) -> ShotsConfig:
         frame=frame,
         mac=mac,
     )
+
+
+def slot_number(text: str) -> str:
+    """`5`, `05` and `ss-05` all name slot 05."""
+    digits = text.strip().lower().removeprefix("ss-")
+    if not digits.isdigit() or not 1 <= int(digits) <= 99:
+        raise SystemExit(f"{text!r} is not a shot: name it by its number, as in ss-05 (5, 05 or ss-05)")
+    return f"{int(digits):02d}"
+
+
+# Folders a test's source is never in, and that can be enormous.
+SKIP_DIRS = {"build", "Build", "DerivedData", "Pods", "Carthage", "node_modules"}
+TEST_METHOD_RE = re.compile(r"\bfunc\s+(test(\d{2})\w*)\s*\(")
+
+
+def numbered_tests(app: App, test: str) -> dict[str, list[str]]:
+    """{slot: the test methods named testNN…} read from the source of the class `test` names. A slot
+    may have several: one per platform behind `#if os(…)`, of which the build has only one.
+    Why: docs/design/screenshots.md#reshooting-single-shots"""
+    class_re = re.compile(rf"\bclass\s+{re.escape(test.rsplit('/', 1)[-1])}\b")
+    found: dict[str, list[str]] = {}
+    for folder, dirs, files in os.walk(app.project.parent):
+        dirs[:] = [d for d in dirs if d not in SKIP_DIRS and not d.startswith(".") and not d.endswith(".xcodeproj")]
+        for name in files:
+            if not name.endswith(".swift"):
+                continue
+            try:
+                source = (Path(folder) / name).read_text()
+            except (OSError, UnicodeDecodeError):
+                continue
+            if class_re.search(source):
+                for method, slot in TEST_METHOD_RE.findall(source):
+                    if method not in found.setdefault(slot, []):
+                        found[slot].append(method)
+    return found
+
+
+def tests_for_shots(app: App, config: ShotsConfig, test: str | None, shots: list[str]) -> list[str]:
+    """The -only-testing ids that shoot `shots`: `shot_tests` where the config names them, else the
+    class's testNN… methods."""
+    if not test or test.count("/") != 1:
+        raise SystemExit(f"--shots runs single methods of the screenshot test class, so screenshots.test must "
+                         f"name one as <Target>/<Class> (it is {test or 'unset: the whole scheme'})")
+    numbered = None
+    ids: list[str] = []
+    for slot in shots:
+        methods = config.shot_tests.get(slot)
+        if methods is None:
+            if numbered is None:
+                numbered = numbered_tests(app, test)
+            methods = numbered.get(slot)
+        if not methods:
+            known = sorted(set(numbered or {}) | set(config.shot_tests))
+            raise SystemExit(
+                f"no test method for shot {slot}: {test.rsplit('/', 1)[-1]} has no `func test{slot}…` under "
+                f"{app.project.parent}" + (f" (it has {', '.join(known)})" if known else "")
+                + '. Name the method in snakelane.yml\'s "screenshots.shot_tests".')
+        ids += [f"{test}/{method}" for method in methods]
+    return ids
 
 
 def frame_mode(screenshots: dict[str, Any], platform: str | None = None) -> str:
@@ -275,18 +347,21 @@ def require_mac_ui_testing() -> None:
                          + "".join(f"    {command}\n" for command in problems))
 
 
-def stale_files(tree: DeckTree, locales: list[str] | None, device: str | None) -> list[Path]:
+def stale_files(tree: DeckTree, locales: list[str] | None, device: str | None,
+                shots: list[str] | None = None) -> list[Path]:
     """The images a shoot of this tree replaces, raw and framed (never the App Preview).
 
-    `locales` None sweeps every locale folder.
+    `locales` None sweeps every locale folder. `shots` narrows it to those slots' files.
     Why: docs/design/screenshots.md#what-a-shoot-clears"""
+    patterns = CLEAR if shots is None else {
+        "framed": [f"ss-{n}.*" for n in shots], "raw": [f"{prefix}ss-{n}.*" for n in shots for prefix in ("", "_")]}
     return sorted({
         path
         for kind, base, folder_for in (("raw", tree.raw_base, tree.raw), ("framed", tree.framed_base, tree.framed))
         if base.is_dir()
         for locale in (locales if locales is not None else [p.name for p in base.iterdir() if p.is_dir()])
         if (folder := folder_for(locale)).is_dir()
-        for pattern in CLEAR[kind]
+        for pattern in patterns[kind]
         for path in folder.glob(pattern)
         if path.is_file() and path.suffix.lower() in IMAGE_SUFFIXES
     })
@@ -298,8 +373,9 @@ class PreviousDeck:
     A stash left by a killed run is refused, never overwritten: it may be the only good copy.
     Why: docs/design/screenshots.md#a-failed-shoot-puts-the-previous-deck-back"""
 
-    def __init__(self, targets: list[tuple[DeckTree, str | None]], locales: list[str] | None) -> None:
-        self.targets, self.locales = targets, locales
+    def __init__(self, targets: list[tuple[DeckTree, str | None]], locales: list[str] | None,
+                 shots: list[str] | None = None) -> None:
+        self.targets, self.locales, self.shots = targets, locales, shots
         self.moved: list[tuple[Path, Path]] = []
         self.app = targets[0][0].app if targets else None
         if self.app is not None:
@@ -307,7 +383,7 @@ class PreviousDeck:
 
     def _current(self) -> list[Path]:
         return sorted({p for tree, device in self.targets
-                       for p in stale_files(tree, self.locales, device)})
+                       for p in stale_files(tree, self.locales, device, self.shots)})
 
     def stash(self) -> None:
         for path in self._current():
@@ -369,11 +445,13 @@ class Plan:
     sims: list[Simulator] = field(default_factory=list)
     clear_targets: list[tuple[DeckTree, str | None]] = field(default_factory=list)
     problems: list[str] = field(default_factory=list)
+    shots: list[str] | None = None  # `--shots`: only these slots are shot and replaced
 
     @property
     def clear_locales(self) -> list[str] | None:
-        """The locale folders a shoot replaces: every one on a full run (see `stale_files`)."""
-        return None if self.full_locales else list(self.locales)
+        """The locale folders a shoot replaces: every one on a full run (see `stale_files`). A
+        single-shot run touches only the locales it shoots, never a folder no pass will refill."""
+        return None if self.full_locales and self.shots is None else list(self.locales)
 
     @property
     def trees(self) -> list[DeckTree]:
@@ -384,17 +462,18 @@ class Plan:
                    destination: str, test: str | None) -> None:
         """One pass per locale on one device; `name` is what the clear and the labels call it."""
         self.clear_targets.append((tree, name))
+        tests = tests_for_shots(self.app, self.config, test, self.shots) if self.shots else [test] if test else []
         for locale, language in self.locales.items():
             banner = banner_json(self.config, tree, locale)
             slug = re.sub(r"[^a-z0-9]+", "-", f"{name_slug}-{locale}".lower()).strip("-")
             xcresult = Path(f"/tmp/snakelane-{self.app.slug}-shots-{slug}.xcresult")
-            cmd = xcodebuild_test(self.app, scheme, destination, test=test, test_plan=self.config.test_plan,
+            cmd = xcodebuild_test(self.app, scheme, destination, test=tests, test_plan=self.config.test_plan,
                                   xcresult=xcresult, mac=sim is None)
             self.passes.append(Pass(f"{name} {locale}" if len(self.locales) > 1 else name, tree, locale, language,
                                     xcresult, cmd, runner_env(self.config, locale, language, tree, banner), sim))
 
 
-def xcodebuild_test(app: App, scheme: str, destination: str, *, test: str | None, test_plan: str | None,
+def xcodebuild_test(app: App, scheme: str, destination: str, *, test: str | list[str] | None, test_plan: str | None,
                     xcresult: Path | None, mac: bool, action: str = "test", retry: bool = True) -> list[str]:
     """`retry=False` for a recording: a retried test would start the clip again mid-recording."""
     return [
@@ -404,7 +483,7 @@ def xcodebuild_test(app: App, scheme: str, destination: str, *, test: str | None
         # A Mac UI test drives a signed app; its development profile is minted on first use.
         *(["-allowProvisioningUpdates"] if mac else []),
         *(["-resultBundlePath", str(xcresult)] if xcresult is not None else []),
-        *(["-only-testing", test] if test else []),
+        *(arg for one in ([test] if isinstance(test, str) else test or []) for arg in ("-only-testing", one)),
         "-parallel-testing-enabled", "NO",  # serial: docs/design/screenshots.md#tests-run-serially
         *(SHOT_TIMEOUT_AND_RETRY if retry else ()),
         action,
@@ -437,7 +516,10 @@ def make_plan(app: App, config: ShotsConfig, args: SimpleNamespace) -> Plan:
         locales = {l: config.locales[l] for l in requested}
     if mac:
         config = for_mac(config)
-    plan = Plan(app, config, "macos" if mac else "ios", locales, full_locales=not args.locales)
+    shots = None
+    if getattr(args, "shots", None):
+        shots = sorted({slot_number(part) for part in args.shots.split(",") if part.strip()})
+    plan = Plan(app, config, "macos" if mac else "ios", locales, full_locales=not args.locales, shots=shots)
     if mac:
         plan.add_passes(DeckTree(app, "macos"), "Mac", "macos", None, config.mac.get("scheme", config.scheme),
                         config.mac.get("destination", MAC_DESTINATION), config.mac.get("test", config.test))
@@ -464,6 +546,8 @@ def print_plan(plan: Plan) -> None:
     print(f"project    {app.project}")
     print(f"scheme     {config.scheme}")
     print(f"test       {config.test or '(whole scheme)'}" + (f"  plan {config.test_plan}" if config.test_plan else ""))
+    if plan.shots:
+        print(f"shots      {', '.join(f'ss-{n}' for n in plan.shots)} only; the rest of each deck stays as it is")
     print(f"platform   {plan.platform}")
     if plan.platform == "ios":
         print("devices")
@@ -481,10 +565,13 @@ def print_plan(plan: Plan) -> None:
         for locale in plan.locales:
             if note := fallback_note(app, framing(app), locale):
                 print(f"  {note}")
-    print("clear      " + "; ".join(f"{kind}/: {', '.join(g)}" for kind, g in CLEAR.items())
-          + f"  (images only; {'every locale folder' if plan.full_locales else 'these locales only'})")
+    if plan.shots:
+        print("clear      " + ", ".join(f"ss-{n}" for n in plan.shots) + "  (raw and framed; these locales only)")
+    else:
+        print("clear      " + "; ".join(f"{kind}/: {', '.join(g)}" for kind, g in CLEAR.items())
+              + f"  (images only; {'every locale folder' if plan.full_locales else 'these locales only'})")
     for tree, device in plan.clear_targets:
-        stale = stale_files(tree, plan.clear_locales, device)
+        stale = stale_files(tree, plan.clear_locales, device, plan.shots)
         print(f"  {tree.label():<11} {len(stale)} file(s) would be replaced (kept aside until every pass succeeds)")
     print("extract    NN-Name → .snakelane raw, NN-Name_framed → the deck, as ss-NN.jpg")
     print(f"frame      {config.frame}"
@@ -503,12 +590,14 @@ def upload_hint(platform: str) -> str:
 
 def execute(plan: Plan) -> None:
     """Every pass, then the framing; all or nothing (see `PreviousDeck`)."""
-    with PreviousDeck(plan.clear_targets, plan.clear_locales):
+    with PreviousDeck(plan.clear_targets, plan.clear_locales, getattr(plan, "shots", None)):
         run_passes(plan)
         if plan.config.frame == "snakelane":  # captions last, once every device has shot: what `reframe` does
             from .frame import frame_deck
+            shots = getattr(plan, "shots", None)
             for locale in plan.locales:
-                frame_deck(plan.app, locale, decks=sorted({p.tree.deck for p in plan.passes}))
+                frame_deck(plan.app, locale, decks=sorted({p.tree.deck for p in plan.passes}),
+                           only={int(n) for n in shots} if shots else None)
 
 
 def run_passes(plan: Plan) -> None:
@@ -527,6 +616,10 @@ def run_passes(plan: Plan) -> None:
                 shutil.rmtree(p.xcresult)
             run(p.cmd, p.env)
             extract_deck(p.xcresult, p.tree, p.locale, p.label)
+            if plan.shots and (missing := missing_shots(p.tree, p.locale, plan.shots)):
+                # The old files are set aside, so one that isn't there now didn't come back.
+                raise SystemExit(f"[{p.label}] the test ran but attached no ss-{', ss-'.join(missing)}: its "
+                                 "method may not exist on this platform, or attaches under another number")
     except (subprocess.CalledProcessError, KeyboardInterrupt):
         if plan.platform == "ios":
             sweep_test_devices()
@@ -540,6 +633,28 @@ def run_passes(plan: Plan) -> None:
             banner_path.unlink(missing_ok=True)
 
 
+def missing_shots(tree: DeckTree, locale: str, shots: list[str]) -> list[str]:
+    return [n for n in shots
+            if not any(folder.is_dir() and any(folder.glob(f"ss-{n}.*")) for folder in (tree.raw(locale), tree.framed(locale)))]
+
+
+def oldest_other_shot(plan: Plan) -> tuple[Path, float] | None:
+    """The oldest shot a single-shot run leaves in place, by its capture's date (the raw, where there
+    is one: framing rewrites the framed file). Why: docs/design/screenshots.md#reshooting-single-shots"""
+    kept: list[tuple[float, Path]] = []
+    for tree in plan.trees:
+        for locale in plan.locales:
+            folder = next((f for f in (tree.raw(locale), tree.framed(locale)) if f.is_dir() and any(f.glob("ss-*"))),
+                          None)
+            if folder is not None:
+                kept += [(p.stat().st_mtime, p) for p in folder.glob("ss-*")
+                         if p.suffix.lower() in IMAGE_SUFFIXES and p.stem.removeprefix("ss-") not in (plan.shots or [])]
+    if not kept:
+        return None
+    when, path = min(kept)
+    return path, when
+
+
 def cmd_shoot(args: SimpleNamespace) -> None:
     app = resolve_app(args.app)
     config = load_config(app)
@@ -551,9 +666,14 @@ def cmd_shoot(args: SimpleNamespace) -> None:
         return
     if plan.platform == "macos":
         require_mac_ui_testing()
+    oldest = oldest_other_shot(plan) if plan.shots else None
     execute(plan)
     for tree in plan.trees:
         print(f"deck written to {tree.framed_base.relative_to(app.root)} ({tree.label()})")
+    if plan.shots:
+        print(f"reshot {', '.join(f'ss-{n}' for n in plan.shots)} only." + (
+            f" The other shots are older, back to {datetime.fromtimestamp(oldest[1]):%Y-%m-%d %H:%M} "
+            f"({oldest[0].relative_to(app.root)}): reshoot the whole deck if the app has changed since." if oldest else ""))
     print(upload_hint(plan.platform))
 
 
@@ -617,12 +737,16 @@ def shoot(
         "--device", help="shoot one simulator (name or UDID) instead of the lineup")] = None,
     locales: Annotated[str | None, typer.Option(
         "--locales", "--locale", help="comma-separated locales (default: every screenshot locale)")] = None,
+    shots: Annotated[str | None, typer.Option(
+        "--shots", "--shot", help="comma-separated shot numbers (05, or ss-05) to reshoot, leaving the rest "
+        "of the deck as it is (default: the whole deck)")] = None,
     platform: PlatformOption = None,
     dry_run: Annotated[bool, typer.Option("--dry-run", help="print the resolved plan and stop")] = False,
 ) -> None:
     """Run the screenshot UI test on each simulator and file the deck."""
     platform = resolve_platform(resolve_app(app).config, platform)  # ios: the simulators; macos: this Mac
-    cmd_shoot(SimpleNamespace(app=app, device=device, locales=locales, platform=platform, dry_run=dry_run))
+    cmd_shoot(SimpleNamespace(app=app, device=device, locales=locales, shots=shots, platform=platform,
+                              dry_run=dry_run))
 
 
 def main(argv: list[str] | None = None) -> None:
