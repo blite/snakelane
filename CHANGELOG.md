@@ -22,6 +22,10 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
   needed. Never submits. An achievement language with no picture in the bundle gets the primary
   locale's, since App Store Connect refuses an achievement for review until every language has
   one. `images push` and `submit` are unchanged.
+- **`lint` catches a Game Center name over 30 characters.** New rule `gamecenter-name`, an error:
+  an achievement's or leaderboard's name longer than App Store Connect takes, in any language of
+  the `.gamekit`. A translation runs longer than its English, Xcode doesn't check, and the 409
+  stops `gamecenter sync` partway (Spider Solitaire's German daily board, 37 characters).
 - **`packs package` adds the pack's record row.** A pack the record didn't list used to build
   and then fail at `upload` as unknown. `package` now appends its row (item count, archive size,
   `uploaded: false`) and never rewrites an existing one. `available_from_version` stays null

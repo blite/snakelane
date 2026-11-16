@@ -26,12 +26,15 @@ Rules (error = blocks the push; warning = printed):
     gamecenter-recurrence error    a recurring leaderboard in the .gamekit with a FREQ=WEEKLY (or other
                                    non minute/hour/day) rule, or a duration like P7D with no time part;
                                    Xcode's sync fails silently
+    gamecenter-name       error    an achievement or leaderboard name over 30 characters in any language
+                                   of the .gamekit; App Store Connect refuses it mid-sync
 
 Phrases are bounded by Latin letters rather than `\\b`; placeholders are case-sensitive.
 Why: docs/design/foundations.md#lint-matching-rules
 Why price-reference: docs/design/foundations.md#price-references-in-the-name-keywords-and-screenshots
 Why gamecenter-points: docs/design/foundations.md#game-center-points
 Why gamecenter-recurrence: docs/design/foundations.md#recurring-leaderboards
+Why gamecenter-name: docs/design/foundations.md#game-center-names
 
 ## snakelane.yml
 
@@ -175,7 +178,7 @@ def caption_findings(app: project.App, allow: tuple[str, ...]) -> list[Finding]:
 
 
 def gamecenter_findings(app: project.App) -> list[Finding]:
-    """gamecenter-points and gamecenter-recurrence over the app's .gamekit: the one
+    """gamecenter-points, gamecenter-recurrence and gamecenter-name over the app's .gamekit: the one
     `gamecenter.gamekit` names, else the repo's only one. No bundle, or several and none named,
     is no opinion here."""
     from ..gamecenter import gamekit
@@ -190,7 +193,9 @@ def gamecenter_findings(app: project.App) -> list[Finding]:
     return [Finding("error", "gamecenter-points", f"gamecenter/{where}", message)
             for where, message in gamekit.points_problems(bundle)] + [
         Finding("error", "gamecenter-recurrence", f"gamecenter/{where}", message)
-        for where, message in gamekit.recurrence_problems(bundle)]
+        for where, message in gamekit.recurrence_problems(bundle)] + [
+        Finding("error", "gamecenter-name", f"gamecenter/{where}", message)
+        for where, message in gamekit.name_problems(bundle)]
 
 
 def allowed(app: project.App) -> tuple[str, ...]:

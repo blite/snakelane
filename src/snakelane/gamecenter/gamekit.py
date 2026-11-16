@@ -46,6 +46,14 @@ MAX_TOTAL_POINTS = 1_000
 RECURRENCE_RULE = re.compile(r"FREQ=(MINUTELY|HOURLY|DAILY);INTERVAL=[1-9][0-9]*")
 RECURRENCE_DURATION = re.compile(r"P(?:[0-9]+D)?T(?=[0-9])(?:[0-9]+H)?(?:[0-9]+M)?(?:[0-9]+S)?")
 
+# App Store Connect's cap on a localized name, in every language: its 409 is "'name' cannot be
+# longer than '30' characters". Xcode's editor doesn't check it, and a translation runs longer
+# than the English it was made from. Seen on a leaderboard; an achievement's title has the same
+# cap in App Store Connect. Activities are left alone until one is refused.
+# Why: docs/design/foundations.md#game-center-names
+MAX_NAME_LENGTH = 30
+NAME_CAPPED_KINDS = ("achievement", "leaderboard")
+
 
 # Each kind's localized text, as the bundle and App Store Connect both name the fields.
 LOCALIZATIONS = {"achievement": "achievementLocalizations", "leaderboard": "leaderboardLocalizations",
@@ -149,6 +157,17 @@ def recurrence_problems(bundle: Path) -> list[tuple[str, str]]:
                              "8601 duration with a time part (PT24H a day, PT168H a week, not P7D), and "
                              "Xcode's sync fails without a word"))
     return problems
+
+
+def name_problems(bundle: Path) -> list[tuple[str, str]]:
+    """(vendor identifier [locale], why) for every achievement or leaderboard name longer than App
+    Store Connect takes, in any language. Archived records are left out, as `read_texts` does."""
+    return [(f"{text.vendor_id} [{text.locale}]",
+             f"name {name!r} is {len(name)} characters: App Store Connect takes at most "
+             f"{MAX_NAME_LENGTH} for {'an' if text.kind == 'achievement' else 'a'} {text.kind}'s name in "
+             "any language, and refuses the sync partway through")
+            for text in read_texts(bundle) if text.kind in NAME_CAPPED_KINDS
+            if len(name := text.values.get("name", "")) > MAX_NAME_LENGTH]
 
 
 def read_bundle(bundle: Path) -> tuple[list[Image], list[str]]:

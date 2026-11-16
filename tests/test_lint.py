@@ -233,6 +233,31 @@ def gamekit_with_boards(folder: Path, boards: list[dict[str, str]]) -> Path:
     return folder
 
 
+def test_a_name_over_30_characters_in_any_language_is_an_error(tmp_path: Path) -> None:
+    # Spider Solitaire, 2026-11-15: German's daily board stopped `gamecenter sync` with a 409.
+    import json
+
+    folder = tmp_path / "Game.gamekit"
+    folder.mkdir()
+    (folder / "gameCenterResources.json").write_text(json.dumps({"resources": {
+        "leaderboards": [{"vendorIdentifier": "lb.daily"}],
+        "achievements": [{"vendorIdentifier": "ach.win", "points": 10},
+                         {"vendorIdentifier": "ach.old", "points": 10, "archived": True}],
+        "leaderboardLocalizations": {"lb.daily": [
+            {"locale": "en-US", "name": "Daily Challenge: Fastest"},
+            {"locale": "de-DE", "name": "Schnellste · Tägliche Herausforderung"},
+            {"locale": "ko", "name": "일" * 30}]},
+        "achievementLocalizations": {
+            "ach.win": [{"locale": "fr-FR", "name": "x" * 31, "beforeEarnedDescription": "y" * 80}],
+            "ach.old": [{"locale": "en-US", "name": "x" * 40}]},
+        "gameActivityLocalizations": {"act.daily": [{"locale": "de-DE", "name": "x" * 40}]},
+    }}))
+    found = [f for f in lint.run(make_app(tmp_path), "ios") if f.rule == "gamecenter-name"]
+    assert [(f.where, f.severity) for f in found] == [
+        ("gamecenter/ach.win [fr-FR]", "error"), ("gamecenter/lb.daily [de-DE]", "error")]
+    assert "is 37 characters" in found[1].message
+
+
 def test_a_weekly_rule_or_a_day_duration_is_an_error(tmp_path: Path) -> None:
     # Word Search, 2026-11-04: Xcode's editor wrote both, and its sync left the board off ASC.
     gamekit_with_boards(tmp_path / "Game.gamekit", [
