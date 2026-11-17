@@ -357,7 +357,13 @@ def deck_dirs(platform_dir: Path, locale: str) -> list[Path]:
     """`<platform>/screenshots/<locale>/` and its device folders (which only keep same-named shots apart).
 
     [] when the locale has no folder (no opinion); an empty folder means "delete what's live"."""
-    root = layout.screenshots_dir(platform_dir) / locale
+    return locale_dirs(layout.screenshots_dir(platform_dir), locale)
+
+
+def locale_dirs(screenshots: Path, locale: str) -> list[Path]:
+    """`<screenshots>/<locale>/` and its device folders: `deck_dirs` for any folder of `<locale>/` decks
+    (a product page optimization treatment's as well as the version's)."""
+    root = screenshots / locale
     if not root.is_dir():
         return []
     return [root, *sorted(p for p in root.iterdir() if p.is_dir() and not p.name.startswith((".", "_")))]

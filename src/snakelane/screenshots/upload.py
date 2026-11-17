@@ -78,11 +78,8 @@ def offline_dry_run(plan: Plan, noun: str) -> bool:
 
 def mirror(client: asc.Client, app_config: dict[str, Any], platform: str, plan: Plan, kind: Kind,
            attributes: Callable[[Path], dict[str, Any]] = lambda _: {}) -> list[dict[str, Any]]:
-    """Make each locale's live sets match `plan`; returns the uploads for the processing wait.
-    `attributes(file)` go into each file's reservation (a preview's poster frame).
-
-    ASC has no replace-in-place, so a kept set is emptied and refilled, and a set for a slot the
-    deck no longer fills is deleted. Why: docs/design/screenshots.md#remote-mirrors-local"""
+    """Make each locale's live sets on the version match `plan`; returns the uploads for the
+    processing wait. `attributes(file)` go into each file's reservation (a preview's poster frame)."""
     version = version_to_push(client, find_app(client, app_config)["id"], platform)
     asvls = keyed(client, f"/v1/appStoreVersions/{version['id']}/appStoreVersionLocalizations")
     uploads: list[dict[str, Any]] = []
@@ -91,32 +88,45 @@ def mirror(client: asc.Client, app_config: dict[str, Any], platform: str, plan: 
             continue
         if (asvl := asvls.get(locale)) is None:
             raise asc.ASCError(f"no AppStoreVersionLocalization for {locale}: add the language in App Store Connect")
-        existing = [(asc.attributes(s).get(kind.type_key), s)
-                    for s in client.get_all(f"/v1/appStoreVersionLocalizations/{asvl['id']}/{kind.sets}")]
-        for slot, stale in existing:
-            if slot in by_type:
-                continue
-            client.delete(f"/v1/{kind.sets}/{stale['id']}")
-            client.report(f"  deleted stale {locale}/{slot} {kind.stale} {stale['id']}")
-        for slot, group in sorted(by_type.items()):
-            if current := next((s for t, s in existing if t == slot), None):
-                for item in client.get_all(f"/v1/{kind.sets}/{current['id']}/{kind.items}"):
-                    client.delete(f"/v1/{kind.items}/{item['id']}")
-                    client.report(f"  deleted {locale}/{slot} {kind.noun} {item['id']}")
-                set_id = current["id"]
-            else:
-                set_id = client.post(f"/v1/{kind.sets}", asc.resource_body(
-                    kind.sets, {kind.type_key: slot}, relationships={"appStoreVersionLocalization": asc.relationship(
-                        "appStoreVersionLocalizations", asvl["id"])}))["data"]["id"]
-                client.report(f"  created {kind.sets[:-1]} {locale}/{slot} ({set_id})")
-            for file in group:
-                relationships = {kind.sets[:-1]: asc.relationship(kind.sets, set_id)}
-                extra = attributes(file)
-                resource_id = upload_asset_resource(client, kind.items, file, relationships, attributes=extra)
-                client.report(f"  uploaded {file.name} -> {locale}/{slot}"
-                              + "".join(f"  {k}={v}" for k, v in extra.items()))
-                uploads.append({"id": resource_id, "path": file, "relationships": relationships,
-                                "label": f"{locale}/{slot}/{file.name}"})
+        uploads += mirror_sets(client, creative.version_target(asvl["id"], locale), by_type, kind, attributes)
+    return uploads
+
+
+def mirror_sets(client: asc.Client, owner: creative.Target, by_type: dict[str, list[Path]], kind: Kind,
+                attributes: Callable[[Path], dict[str, Any]] = lambda _: {}) -> list[dict[str, Any]]:
+    """Make one localization's live sets match `by_type` (slot -> files): a version localization's, or
+    a product page optimization treatment's, which owns sets the same way.
+
+    ASC has no replace-in-place, so a kept set is emptied and refilled, and a set for a slot the
+    deck no longer fills is deleted. Why: docs/design/screenshots.md#remote-mirrors-local"""
+    uploads: list[dict[str, Any]] = []
+    where = owner.label
+    existing = [(asc.attributes(s).get(kind.type_key), s)
+                for s in client.get_all(f"/v1/{owner.resource}/{owner.id}/{kind.sets}")]
+    for slot, stale in existing:
+        if slot in by_type:
+            continue
+        client.delete(f"/v1/{kind.sets}/{stale['id']}")
+        client.report(f"  deleted stale {where}/{slot} {kind.stale} {stale['id']}")
+    for slot, group in sorted(by_type.items()):
+        if current := next((s for t, s in existing if t == slot), None):
+            for item in client.get_all(f"/v1/{kind.sets}/{current['id']}/{kind.items}"):
+                client.delete(f"/v1/{kind.items}/{item['id']}")
+                client.report(f"  deleted {where}/{slot} {kind.noun} {item['id']}")
+            set_id = current["id"]
+        else:
+            set_id = client.post(f"/v1/{kind.sets}", asc.resource_body(
+                kind.sets, {kind.type_key: slot},
+                relationships={owner.relationship: asc.relationship(owner.resource, owner.id)}))["data"]["id"]
+            client.report(f"  created {kind.sets[:-1]} {where}/{slot} ({set_id})")
+        for file in group:
+            relationships = {kind.sets[:-1]: asc.relationship(kind.sets, set_id)}
+            extra = attributes(file)
+            resource_id = upload_asset_resource(client, kind.items, file, relationships, attributes=extra)
+            client.report(f"  uploaded {file.name} -> {where}/{slot}"
+                          + "".join(f"  {k}={v}" for k, v in extra.items()))
+            uploads.append({"id": resource_id, "path": file, "relationships": relationships,
+                            "label": f"{where}/{slot}/{file.name}"})
     return uploads
 
 
@@ -188,11 +198,16 @@ def refuse_developer_chrome(app_config: dict[str, Any], platform_dir: Path, loca
     snakelane.yml's "developer_chrome_check" (documented in listing/store.py) decides what a missing
     extra means: true required, false off, absent best-effort.
     Why: docs/design/screenshots.md#the-push-runs-the-check-up-front-as-a-subprocess"""
+    # The upload's own rules, so an excluded file cannot block the push.
+    refuse_developer_chrome_in(app_config, [
+        path for locale in locales
+        for path in deck_files(deck_dirs(platform_dir, locale), DECK_SUFFIXES, "screenshot", quiet=True)], allow)
+
+
+def refuse_developer_chrome_in(app_config: dict[str, Any], files: list[Path], allow: bool = False) -> None:
+    """`refuse_developer_chrome` for a list of shots (a product page optimization treatment's)."""
     if (setting := app_config.get("developer_chrome_check")) is False:
         return
-    # The upload's own rules, so an excluded file cannot block the push.
-    files = [path for locale in locales
-             for path in deck_files(deck_dirs(platform_dir, locale), DECK_SUFFIXES, "screenshot", quiet=True)]
     if not files:
         return
     if not developer_chrome_check_available():
@@ -239,30 +254,40 @@ def screenshots_plan(folder: Path, app_config: dict[str, Any], platform: str, *,
     refuse_developer_chrome(app_config, platform_dir, locales, allow=allow_developer_chrome)
     # The whole local plan first, so an unknown size fails before the first DELETE.
     plan: Plan = {}
-    all_dimensions: list[tuple[int, int]] = []
     for locale in locales:
         if not (dirs := deck_dirs(platform_dir, locale)):
             print(f"  (no screenshots under {layout.screenshots_dir(platform_dir) / locale} — skipping {locale}; "
                   "the App Store shows the primary language's)")
             plan[locale] = None
             continue
-        refuse_png_in_deck(dirs)  # skipped, a PNG would be deleted from the store
         # The suffix filter lets an App Preview (`ap-01.m4v`) share the folder.
         previews = [p for d in dirs for p in d.iterdir() if p.suffix.lower() in PREVIEW_SUFFIXES]
         if previews and not with_previews:
             print(f"  (not uploading {len(previews)} App Preview(s) here — they are a separate ASC resource: "
                   "`snakelane store media push --only previews`)")
-        plan[locale] = by_type = {}  # empty: the sweep deletes every live set
-        for file in deck_files(dirs, DECK_SUFFIXES, "screenshot"):
-            all_dimensions.append(dimensions := screenshot_dimensions(file))
-            by_type.setdefault(display_type_for(file, dimensions), []).append(file)
-    # Before the dry run returns, and before the first DELETE.
-    for warning in size_warnings(all_dimensions):
+        plan[locale] = locale_screenshots(dirs)  # empty: the sweep deletes every live set
+    check_screenshot_plan(plan)
+    return plan
+
+
+def locale_screenshots(dirs: list[Path]) -> dict[str, list[Path]]:
+    """One locale's screenshots by slot, the display type read from each file's pixel size."""
+    refuse_png_in_deck(dirs)  # skipped, a PNG would be deleted from the store
+    by_type: dict[str, list[Path]] = {}
+    for file in deck_files(dirs, DECK_SUFFIXES, "screenshot"):
+        by_type.setdefault(display_type_for(file, screenshot_dimensions(file)), []).append(file)
+    return by_type
+
+
+def check_screenshot_plan(plan: Plan) -> None:
+    """Size advice, and a set over Apple's limit refused: before a dry run returns and before the first DELETE."""
+    dimensions = [screenshot_dimensions(file) for slots in plan.values() if slots
+                  for files in slots.values() for file in files]
+    for warning in size_warnings(dimensions):
         print(f"  warning: {warning}")
     if oversized := oversized_sets(plan):
         raise SystemExit("too many screenshots in a set:\n  " + "\n  ".join(oversized)
                          + "\nRemove or underscore-prefix (`_ss-11.jpg`) the extras.")
-    return plan
 
 
 def push_screenshots(client: asc.Client, app_config: dict[str, Any], platform: str, plan: Plan) -> None:

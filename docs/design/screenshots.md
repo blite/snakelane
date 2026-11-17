@@ -317,6 +317,12 @@ Spades put its search result on the 1.7 version page and took it off again the s
 The API takes a placement on a treatment localization as it does on a version localization, so
 `store ppo push` reuses the creative push's upload and placement and adds the test around it.
 
+Treatment screenshots came next (2026-11-17): Jigsaw Puzzles wanted a test whose only change is
+the first three screenshots, and its rule is that an App Store Connect gap is fixed in snakelane
+rather than by hand or a script in the app. A treatment localization owns `appScreenshotSets` as a
+version localization does, so the push runs the version deck's own mirror on it (`mirror_sets`):
+one set of rules for sizes, limits and replacement, not a second path that drifts.
+
 It stops short of review and starting. A treatment with new art is reviewed, alone or with a
 version, and starting a test changes what live visitors see, which belongs to a person in App Store
 Connect rather than to a sync. A finished test's name isn't reused because its results stay

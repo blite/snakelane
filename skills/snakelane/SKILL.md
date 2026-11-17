@@ -58,7 +58,8 @@ overrides that. `--app <name>` picks among several configs; with one it is not n
     │                        product-page-header.*, universal.png (one file per slot);
     │                        creative/<platform>/ overrides
     ├── ppo/<test>/          `store ppo push`: experiment.yml (name, traffic, treatments:
-    │                        folder -> name) and <folder>/creative/ per treatment
+    │                        folder -> name) and per treatment <folder>/creative/ and/or
+    │                        <folder>/screenshots/<platform>/<locale>/ (as the version deck)
     └── release/asset_packs.json   the asset pack record
 ```
 
@@ -100,7 +101,7 @@ snakelane store media push [--dry-run] [--only screenshots|previews|creative]   
                                           # creative = product page header + search-result asset
 snakelane store media show [--only …]   # no --only: a kind with no local files is left alone live
 snakelane store ppo push [--dry-run] | ppo show   # product page optimization tests: treatments'
-                                          # creatives; review and start stay in App Store Connect
+                                          # screenshots and creatives; review and start stay in ASC
 snakelane store iap show | iap push [--dry-run] [--create] [--product ID]
 snakelane store subs show | subs push [--dry-run] [--create]
 

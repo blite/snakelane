@@ -18,7 +18,7 @@ file, else it is skipped, never pushed blank. Why: docs/design/foundations.md#bl
     screenshots/<platform>/<locale>/      ss-NN.jpg and ap-NN.m4v; in iphone/, ipad/ and duo/ for iOS
     creative/<locale>/, creative/default/  search-result.*, product-page-header.*, universal.png
                                           (store creative; creative/<platform>/ overrides)
-    ppo/<test>/experiment.yml, ppo/<test>/<treatment>/creative/
+    ppo/<test>/experiment.yml, ppo/<test>/<treatment>/creative/, …/screenshots/<platform>/<locale>/
                                           product page optimization tests (`store ppo`)
     release/asset_packs.json              the asset pack record
 
@@ -75,7 +75,8 @@ previews = command_app("App Previews: their own App Store Connect resource, thou
                        "the deck folders.")
 iap = command_app("One-time in-app purchases (iap.yml's products).")
 subs = command_app("Auto-renewable subscriptions (iap.yml's subscription_groups).")
-ppo = command_app("Product page optimization tests (ppo/): treatments' creative assets against the live page.")
+ppo = command_app("Product page optimization tests (ppo/): treatments' screenshots and creative assets "
+                  "against the live page.")
 creative = command_app("Creative assets: the product page header and the search-result image or video, "
                        "through the App Asset Library.")
 for sub_app, sub_name in ((media, "media"), (iap, "iap"), (subs, "subs"), (ppo, "ppo")):
@@ -178,14 +179,15 @@ def creative_show(app: AppOption = None, platform: PlatformOption = None) -> Non
 
 
 @ppo.command("push")
-def ppo_push(app: AppOption = None, platform: PlatformOption = None, dry_run: DRY_RUN = False) -> None:
-    """Create or update each test in ppo/ and place its treatments' creative assets. Never submits or starts one."""
+def ppo_push(app: AppOption = None, platform: PlatformOption = None, dry_run: DRY_RUN = False,
+             allow_developer_chrome: ALLOW_DEVELOPER_CHROME = False) -> None:
+    """Create or update each test in ppo/: its treatments' creative assets and screenshots. Never submits or starts one."""
     call(cmd_ppo_push, locals())
 
 
 @ppo.command("show")
 def ppo_show(app: AppOption = None, platform: PlatformOption = None) -> None:
-    """List the tests: state, traffic, treatments and their creative placements (read-only)."""
+    """List the tests: state, traffic, treatments, their creative placements and screenshot sets (read-only)."""
     call(cmd_ppo_show, locals())
 
 
