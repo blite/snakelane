@@ -12,6 +12,17 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
   set, the developer-build check (`--allow-developer-chrome` is new on `ppo push`), a set replaced
   wholesale, a locale with no folder left alone. A treatment with screenshots and no creative
   assets is now accepted. `ppo show` lists each treatment's screenshot sets.
+- **A treatment's App Preview: `snakelane preview --ppo <test>/<folder>` records it and
+  `store ppo push` uploads it.** A treatment entry in `experiment.yml` can be `{name, preview}`,
+  where `preview` overrides `previews` keys (`audio` and `overlay` merge key by key;
+  `launch_set: [KEY=value]` changes single launch arguments). The clip and its poster sidecar go to
+  the treatment's `screenshots/ios/<locale>/<deck>/ap-01.m4v`; the version deck's is never touched.
+  The push mirrors `ap-NN.m4v` onto the treatment's preview sets as `media push --only previews`
+  does, poster frame included, and leaves preview sets alone for a treatment with no preview.
+- **`ppo push --dry-run` says a new treatment localization arrives with copies of the live page's
+  sets**, which the push deletes where the treatment's folder doesn't replace them; the dry run
+  can't list them. **`ppo show` reads the App Asset Library only when a placement needs naming**, so a
+  test without creative assets no longer fails on the library's flaky 500s. It lists preview sets too.
 - **`shoot --shots 05,06` reshoots single shots.** Only those shots' test methods run, and only
   their raw and framed files are replaced; the rest of the deck is left alone whether the run
   passes or fails. It works with `--locales`, `--device` and `--platform`. A shot's method is

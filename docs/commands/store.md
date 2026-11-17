@@ -114,8 +114,8 @@ crop preview: check it in App Store Connect's product page preview tool before s
 
 A [product page optimization](https://developer.apple.com/help/app-store-connect/create-product-page-optimization-tests/overview-of-product-page-optimization)
 tests up to three treatments of the product page against the live one, each shown to a share of
-visitors. `store ppo push` creates the test and its treatments, uploads each treatment's screenshots
-and places its creative assets, for art that should earn its place before it goes on the page for
+visitors. `store ppo push` creates the test and its treatments, uploads each treatment's screenshots and
+App Previews and places its creative assets, for art that should earn its place before it goes on the page for
 everyone:
 
 ```text
@@ -127,15 +127,26 @@ metadata/ppo/<test>/experiment.yml
 metadata/ppo/<test>/<folder>/creative/<locale>/, .../creative/default/
     the treatment's search-result.*, product-page-header.*, universal.png, named and checked
     as for the version; creative/<platform>/ overrides
-metadata/ppo/<test>/<folder>/screenshots/<platform>/<locale>/{iphone,ipad}/ss-NN.jpg
-    the treatment's screenshots, laid out as the version's deck in metadata/screenshots/
+metadata/ppo/<test>/<folder>/screenshots/<platform>/<locale>/{iphone,ipad}/ss-NN.jpg, ap-NN.m4v
+    the treatment's screenshots and App Previews (with the ap-NN.json poster sidecar),
+    laid out as the version's deck in metadata/screenshots/
 ```
 
-A treatment needs screenshots, creative assets or both for the platform. Its screenshots follow
-the version deck's rules: the set from each file's pixel size, at most ten to a set, sizes Apple
-accepts, the developer-build check (`--allow-developer-chrome` as for `media push`). A set is
-replaced wholesale and a slot the folder no longer fills is deleted from the treatment; a locale
-with no folder keeps what the treatment has.
+A treatment's entry is its name, or `{name, preview}`, where `preview` is what
+`snakelane preview --ppo <test>/<folder>` records the treatment's App Preview with
+([shoot, frame, preview](screenshots.md)).
+
+A treatment needs screenshots, previews, creative assets or any mix for the platform. Its
+screenshots and previews follow the version deck's rules: the set from each file's pixel size, at
+most ten screenshots to a set, sizes Apple accepts, the developer-build check
+(`--allow-developer-chrome` as for `media push`), a preview checked as Apple would and sent with
+its poster frame. A set is replaced wholesale and a slot the folder no longer fills is deleted from
+the treatment; a locale with no folder keeps what the treatment has, and a treatment with no
+preview anywhere keeps its preview sets.
+
+App Store Connect fills a new treatment localization with copies of the live page's screenshot and
+preview sets, so a push deletes the copies the treatment's folder doesn't replace. A dry run plans
+the localization before it exists and can't read them, so it says so instead of listing them.
 
 ```bash
 snakelane store ppo push --dry-run
@@ -149,8 +160,8 @@ finished test's name is refused rather than reused, so the next test gets a new 
 through the App Asset Library as the version's do, uploaded once and found again by their bytes.
 
 Sending the test to review and starting it are done in App Store Connect, and so are a treatment's
-app icon and App Previews, which the push doesn't handle yet. `store ppo show` lists each
-treatment's creative placements and screenshot sets.
+app icon, which the push doesn't handle yet. `store ppo show` lists each treatment's creative
+placements, screenshot sets and preview sets.
 
 ## In-app purchases and subscriptions
 

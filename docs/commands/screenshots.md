@@ -100,6 +100,7 @@ snakelane preview --dry-run         # the plan: simulators, the test, audio, ove
 snakelane preview                   # record and encode ap-01.m4v for every device
 snakelane preview --device "iPhone 17 Pro"
 snakelane preview --encode-only     # new captions or mix, from the kept recording
+snakelane preview --ppo no-ads-first/promise   # a product page optimization treatment's preview
 ```
 
 `preview` launches the app into its video fixture on each simulator (or runs a video UI test),
@@ -116,6 +117,13 @@ captions should follow) in `/tmp/<slug>-preview-events.jsonl`; the template is t
 is all a viewer sees with autoplay off, and it can't be changed once the version is approved. The
 dry run and each encode warn when a preview caption repeats ss-01's or ss-02's, which a portrait
 preview plays beside in search results.
+
+`--ppo <test>/<folder>` records a [product page optimization](store.md#product-page-optimizations)
+treatment's preview instead, with that treatment's `preview` block in `experiment.yml` laid over
+`previews` (other launch arguments, captions, simulators), into the treatment's own folder. The
+version deck's `ap-01.m4v` is left as it is; `store ppo push` uploads the new one.
+[The config reference](../reference/config.md#a-product-page-optimization-treatments-preview)
+has the block's shape.
 
 ## Catching developer builds
 

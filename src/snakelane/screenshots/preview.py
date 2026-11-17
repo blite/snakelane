@@ -26,6 +26,20 @@ snakelane.yml "previews" (all optional; full reference in the skill's references
                   It is all a viewer sees with autoplay off, and fixed once the version is approved.
                   Why: docs/design/screenshots.md#the-poster-frame-is-chosen-not-left-to-apple
 
+`snakelane preview --ppo <test>/<folder>` records a product page optimization treatment's preview
+instead: into ppo/<test>/<folder>/screenshots/ios/<locale>/<deck>/ap-01.m4v, never the version deck,
+with the treatment's `preview:` block in ppo/<test>/experiment.yml laid over "previews":
+    treatments:
+      promise:
+        name: Promise first
+        preview:              any "previews" key; audio and overlay merge key by key, the rest replace
+          launch_set: ["UITestsAutoOpenPuzzle=beach1:beach1_03"]
+                              arguments set on "launch": KEY=value replaces the argument with that
+                              KEY (or the bare flag KEY), anything else is added if missing
+          overlay: {captions: […]}
+          devices: [{id: <udid>, deck: iphone}]
+`store ppo push` uploads it. Why: docs/design/screenshots.md#a-treatment-records-its-own-preview
+
 In App Store search results a portrait preview plays beside ss-01 and ss-02, so --dry-run warns when a
 preview caption repeats theirs: from "screenshots.framing.captions", or read off the framed shots with
 Vision (the snakelane[check] extra) when the UI test draws them (frame "test").
@@ -76,6 +90,7 @@ from .shoot import (
     xcodebuild_test,
 )
 
+TREATMENT_KEYS = {"launch_set"}  # only in a treatment's preview block: see merge_treatment
 KNOWN_KEYS = {"launch", "test", "scheme", "test_plan", "env", "devices", "locales", "fit", "max_seconds", "audio",
               "overlay", "poster", "_comment"}
 AUDIO_KEYS = {"capture", "bed", "bed_gain", "loudness", "_comment"}
@@ -108,10 +123,51 @@ class PreviewConfig:  # snakelane.yml's "previews", defaults applied
     poster: str | float | None = None
 
 
-def load_preview_config(app: App) -> PreviewConfig:
+def set_arguments(launch: list[str], arguments: list[str]) -> list[str]:
+    """`launch` with each of `arguments` set: KEY=value replaces the argument with that KEY (KEY=… or
+    the bare flag KEY) where it stands, anything else is added at the end unless it's there already."""
+    result = list(launch)
+    for argument in arguments:
+        key = argument.split("=", 1)[0]
+        at = next((i for i, a in enumerate(result) if a == key or a.startswith(f"{key}=")), None)
+        if at is None:
+            result.append(argument)
+        else:
+            result[at] = argument
+    return result
+
+
+def merge_treatment(raw: dict[str, Any], block: dict[str, Any], where: str) -> dict[str, Any]:
+    """snakelane.yml's "previews" with a treatment's preview block laid over it (`where` names the block)."""
+    if unknown := set(block) - KNOWN_KEYS - TREATMENT_KEYS:
+        raise SystemExit(f"unknown key(s) in {where}: {', '.join(sorted(unknown))}")
+    merged = {**raw}
+    for key, value in block.items():
+        if key in ("audio", "overlay") and isinstance(value, dict) and isinstance(raw.get(key), dict):
+            merged[key] = {**raw[key], **value}
+        elif key != "launch_set":
+            merged[key] = value
+    # A treatment that names its own way in leaves the version's other way out.
+    if "launch" in block:
+        merged.pop("test", None)
+    if "test" in block:
+        merged.pop("launch", None)
+    if (arguments := block.get("launch_set")) is not None:
+        if not isinstance(arguments, list) or not all(isinstance(a, str) for a in arguments):
+            raise SystemExit(f'{where}.launch_set is a list of launch arguments, e.g. ["KEY=value"]')
+        if not isinstance(merged.get("launch"), list):
+            raise SystemExit(f"{where}.launch_set sets arguments on previews.launch, and there is none")
+        merged["launch"] = set_arguments(merged["launch"], arguments)
+    return merged
+
+
+def load_preview_config(app: App, treatment: dict[str, Any] | None = None, where: str = "") -> PreviewConfig:
+    """snakelane.yml's "previews", with a treatment's preview block (named by `where`) over it when given."""
     raw = app.config.get("previews") or {}
     if not isinstance(raw, dict):
         raise SystemExit(f'"previews" in {app.config_path} must be an object')
+    if treatment:
+        raw = merge_treatment(raw, treatment, where)
     for where, entry, known in (("previews", raw, KNOWN_KEYS), ("previews.audio", raw.get("audio") or {}, AUDIO_KEYS),
                                 ("previews.overlay", raw.get("overlay") or {}, OVERLAY_KEYS)):
         if unknown := set(entry) - known:
@@ -253,9 +309,12 @@ def repeats(caption: str, shot: str) -> bool:
     return bool(a and b) and (f" {a} " in f" {b} " or f" {b} " in f" {a} ")
 
 
-def shot_captions(app: App, deck: str, locale: str, framed: Path) -> tuple[dict[int, str], str | None]:
-    """ss-01's and ss-02's captions in `deck`, and why they couldn't be read when they couldn't."""
-    mode = frame_mode(app.config.get("screenshots") or {})
+def shot_captions(app: App, deck: str, locale: str, framed: Path,
+                  read_shots: bool = False) -> tuple[dict[int, str], str | None]:
+    """ss-01's and ss-02's captions in `deck`, and why they couldn't be read when they couldn't.
+    `read_shots`: read them off the files in `framed` whatever frames the version's (a treatment's
+    shots are made apart from the config's captions)."""
+    mode = "test" if read_shots else frame_mode(app.config.get("screenshots") or {})
     if mode == "none":
         return {}, None
     if mode == "snakelane":
@@ -270,11 +329,12 @@ def shot_captions(app: App, deck: str, locale: str, framed: Path) -> tuple[dict[
                                     if framed.is_dir() else [])
              if (m := re.fullmatch(r"ss-(\d+)", f.stem)) and int(m[1]) in SEARCH_SLOTS}
     if not shots:
-        return {}, f"the UI test draws their captions (frame: test) and {framed.relative_to(app.root)} has no ss-01/ss-02"
+        why = "" if read_shots else "the UI test draws their captions (frame: test) and "
+        return {}, f"{why}{framed.relative_to(app.root)} has no ss-01/ss-02"
     from .upload import developer_chrome_check_available
     if not developer_chrome_check_available():
-        return {}, ("the UI test draws their captions (frame: test); reading them off the shots needs macOS "
-                    "and the snakelane[check] extra")
+        why = "" if read_shots else "the UI test draws their captions (frame: test); "
+        return {}, f"{why}reading them off the shots needs macOS and the snakelane[check] extra"
     from .check import UnreadableImage, text_in
     try:
         return {slot: " ".join(text_in(path)) for slot, path in sorted(shots.items())}, None
@@ -282,10 +342,11 @@ def shot_captions(app: App, deck: str, locale: str, framed: Path) -> tuple[dict[
         return {}, str(error)
 
 
-def search_result_repeats(app: App, deck: str, locale: str, framed: Path, texts: list[str]) -> list[str]:
+def search_result_repeats(app: App, deck: str, locale: str, framed: Path, texts: list[str],
+                          read_shots: bool = False) -> list[str]:
     """A warning for each preview caption that repeats ss-01's or ss-02's: in search results they play
     side by side. Why: docs/design/screenshots.md#in-search-results-the-preview-sits-beside-ss-01-and-ss-02"""
-    found, reason = shot_captions(app, deck, locale, framed)
+    found, reason = shot_captions(app, deck, locale, framed, read_shots)
     if reason:
         return [f"can't check the preview's captions against ss-01/ss-02 (search results): {reason}"]
     return [f'preview caption "{text}" repeats ss-{slot:02d}\'s, which plays beside it in search results'
@@ -337,13 +398,19 @@ class Pass:  # one recording: one simulator, one locale
     locale: str
     language: str | None
     tree: DeckTree
-    masters: Path              # .snakelane/<slug>/previews/<deck>/<locale>/
+    masters: Path              # .snakelane/<slug>/previews/<deck>/<locale>/ (…/previews/ppo/<test>/<folder>/…)
     build: list[str]
     test: list[str]
+    out: Path | None = None    # a treatment's <locale>/<deck>/ folder; None: the version deck's
+
+    @property
+    def deck_dir(self) -> Path:
+        """The shots the clip sits beside: the slot comes from them, and search results pair them with it."""
+        return self.out if self.out is not None else self.tree.framed(self.locale)
 
     @property
     def clip(self) -> Path:
-        return self.tree.framed(self.locale) / CLIP
+        return self.deck_dir / CLIP
 
     def master(self, suffix: str) -> Path:
         return self.masters / f"master{suffix}"
@@ -353,6 +420,7 @@ class Pass:  # one recording: one simulator, one locale
 class Plan:
     app: App
     config: PreviewConfig
+    treatment: Path | None = None    # ppo/<test>/<folder>/ when recording a treatment's preview
     passes: list[Pass] = field(default_factory=list)
     problems: list[str] = field(default_factory=list)
 
@@ -373,8 +441,8 @@ def built_app(app: App, scheme: str, destination: str) -> Path:
     raise SystemExit(f"scheme {scheme} builds no app with bundle id {app.config['bundle_id']}")
 
 
-def make_plan(app: App, config: PreviewConfig, args: SimpleNamespace) -> Plan:
-    plan = Plan(app, config)
+def make_plan(app: App, config: PreviewConfig, args: SimpleNamespace, treatment: Path | None = None) -> Plan:
+    plan = Plan(app, config, treatment=treatment)
     locales = config.locales
     if args.locales:
         requested = [l.strip() for l in args.locales.split(",") if l.strip()]
@@ -396,14 +464,22 @@ def make_plan(app: App, config: PreviewConfig, args: SimpleNamespace) -> Plan:
             test = xcodebuild_test(app, config.scheme, destination, action="test-without-building", **common)
         tree = DeckTree(app, "ios", sim.deck)
         for locale, language in locales.items():
-            masters = app.work_dir / "previews" / sim.deck / locale
-            plan.passes.append(Pass(sim, locale, language, tree, masters, build, test))
+            if treatment is None:
+                masters, out = app.work_dir / "previews" / sim.deck / locale, None
+            else:
+                from .ppo import treatment_deck
+                relative = treatment.relative_to(app.folder / "ppo")
+                masters = app.work_dir / "previews" / "ppo" / relative / sim.deck / locale
+                out = treatment_deck(treatment, "ios") / locale / sim.deck
+            plan.passes.append(Pass(sim, locale, language, tree, masters, build, test, out))
     return plan
 
 
 def print_plan(plan: Plan, encode_only: bool) -> None:
     app, config = plan.app, plan.config
     print(f"app        {app.name}  (slug {app.slug})")
+    if plan.treatment is not None:
+        print(f"treatment  {plan.treatment.relative_to(app.root)}  (the version deck's preview is not touched)")
     if config.launch is not None:
         print(f"launch     {app.config['bundle_id']} {' '.join(config.launch)}  (no UI test attached)")
     else:
@@ -437,7 +513,8 @@ def print_plan(plan: Plan, encode_only: bool) -> None:
         if line := poster_line(media.preview_info(p.clip)):
             print(f"  poster   {line}")
         if texts:
-            for warning in search_result_repeats(app, p.sim.deck, p.locale, p.clip.parent, texts):
+            for warning in search_result_repeats(app, p.sim.deck, p.locale, p.deck_dir, texts,
+                                                 read_shots=p.out is not None):
                 print(f"  warning: {warning}")
     if plan.problems:
         print("problems" + "".join(f"\n  ! {problem}" for problem in plan.problems))
@@ -736,7 +813,7 @@ def encode(plan: Plan, p: Pass) -> Path:
         raise SystemExit(f"no recording in {p.masters} — run `snakelane preview` without --encode-only first")
     info = json.loads(meta.read_text())
     capture = media.read_movie(mov)
-    target = preview_size(capture.dimensions, p.tree.framed(p.locale))
+    target = preview_size(capture.dimensions, p.deck_dir)
     video_start = info["video_start"]
     moments = {name: t - video_start for name, t in info["events"].items()}
     start, length = clip_window(moments, capture.seconds, config.max_seconds)
@@ -823,7 +900,8 @@ def encode(plan: Plan, p: Pass) -> Path:
     media.preview_sidecar(p.clip).write_text(json.dumps(info, indent=2, ensure_ascii=False) + "\n")
     print(f"  {p.clip.relative_to(app.root)}  {tw}x{th}  {movie.seconds:.1f}s  {movie.video.fps:.0f} fps  "
           f"{p.clip.stat().st_size / 1e6:.1f} MB" + (f"  poster {media.time_code(poster)}" if poster is not None else ""))
-    for warning in search_result_repeats(app, p.sim.deck, p.locale, p.clip.parent, [t for _, _, t in timed]):
+    for warning in search_result_repeats(app, p.sim.deck, p.locale, p.deck_dir, [t for _, _, t in timed],
+                                         read_shots=p.out is not None):
         print(f"  warning: {warning}")
     return p.clip
 
@@ -847,10 +925,28 @@ def display_awake():
         hold.terminate()
 
 
+def treatment_config(app: App, ppo_arg: str) -> tuple[Path, PreviewConfig]:
+    """`--ppo <test>/<folder>`: the treatment's folder, and "previews" with its preview block over it."""
+    from .ppo import read_experiment
+
+    test, _, sub = ppo_arg.strip("/").partition("/")
+    if not test or not sub or "/" in sub:
+        raise SystemExit(f"--ppo takes <test>/<folder>, the test's folder under ppo/ and the treatment's, not {ppo_arg!r}")
+    config_path, _name, _traffic, entries = read_experiment(app.folder / "ppo" / test)
+    if sub not in entries:
+        raise SystemExit(f"{config_path}: no treatment {sub!r} (treatments: {', '.join(entries)})")
+    name, block = entries[sub]
+    folder = app.folder / "ppo" / test / sub
+    if not folder.is_dir():
+        raise SystemExit(f"{config_path}: no folder {folder.relative_to(app.root)} for {name!r}")
+    return folder, load_preview_config(app, block, f"ppo/{test}/experiment.yml treatments.{sub}.preview")
+
+
 def cmd_preview(args: SimpleNamespace) -> None:
     app = resolve_app(args.app)
-    config = load_preview_config(app)
-    plan = make_plan(app, config, args)
+    treatment, config = (treatment_config(app, args.ppo) if getattr(args, "ppo", None)
+                         else (None, load_preview_config(app)))
+    plan = make_plan(app, config, args, treatment)
     if args.dry_run:
         print_plan(plan, args.encode_only)
         if plan.problems and not args.encode_only:
@@ -876,7 +972,8 @@ def cmd_preview(args: SimpleNamespace) -> None:
                 (record_launched if config.launch is not None else record)(plan, p)
     for p in plan.passes:
         encode(plan, p)
-    print("upload with:  snakelane store media push --only previews")
+    print("upload with:  " + ("snakelane store ppo push" if treatment is not None
+                              else "snakelane store media push --only previews"))
 
 
 cli = command_app("Record the App Preview from the app's video UI test and encode it into the deck. "
@@ -894,9 +991,13 @@ def preview(
     encode_only: Annotated[bool, typer.Option(
         "--encode-only", help="encode again from the kept recordings, without recording")] = False,
     dry_run: Annotated[bool, typer.Option("--dry-run", help="print the resolved plan and stop")] = False,
+    ppo: Annotated[str | None, typer.Option(
+        "--ppo", help="record a product page optimization treatment's preview: <test>/<folder> under ppo/, "
+                      "with its experiment.yml preview block over previews")] = None,
 ) -> None:
     """Record each simulator's App Preview with its sound and encode it as ap-01.m4v."""
-    cmd_preview(SimpleNamespace(app=app, device=device, locales=locales, encode_only=encode_only, dry_run=dry_run))
+    cmd_preview(SimpleNamespace(app=app, device=device, locales=locales, encode_only=encode_only, dry_run=dry_run,
+                                ppo=ppo))
 
 
 def main(argv: list[str] | None = None) -> None:

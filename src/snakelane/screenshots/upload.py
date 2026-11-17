@@ -144,34 +144,47 @@ def previews_plan(folder: Path, app_config: dict[str, Any], platform: str) -> tu
             continue
         # An empty map is an instruction: the sweep deletes every live set.
         # Why: docs/design/screenshots.md#an-empty-local-deck-deletes-the-live-sets
-        plan[locale] = by_type = {}
-        for file in deck_files(dirs, PREVIEW_SUFFIXES, "preview"):
-            by_type.setdefault(preview_type_for(file, file.parent), []).append(file)
-            # Set when the preview is reserved: once the version is approved it can't be changed.
-            # Why: docs/design/screenshots.md#the-poster-frame-is-chosen-not-left-to-apple
-            posters[file] = code = poster_time_code(file, read_movie(file).seconds)
-            print(f"  {locale}/{file.parent.name}/{file.name}: poster "
-                  + (code or "Apple's default (no previews.poster when it was encoded)"))
+        plan[locale] = locale_previews(dirs, locale, posters)
     return plan, posters
+
+
+def locale_previews(dirs: list[Path], label: str, posters: dict[Path, str | None]) -> dict[str, list[Path]]:
+    """One locale's previews by slot, each checked as Apple would and its poster frame read into `posters`."""
+    by_type: dict[str, list[Path]] = {}
+    for file in deck_files(dirs, PREVIEW_SUFFIXES, "preview"):
+        by_type.setdefault(preview_type_for(file, file.parent), []).append(file)
+        # Set when the preview is reserved: once the version is approved it can't be changed.
+        # Why: docs/design/screenshots.md#the-poster-frame-is-chosen-not-left-to-apple
+        posters[file] = code = poster_time_code(file, read_movie(file).seconds)
+        print(f"  {label}/{file.parent.name}/{file.name}: poster "
+              + (code or "Apple's default (no previews.poster when it was encoded)"))
+    return by_type
+
+
+def poster_attributes(posters: dict[Path, str | None]) -> Callable[[Path], dict[str, Any]]:
+    """A preview's reservation attributes: its poster frame, when it has one."""
+    return lambda file: {"previewFrameTimeCode": code} if (code := posters.get(file)) else {}
 
 
 def push_previews(client: asc.Client, app_config: dict[str, Any], platform: str, plan: Plan,
                   posters: dict[Path, str | None]) -> None:
-    uploads = mirror(client, app_config, platform, plan, PREVIEWS,
-                     lambda file: {"previewFrameTimeCode": code} if (code := posters.get(file)) else {})
+    uploads = mirror(client, app_config, platform, plan, PREVIEWS, poster_attributes(posters))
     if client.dry_run:
         print("\n[dry-run] no App Previews were changed.")
         return
-    if not uploads:
-        return
+    if uploads and not verify_preview_processing(client, uploads):
+        raise SystemExit("App Preview upload did not complete cleanly")
+
+
+def verify_preview_processing(client: asc.Client, uploads: list[dict[str, Any]]) -> bool:
+    """Wait until Apple has processed every uploaded preview; report the rest in red."""
     print(f"\nwaiting for App Store Connect to process {len(uploads)} preview(s)…")
     # 20 minutes: a preview is transcoded, not just checksummed.
     complete, failed, timed_out = wait_for_asset_processing(
         client, "appPreviews", {r["id"]: r["label"] for r in uploads}, timeout=1200)
     for name in complete:
         print(f"✓ {name} processed")
-    if not report_processing(failed, timed_out):
-        raise SystemExit("App Preview upload did not complete cleanly")
+    return report_processing(failed, timed_out)
 
 
 def cmd_previews_push(args: SimpleNamespace) -> None:

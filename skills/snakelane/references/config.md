@@ -152,6 +152,34 @@ gallery's search-result mock warn when a preview caption repeats theirs: compare
 `screenshots.framing.captions`, or, with `frame: test`, read off the framed shots with Vision
 (the `snakelane[check]` extra; without it they say they can't check).
 
+### A product page optimization treatment's preview
+
+`preview --ppo <test>/<folder>` records a treatment's preview with the treatment's `preview` block
+from `metadata/ppo/<test>/experiment.yml` over `previews`, into
+`metadata/ppo/<test>/<folder>/screenshots/ios/<locale>/<deck>/ap-01.m4v` (and its `ap-01.json`);
+the version deck's clip is never touched, and `store ppo push` uploads it.
+
+```yaml
+# metadata/ppo/<test>/experiment.yml
+name: No ads first
+traffic: 50
+treatments:
+  promise:                       # the folder; `promise: Promise first` when there's no preview block
+    name: Promise first
+    preview:                     # any previews key, laid over snakelane.yml's previews
+      launch_set: ["UITestsAutoOpenPuzzle=beach1:beach1_03"]   # KEY=value replaces that KEY's
+                                 #   argument in previews.launch; anything else is added
+      overlay:                   # audio and overlay merge key by key; other keys replace
+        captions:
+          - {at: 0, text: "==NO ADS. EVER.==\nPlay Uninterrupted"}
+          - {at: won, text: "==COMPLETE==\nSee the full picture"}
+      devices:                   # optional: simulators kept for this, as screenshots.devices
+        - {id: 4CC94959-2F33-471C-8EEB-AC768C2A4571, deck: iphone}
+```
+
+A block that sets `launch` drops `previews.test`, and one that sets `test` drops `previews.launch`.
+The search-result caption check reads the treatment's own ss-01 and ss-02 off the files.
+
 ## Game Center (`gamecenter`)
 
 ```yaml

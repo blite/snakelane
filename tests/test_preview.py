@@ -382,3 +382,67 @@ def test_a_clip_encoded_before_the_sidecar_is_checked_against_the_config(tmp_pat
     deck = gallery.Deck("iPhone", "ios", folder, shots, [movie(folder / "ap-01.m4v")])
     tiles, warnings = gallery.search_strip(app, deck, "en-US", gallery.Assets(None))
     assert "poster: Apple&#x27;s default" in tiles[0] and "repeats ss-02" in warnings[0]
+
+
+# --- a product page optimization treatment's preview ----------------------------------------------
+
+def treatment_app(tmp_path: Path, block: str) -> project.App:
+    (tmp_path / "Example.xcodeproj").mkdir()
+    app = make_app(tmp_path, scheme="Example", screenshots={"devices": ["iPhone 17 Pro"]},
+                   previews={"launch": ["UITests", "Puzzle=a:1", "Seed=42"], "poster": "won",
+                             "overlay": {"style": "band", "depth": 0.14, "captions": "Relax"}})
+    folder = app.folder / "ppo" / "no-ads-first"
+    (folder / "promise").mkdir(parents=True)
+    (folder / "experiment.yml").write_text(
+        "name: No ads first\ntraffic: 50\ntreatments:\n  promise:\n    name: Promise first\n" + block)
+    return app
+
+
+def test_set_arguments_replaces_by_key_and_adds_the_rest() -> None:
+    launch = ["UITests", "Puzzle=a:1", "Seed=42"]
+    assert preview.set_arguments(launch, ["Puzzle=b:3", "UITests", "Muted"]) == [
+        "UITests", "Puzzle=b:3", "Seed=42", "Muted"]
+    assert launch == ["UITests", "Puzzle=a:1", "Seed=42"], "the version's list is untouched"
+
+
+def test_a_treatment_records_with_its_block_over_previews_into_its_own_folder(tmp_path: Path) -> None:
+    from types import SimpleNamespace
+
+    app = treatment_app(tmp_path, "    preview:\n      launch_set: [Puzzle=b:3]\n"
+                                  "      overlay: {captions: [{at: 0, text: NO ADS}, {at: won, text: DONE}]}\n")
+    folder, config = preview.treatment_config(app, "no-ads-first/promise")
+    assert config.launch == ["UITests", "Puzzle=b:3", "Seed=42"]
+    assert config.overlay == "band" and config.depth == 0.14, "overlay keys merge one by one"
+    assert config.captions == [{"at": 0, "text": "NO ADS"}, {"at": "won", "text": "DONE"}]
+    assert config.poster == "won"
+    plan = preview.make_plan(app, config, SimpleNamespace(locales=None, device=None, dry_run=True, encode_only=False),
+                             folder)
+    (p,) = plan.passes
+    assert p.clip == app.folder / "ppo/no-ads-first/promise/screenshots/ios/en-US/iphone/ap-01.m4v"
+    assert p.masters == app.work_dir / "previews/ppo/no-ads-first/promise/iphone/en-US"
+    assert p.clip != p.tree.framed("en-US") / preview.CLIP, "never the version deck's clip"
+
+
+def test_a_treatment_without_a_block_records_as_the_version_does(tmp_path: Path) -> None:
+    app = treatment_app(tmp_path, "")
+    _folder, config = preview.treatment_config(app, "no-ads-first/promise")
+    assert config == preview.load_preview_config(app)
+
+
+@pytest.mark.parametrize(("ppo_arg", "block", "message"), [
+    ("no-ads-first", "", "takes <test>/<folder>"),
+    ("missing/promise", "", "no .*experiment.yml"),
+    ("no-ads-first/other", "", "no treatment 'other'"),
+    ("no-ads-first/promise", "    preview: {lunch: [x]}\n", r"unknown key\(s\) in .*treatments.promise.preview"),
+    ("no-ads-first/promise", "    preview: {launch_set: Puzzle=b}\n", "launch_set is a list"),
+])
+def test_a_bad_treatment_preview_says_which(tmp_path: Path, ppo_arg: str, block: str, message: str) -> None:
+    app = treatment_app(tmp_path, block)
+    with pytest.raises(SystemExit, match=message):
+        preview.treatment_config(app, ppo_arg)
+
+
+def test_a_treatment_naming_a_test_drops_the_versions_launch(tmp_path: Path) -> None:
+    app = treatment_app(tmp_path, "    preview: {test: ExampleUITests/Promise}\n")
+    _folder, config = preview.treatment_config(app, "no-ads-first/promise")
+    assert (config.launch, config.test) == (None, "ExampleUITests/Promise")

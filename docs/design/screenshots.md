@@ -323,6 +323,26 @@ rather than by hand or a script in the app. A treatment localization owns `appSc
 version localization does, so the push runs the version deck's own mirror on it (`mirror_sets`):
 one set of rules for sizes, limits and replacement, not a second path that drifts.
 
+Its first real push (2026-11-17) found a new treatment localization already holding copies of the
+live page's sets (`APP_IPHONE_67`, `APP_IPHONE_DUO`, seven iPad shots), which the mirror deleted as
+it should. The dry run had planned an empty localization and shown none of that, so a dry run
+that creates one now says the copies will be cleared. Previews are mirrored only when the treatment
+has one somewhere: the copies are the live page's own, and deleting them would make a
+screenshots-only treatment differ in its preview too. The same day `ppo show` died on a 500 from
+the App Asset Library's image list, read to name placements a test without creative assets
+doesn't have; it now reads the library only when a placement needs naming.
+
+### A treatment records its own preview
+
+Jigsaw Puzzles' "No ads first" treatment wanted its own App Preview (another puzzle, other
+captions), and `preview` could only write the version deck's `ap-01.m4v` from `previews`. A
+treatment's `preview` block in `experiment.yml` lays the keys that differ over `previews` rather
+than repeating them: the recording is the version's in every other way, and a copy would drift.
+`launch_set` exists because a launch list is long and a treatment usually changes one argument of
+it. `--ppo` writes into the treatment's folder, with its masters kept apart under
+`.snakelane/<slug>/previews/ppo/`, so the version's clip and its `--encode-only` recording can't be
+overwritten by a treatment's.
+
 It stops short of review and starting. A treatment with new art is reviewed, alone or with a
 version, and starting a test changes what live visitors see, which belongs to a person in App Store
 Connect rather than to a sync. A finished test's name isn't reused because its results stay

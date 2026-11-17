@@ -58,8 +58,9 @@ overrides that. `--app <name>` picks among several configs; with one it is not n
     │                        product-page-header.*, universal.png (one file per slot);
     │                        creative/<platform>/ overrides
     ├── ppo/<test>/          `store ppo push`: experiment.yml (name, traffic, treatments:
-    │                        folder -> name) and per treatment <folder>/creative/ and/or
-    │                        <folder>/screenshots/<platform>/<locale>/ (as the version deck)
+    │                        folder -> name or {name, preview}) and per treatment <folder>/creative/
+    │                        and/or <folder>/screenshots/<platform>/<locale>/ (ss-NN.jpg, ap-NN.m4v
+    │                        as the version deck)
     └── release/asset_packs.json   the asset pack record
 ```
 
@@ -101,14 +102,15 @@ snakelane store media push [--dry-run] [--only screenshots|previews|creative]   
                                           # creative = product page header + search-result asset
 snakelane store media show [--only …]   # no --only: a kind with no local files is left alone live
 snakelane store ppo push [--dry-run] | ppo show   # product page optimization tests: treatments'
-                                          # screenshots and creatives; review and start stay in ASC
+                                          # screenshots, previews and creatives; review and start stay in ASC
 snakelane store iap show | iap push [--dry-run] [--create] [--product ID]
 snakelane store subs show | subs push [--dry-run] [--create]
 
 snakelane shoot [--dry-run]         # generate the deck from the UI test
 snakelane shoot --shots 05,06 [--locales …]   # reshoot only those shots; the rest of the deck stays
 snakelane frame                   # redraw captions over raw/ without re-shooting
-snakelane preview [--dry-run] [--encode-only]   # record ap-01.m4v from the video UI test, with sound
+snakelane preview [--dry-run] [--encode-only] [--ppo <test>/<folder>]   # record ap-01.m4v, with sound;
+                                          # --ppo: a treatment's, from its experiment.yml preview block
 snakelane gallery --open                  # review page: decks, store mocks, lint, translations
 snakelane gallery --live | --git          # …each shot marked new/changed/unchanged vs ASC or HEAD
 snakelane gallery --bundle <dir>          # self-contained copy (CI artifact, sharing)
@@ -308,6 +310,12 @@ Don't mark `--reviewed` on your own translation without the user's go-ahead.
   `ap-01.json` beside the clip (commit both); `store media push` sends it as
   `previewFrameTimeCode`. In search results a portrait preview plays beside ss-01 and ss-02, so
   don't repeat their captions: `preview --dry-run` and the gallery warn when a caption does.
+- A product page optimization treatment gets its own preview with `preview --ppo <test>/<folder>`:
+  the treatment's `preview` block in `experiment.yml` overrides `previews` keys (`launch_set` changes
+  single launch arguments; references/config.md has the shape), and the clip goes into the
+  treatment's folder, never the version deck's. A new treatment localization arrives holding copies
+  of the live page's sets; `store ppo push` deletes those the folder doesn't replace, and keeps the
+  preview copies when the treatment has no preview.
 - [App Previews](https://developer.apple.com/help/app-store-connect/reference/app-information/app-preview-specifications) are a separate resource. "Uploaded" is not "accepted": Apple transcodes for up
   to ~20 minutes and can reject afterwards, visible only in the web UI. Raw `simctl`
   recordings are not uploadable as-is.

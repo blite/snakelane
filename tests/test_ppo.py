@@ -59,7 +59,7 @@ def test_a_bad_experiment_file_stops_before_apple_is_asked(tmp_path: Path, confi
 def test_a_treatment_without_files_is_refused(tmp_path: Path) -> None:
     # Only an iOS file, so the Mac treatment would show nothing the live page doesn't.
     write_test(tmp_path, CONFIG, {"table/creative/ios/default/search-result.jpg": (1920, 1280)})
-    with pytest.raises(SystemExit, match="no screenshots or creative assets for macos"):
+    with pytest.raises(SystemExit, match="no screenshots, previews or creative assets for macos"):
         ppo.load_tests(tmp_path, "macos", ["en-US"])
 
 
@@ -100,7 +100,7 @@ def test_a_new_test_is_created_with_its_treatment_and_placement(tmp_path: Path) 
     tests, path = planned_tests(tmp_path)
     # A Mac test of the same name is another platform's: not this one.
     client = Client(gets(path, [experiment("mac", platform="MAC_OS")]))
-    assert ppo.push_tests(client, "app", "ios", tests, ref()) == (1, [])
+    assert ppo.push_tests(client, "app", "ios", tests, ref()) == (1, [], [])
     assert [(verb, p) for verb, p, _ in client.writes] == [
         ("POST", "/v2/appStoreVersionExperiments"),
         ("POST", "/v1/appStoreVersionExperimentTreatments"),
@@ -128,7 +128,7 @@ def test_a_prepared_test_already_showing_the_file_only_has_its_traffic_set(tmp_p
                          treatments=[{"id": "T", "attributes": {"name": "Table mid-trick"}}],
                          localizations=[{"id": "TL", "attributes": {"locale": "en-US"}}],
                          placements=[placement("P1")], backing=["P1"]))
-    assert ppo.push_tests(client, "app", "ios", tests, ref()) == (0, [])
+    assert ppo.push_tests(client, "app", "ios", tests, ref()) == (0, [], [])
     assert [(verb, p) for verb, p, _ in client.writes] == [("PATCH", "/v2/appStoreVersionExperiments/E")]
     assert client.writes[0][2]["data"]["attributes"] == {"trafficProportion": 50}
 
@@ -139,7 +139,7 @@ def test_a_changed_file_replaces_the_treatments_placement(tmp_path: Path) -> Non
                          treatments=[{"id": "T", "attributes": {"name": "Table mid-trick"}}],
                          localizations=[{"id": "TL", "attributes": {"locale": "en-US"}}],
                          placements=[placement("OLD")]))
-    assert ppo.push_tests(client, "app", "ios", tests, ref()) == (1, [])
+    assert ppo.push_tests(client, "app", "ios", tests, ref()) == (1, [], [])
     assert [(verb, p) for verb, p, _ in client.writes] == [
         ("DELETE", "/v1/appAssetLibraryPlacements/OLD"), ("POST", "/v1/appAssetLibraryPlacements")]
 
@@ -207,7 +207,7 @@ def test_a_treatment_screenshot_of_an_unknown_size_is_refused(tmp_path: Path) ->
 
 def test_screenshots_for_another_platform_dont_make_a_treatment(tmp_path: Path) -> None:
     shots_test(tmp_path)
-    with pytest.raises(SystemExit, match="no screenshots or creative assets for macos"):
+    with pytest.raises(SystemExit, match="no screenshots, previews or creative assets for macos"):
         ppo.load_tests(tmp_path, "macos", ["en-US"])
 
 
@@ -305,3 +305,139 @@ def test_the_dry_run_without_a_key_prints_the_local_plan(tmp_path: Path, monkeyp
     assert "'No ads first': 50% of visitors, 1 treatment(s)" in out
     assert "ppo/art/promise/screenshots/ios/en-US/iphone/ ss-01.jpg, ss-02.jpg, ss-03.jpg" in out
     assert "nothing was written" in out
+
+
+# --- treatment previews ------------------------------------------------------------------------------
+
+def preview_test(tmp_path: Path, poster: str | None = "00:00:14:12") -> Path:
+    import json
+
+    from .test_preview import movie
+
+    folder = write_test(tmp_path, SHOTS_CONFIG, {"promise/screenshots/ios/en-US/iphone/ss-01.jpg": IPHONE})
+    clip = movie(folder / "promise/screenshots/ios/en-US/iphone/ap-01.m4v")
+    if poster:
+        clip.with_suffix(".json").write_text(json.dumps({"poster": {"time_code": poster}}))
+    return clip
+
+
+def live_treatment(**extra: Any) -> dict[str, Any]:
+    return {
+        "/v1/apps/app/appStoreVersionExperimentsV2": {"data": [experiment("E", name="No ads first")]},
+        "/v2/appStoreVersionExperiments/E/appStoreVersionExperimentTreatments": {
+            "data": [{"id": "T", "attributes": {"name": "Promise first"}}]},
+        "/v1/appStoreVersionExperimentTreatments/T/appStoreVersionExperimentTreatmentLocalizations": {
+            "data": [{"id": "TL", "attributes": {"locale": "en-US"}}]},
+        **extra,
+    }
+
+
+def test_a_treatment_preview_replaces_its_preview_sets_with_the_poster(tmp_path: Path) -> None:
+    preview_test(tmp_path)
+    tests = ppo.load_tests(tmp_path, "ios", ["en-US"])
+    (treatment,) = tests[0].treatments
+    assert {k: [f.name for f in v] for k, v in treatment.previews["en-US"].items()} == {"IPHONE_61": ["ap-01.m4v"]}
+    client = Client(live_treatment(**{
+        # App Store Connect's copy of the live page's preview, in a slot the treatment doesn't fill.
+        "/v1/appStoreVersionExperimentTreatmentLocalizations/TL/appPreviewSets": {"data": [
+            {"id": "COPY", "attributes": {"previewType": "IPHONE_67"}}]},
+    }))
+    pushed = ppo.push_tests(client, "app", "ios", tests, None)
+    assert len(pushed.previews) == 1 and len(pushed.uploads) == 1
+    assert ("DELETE", "/v1/appPreviewSets/COPY", None) in client.writes
+    posts = {p: body["data"] for verb, p, body in client.writes if verb == "POST"}
+    assert posts["/v1/appPreviewSets"]["attributes"] == {"previewType": "IPHONE_61"}
+    assert posts["/v1/appPreviewSets"]["relationships"]["appStoreVersionExperimentTreatmentLocalization"]["data"][
+        "id"] == "TL"
+    assert posts["/v1/appPreviews"]["attributes"]["previewFrameTimeCode"] == "00:00:14:12"
+
+
+def test_a_treatment_without_previews_keeps_its_preview_sets(tmp_path: Path) -> None:
+    shots_test(tmp_path)
+    tests = ppo.load_tests(tmp_path, "ios", ["en-US"])
+    assert tests[0].treatments[0].previews == {}
+    client = Client(live_treatment(**{
+        "/v1/appStoreVersionExperimentTreatmentLocalizations/TL/appPreviewSets": {"data": [
+            {"id": "COPY", "attributes": {"previewType": "IPHONE_67"}}]},
+    }))
+    assert ppo.push_tests(client, "app", "ios", tests, None).previews == []
+    assert not any("appPreview" in p for _, p, _ in client.writes)
+
+
+def test_a_preview_alone_makes_a_treatment(tmp_path: Path) -> None:
+    clip = preview_test(tmp_path)
+    (tmp_path / "ppo/art/promise/screenshots/ios/en-US/iphone/ss-01.jpg").rename(clip.with_name("_ss-01.jpg"))
+    # The slot is read off the shots beside it, so a preview with none is refused as the version's is.
+    with pytest.raises(SystemExit, match="no screenshots beside it"):
+        ppo.load_tests(tmp_path, "ios", ["en-US"])
+    clip.with_name("_ss-01.jpg").rename(clip.with_name("ss-01.jpg"))
+    assert ppo.load_tests(tmp_path, "ios", ["en-US"])[0].treatments[0].shows("en-US")
+
+
+def test_a_dry_run_says_a_new_localization_arrives_with_the_live_pages_sets(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    from snakelane.connect import asc
+
+    shots_test(tmp_path)
+    tests = ppo.load_tests(tmp_path, "ios", ["en-US"])
+
+    class DryClient(Client):
+        def post(self, path: str, body: dict[str, Any]) -> dict[str, Any]:
+            data = super().post(path, body)["data"]
+            return {"data": {**data, "id": f"{asc.PLANNED}{self.created}"}}
+
+    client = DryClient(live_treatment(**{
+        "/v1/appStoreVersionExperimentTreatments/T/appStoreVersionExperimentTreatmentLocalizations": {"data": []}}))
+    ppo.push_tests(client, "app", "ios", tests, None)
+    out = capsys.readouterr().out
+    assert "copies of the live page's screenshot sets" in out
+    assert "deletes every one but APP_IPAD_PRO_3GEN_129, APP_IPHONE_61" in out
+
+
+def test_a_treatment_entry_takes_a_name_and_a_preview_block(tmp_path: Path) -> None:
+    config = ("name: No ads first\ntraffic: 50\ntreatments:\n  promise:\n    name: Promise first\n"
+              "    preview:\n      launch_set: [A=1]\n")
+    write_test(tmp_path, config, {"promise/screenshots/ios/en-US/iphone/ss-01.jpg": IPHONE})
+    (treatment,) = ppo.load_tests(tmp_path, "ios", ["en-US"])[0].treatments
+    assert (treatment.name, treatment.preview) == ("Promise first", {"launch_set": ["A=1"]})
+
+
+@pytest.mark.parametrize(("entry", "message"), [
+    ("{name: P, previews: {}}", "unknown key"),
+    ("{preview: {}}", "needs a name"),
+    ("{name: P, preview: [x]}", "mapping of previews keys"),
+])
+def test_a_bad_treatment_entry_says_which(tmp_path: Path, entry: str, message: str) -> None:
+    write_test(tmp_path, f"name: X\ntraffic: 50\ntreatments:\n  promise: {entry}\n",
+               {"promise/screenshots/ios/en-US/iphone/ss-01.jpg": IPHONE})
+    with pytest.raises(SystemExit, match=message):
+        ppo.load_tests(tmp_path, "ios", ["en-US"])
+
+
+def test_show_reads_the_asset_library_only_for_a_placement(monkeypatch: pytest.MonkeyPatch,
+                                                         capsys: pytest.CaptureFixture[str]) -> None:
+    from types import SimpleNamespace
+
+    from snakelane.connect import asc
+
+    client = Client(live_treatment(**{
+        "/v1/appStoreVersionExperimentTreatmentLocalizations/TL/appScreenshotSets": {"data": [
+            {"id": "S", "attributes": {"screenshotDisplayType": "APP_IPHONE_61"}}]},
+        "/v1/appScreenshotSets/S/appScreenshots": {"data": [{"id": "1", "attributes": {"fileName": "ss-01.jpg"}}]},
+        "/v1/appStoreVersionExperimentTreatmentLocalizations/TL/appPreviewSets": {"data": [
+            {"id": "P", "attributes": {"previewType": "IPHONE_61"}}]},
+        "/v1/appPreviewSets/P/appPreviews": {"data": [{"id": "2", "attributes": {"fileName": "ap-01.m4v"}}]},
+    }))
+
+    def library(*_: Any) -> dict[str, str]:
+        raise AssertionError("the library was read for a test without creative assets")
+
+    monkeypatch.setattr(ppo, "load_app", lambda _app: (Path("."), {"bundle_id": "b", "platforms": ["ios"]}))
+    monkeypatch.setattr(ppo, "resolve_platform", lambda *_: "ios")
+    monkeypatch.setattr(ppo, "find_app", lambda *_: {"id": "app"})
+    monkeypatch.setattr(asc, "Client", lambda: client)
+    monkeypatch.setattr(creative, "placement_labels", library)
+    ppo.cmd_ppo_show(SimpleNamespace(app=None, platform=None))
+    out = capsys.readouterr().out
+    assert "APP_IPHONE_61        1 — ss-01.jpg" in out
+    assert "preview IPHONE_61    1 — ap-01.m4v" in out
