@@ -350,9 +350,10 @@ achievement and leaderboard image (1024×1024) per locale, and each activity's d
   rule catches a recurring leaderboard App Store Connect refuses: no `FREQ=WEEKLY` (a week is
   `FREQ=DAILY;INTERVAL=7`) and no duration without a time part (a week is `PT168H`, not `P7D`).
   Xcode's sync then leaves that board off, and may leave every record without its localizations
-  (Word Search, 2026-11-04). Its `gamecenter-name` rule catches an achievement or leaderboard
-  name over 30 characters in any language: App Store Connect refuses it and stops `gamecenter
-  sync` partway (Spider Solitaire, 2026-11-15), so check a translated name's length. Start a
+  (Word Search, 2026-11-04). Its `gamecenter-name` rule catches an achievement, leaderboard or
+  activity name over 30 characters in any language: App Store Connect refuses it and stops
+  `gamecenter sync` partway (Spider Solitaire, 2026-11-15 and 2026-11-18), so check a translated
+  name's length. Start a
   board at midnight UTC, never in the past.
 - **After a sync, check it took:** `snakelane gamecenter images show` reports any record or locale
   App Store Connect is missing. A sync that created the records but not their localizations shows

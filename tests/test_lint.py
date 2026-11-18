@@ -250,12 +250,19 @@ def test_a_name_over_30_characters_in_any_language_is_an_error(tmp_path: Path) -
         "achievementLocalizations": {
             "ach.win": [{"locale": "fr-FR", "name": "x" * 31, "beforeEarnedDescription": "y" * 80}],
             "ach.old": [{"locale": "en-US", "name": "x" * 40}]},
-        "gameActivityLocalizations": {"act.daily": [{"locale": "de-DE", "name": "x" * 40}]},
+        # Spider Solitaire, 2026-11-18: German's Spiderette daily activity drew the same 409.
+        "gameActivities": [{"vendorIdentifier": "act.daily"}, {"vendorIdentifier": "act.old", "archived": True}],
+        "gameActivityLocalizations": {
+            "act.daily": [{"locale": "de-DE", "name": "Spiderette · Tägliche Herausforderung"},
+                          {"locale": "en-US", "name": "Spiderette · Daily Challenge"}],
+            "act.old": [{"locale": "en-US", "name": "x" * 40}]},
     }}))
     found = [f for f in lint.run(make_app(tmp_path), "ios") if f.rule == "gamecenter-name"]
     assert [(f.where, f.severity) for f in found] == [
-        ("gamecenter/ach.win [fr-FR]", "error"), ("gamecenter/lb.daily [de-DE]", "error")]
+        ("gamecenter/ach.win [fr-FR]", "error"), ("gamecenter/lb.daily [de-DE]", "error"),
+        ("gamecenter/act.daily [de-DE]", "error")]
     assert "is 37 characters" in found[1].message
+    assert "an activity's name" in found[2].message
 
 
 def test_a_weekly_rule_or_a_day_duration_is_an_error(tmp_path: Path) -> None:

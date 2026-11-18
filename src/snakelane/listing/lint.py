@@ -26,7 +26,7 @@ Rules (error = blocks the push; warning = printed):
     gamecenter-recurrence error    a recurring leaderboard in the .gamekit with a FREQ=WEEKLY (or other
                                    non minute/hour/day) rule, or a duration like P7D with no time part;
                                    Xcode's sync fails silently
-    gamecenter-name       error    an achievement or leaderboard name over 30 characters in any language
+    gamecenter-name       error    an achievement, leaderboard or activity name over 30 characters in any language
                                    of the .gamekit; App Store Connect refuses it mid-sync
 
 Phrases are bounded by Latin letters rather than `\\b`; placeholders are case-sensitive.

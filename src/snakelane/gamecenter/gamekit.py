@@ -52,7 +52,7 @@ RECURRENCE_DURATION = re.compile(r"P(?:[0-9]+D)?T(?=[0-9])(?:[0-9]+H)?(?:[0-9]+M
 # cap in App Store Connect. Activities are left alone until one is refused.
 # Why: docs/design/foundations.md#game-center-names
 MAX_NAME_LENGTH = 30
-NAME_CAPPED_KINDS = ("achievement", "leaderboard")
+NAME_CAPPED_KINDS = ("achievement", "leaderboard", "activity")
 
 
 # Each kind's localized text, as the bundle and App Store Connect both name the fields.
@@ -160,11 +160,12 @@ def recurrence_problems(bundle: Path) -> list[tuple[str, str]]:
 
 
 def name_problems(bundle: Path) -> list[tuple[str, str]]:
-    """(vendor identifier [locale], why) for every achievement or leaderboard name longer than App
-    Store Connect takes, in any language. Archived records are left out, as `read_texts` does."""
+    """(vendor identifier [locale], why) for every achievement, leaderboard or activity name longer
+    than App Store Connect takes, in any language. Archived records are left out, as `read_texts`
+    does."""
     return [(f"{text.vendor_id} [{text.locale}]",
              f"name {name!r} is {len(name)} characters: App Store Connect takes at most "
-             f"{MAX_NAME_LENGTH} for {'an' if text.kind == 'achievement' else 'a'} {text.kind}'s name in "
+             f"{MAX_NAME_LENGTH} for {'a' if text.kind == 'leaderboard' else 'an'} {text.kind}'s name in "
              "any language, and refuses the sync partway through")
             for text in read_texts(bundle) if text.kind in NAME_CAPPED_KINDS
             if len(name := text.values.get("name", "")) > MAX_NAME_LENGTH]
