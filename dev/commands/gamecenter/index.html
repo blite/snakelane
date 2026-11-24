@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#gamecenter-game-center-images-and-review" class="md-skip">
+        <a href="#gamecenter-game-center-text-images-and-review" class="md-skip">
           Skip to content
         </a>
       
@@ -859,6 +859,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#images" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Images
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#sending-the-records-to-review" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1481,6 +1492,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#images" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Images
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#sending-the-records-to-review" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1516,9 +1538,34 @@
   
 
 
-<h1 id="gamecenter-game-center-images-and-review">gamecenter: Game Center images and review<a class="headerlink" href="#gamecenter-game-center-images-and-review" title="Permanent link">&para;</a></h1>
-<p>Xcode's Game Center editor writes a <code>*.gamekit</code> bundle and syncs its achievements, leaderboards
-and activities to App Store Connect, but not their images. <code>gamecenter images</code> uploads them.</p>
+<h1 id="gamecenter-game-center-text-images-and-review">gamecenter: Game Center text, images and review<a class="headerlink" href="#gamecenter-game-center-text-images-and-review" title="Permanent link">&para;</a></h1>
+<p>Xcode's Game Center editor writes a <code>*.gamekit</code> bundle and creates its achievements, leaderboards
+and activities on App Store Connect, but it leaves out their images, and a live record's new
+languages. <code>gamecenter sync</code> makes App Store Connect match the bundle in one run.</p>
+<div class="highlight"><pre><span></span><code>snakelane<span class="w"> </span>gamecenter<span class="w"> </span>sync<span class="w"> </span>--dry-run<span class="w">   </span><span class="c1"># every difference, and every write it would send</span>
+snakelane<span class="w"> </span>gamecenter<span class="w"> </span>sync<span class="w">             </span><span class="c1"># confirm (--yes skips), write, verify, fill the draft</span>
+snakelane<span class="w"> </span>gamecenter<span class="w"> </span>sync<span class="w"> </span>--without-version<span class="w">   </span><span class="c1"># leave the app version out of the draft</span>
+</code></pre></div>
+<p>For each record in the bundle (archived ones left out), <code>sync</code> compares the localized text (an
+achievement's name and descriptions, a leaderboard's name and formatter words, an activity's name
+and description) and the images with the record's newest version. Where they differ, it:</p>
+<ol>
+<li>makes the next version if the newest is <strong>live</strong> (App Store Connect doesn't edit a live one;
+    it copies the live localizations and images into the new version);</li>
+<li>adds the missing locales and updates the fields that differ, sending only fields the bundle
+    sets;</li>
+<li>uploads new and changed images, as <code>images push</code> does below. An achievement language the
+    bundle gives no picture gets the primary locale's, since App Store Connect won't review an
+    achievement until every language has one;</li>
+<li>reads it all back, then adds every record waiting for review, and the app version being
+    prepared, to the draft review submission, creating the draft if there is none, as <code>submit</code>
+    does. It never submits.</li>
+</ol>
+<p>A record App Store Connect doesn't have yet is reported and skipped: run Xcode's sync to create
+it. A version in review is left alone until it is live. A locale App Store Connect holds and the
+bundle doesn't is listed, never deleted. The steps also run alone, below.</p>
+<h2 id="images">Images<a class="headerlink" href="#images" title="Permanent link">&para;</a></h2>
+<p><code>gamecenter images</code> uploads only the images.</p>
 <div class="highlight"><pre><span></span><code>snakelane<span class="w"> </span>gamecenter<span class="w"> </span>images<span class="w"> </span>show<span class="w">                </span><span class="c1"># each image against live (read-only)</span>
 snakelane<span class="w"> </span>gamecenter<span class="w"> </span>images<span class="w"> </span>push<span class="w"> </span>--dry-run<span class="w">      </span><span class="c1"># the same, plus every write it would send</span>
 snakelane<span class="w"> </span>gamecenter<span class="w"> </span>images<span class="w"> </span>push<span class="w">                </span><span class="c1"># compare, confirm (--yes skips), upload, verify</span>

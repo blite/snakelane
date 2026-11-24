@@ -1043,6 +1043,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Previews (preview)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-product-page-optimization-treatments-preview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A product page optimization treatment's preview
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1577,6 +1594,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Previews (preview)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-product-page-optimization-treatments-preview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A product page optimization treatment's preview
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1761,6 +1795,8 @@ works renamed.</p>
 <span class="w">  </span><span class="nt">env</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w">                        </span><span class="c1"># extra TEST_RUNNER_ variables</span>
 <span class="w">  </span><span class="nt">frame</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test</span><span class="w">                    </span><span class="c1"># test (UI test draws captions) | snakelane | none</span>
 <span class="w">  </span><span class="nt">reframe_test</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">             </span><span class="c1"># UI test that re-frames raws on disk</span>
+<span class="w">  </span><span class="nt">shot_tests</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w">                 </span><span class="c1"># `shoot --shots`: {"05": testWin} (or a list) where a shot's</span>
+<span class="w">                                 </span><span class="c1">#   method isn't named testNN…; default: found by that name</span>
 <span class="w">  </span><span class="nt">mac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w">                        </span><span class="c1"># present = enable --platform macos; {frame: snakelane} has</span>
 <span class="w">                                 </span><span class="c1">#   snakelane caption the Mac deck while the UI test draws iOS's;</span>
 <span class="w">                                 </span><span class="c1">#   scheme, test, test_plan (null for none), destination override</span>
@@ -1821,6 +1857,29 @@ In search results a portrait preview plays beside ss-01 and ss-02, so <code>prev
 gallery's search-result mock warn when a preview caption repeats theirs: compared with
 <code>screenshots.framing.captions</code>, or, with <code>frame: test</code>, read off the framed shots with Vision
 (the <code>snakelane[check]</code> extra; without it they say they can't check).</p>
+<h3 id="a-product-page-optimization-treatments-preview">A product page optimization treatment's preview<a class="headerlink" href="#a-product-page-optimization-treatments-preview" title="Permanent link">&para;</a></h3>
+<p><code>preview --ppo &lt;test&gt;/&lt;folder&gt;</code> records a treatment's preview with the treatment's <code>preview</code> block
+from <code>metadata/ppo/&lt;test&gt;/experiment.yml</code> over <code>previews</code>, into
+<code>metadata/ppo/&lt;test&gt;/&lt;folder&gt;/screenshots/ios/&lt;locale&gt;/&lt;deck&gt;/ap-01.m4v</code> (and its <code>ap-01.json</code>);
+the version deck's clip is never touched, and <code>store ppo push</code> uploads it.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># metadata/ppo/&lt;test&gt;/experiment.yml</span>
+<span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">No ads first</span>
+<span class="nt">traffic</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="nt">treatments</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">promise</span><span class="p">:</span><span class="w">                       </span><span class="c1"># the folder; `promise: Promise first` when there's no preview block</span>
+<span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Promise first</span>
+<span class="w">    </span><span class="nt">preview</span><span class="p">:</span><span class="w">                     </span><span class="c1"># any previews key, laid over snakelane.yml's previews</span>
+<span class="w">      </span><span class="nt">launch_set</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"UITestsAutoOpenPuzzle=beach1:beach1_03"</span><span class="p p-Indicator">]</span><span class="w">   </span><span class="c1"># KEY=value replaces that KEY's</span>
+<span class="w">                                 </span><span class="c1">#   argument in previews.launch; anything else is added</span>
+<span class="w">      </span><span class="nt">overlay</span><span class="p">:</span><span class="w">                   </span><span class="c1"># audio and overlay merge key by key; other keys replace</span>
+<span class="w">        </span><span class="nt">captions</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">at</span><span class="p">:</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="nt"> text</span><span class="p">:</span><span class="w"> </span><span class="s">"==NO</span><span class="nv"> </span><span class="s">ADS.</span><span class="nv"> </span><span class="s">EVER.==\nPlay</span><span class="nv"> </span><span class="s">Uninterrupted"</span><span class="p p-Indicator">}</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">at</span><span class="p">:</span><span class="w"> </span><span class="nv">won</span><span class="p p-Indicator">,</span><span class="nt"> text</span><span class="p">:</span><span class="w"> </span><span class="s">"==COMPLETE==\nSee</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">full</span><span class="nv"> </span><span class="s">picture"</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">devices</span><span class="p">:</span><span class="w">                   </span><span class="c1"># optional: simulators kept for this, as screenshots.devices</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="nv">4CC94959-2F33-471C-8EEB-AC768C2A4571</span><span class="p p-Indicator">,</span><span class="nt"> deck</span><span class="p">:</span><span class="w"> </span><span class="nv">iphone</span><span class="p p-Indicator">}</span>
+</code></pre></div>
+<p>A block that sets <code>launch</code> drops <code>previews.test</code>, and one that sets <code>test</code> drops <code>previews.launch</code>.
+The search-result caption check reads the treatment's own ss-01 and ss-02 off the files.</p>
 <h2 id="game-center-gamecenter">Game Center (<code>gamecenter</code>)<a class="headerlink" href="#game-center-gamecenter" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="nt">gamecenter</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">gamekit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">App/GameCenter/GameCenterResources.gamekit</span><span class="w">   </span><span class="c1"># Xcode's Game Center bundle, repo-relative</span>

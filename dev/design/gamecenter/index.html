@@ -1229,6 +1229,45 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sync
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sync">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#xcode-leaves-a-live-records-new-languages-behind" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Xcode leaves a live record's new languages behind
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#every-achievement-language-needs-a-picture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Every achievement language needs a picture
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#images" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1570,6 +1609,45 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sync
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sync">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#xcode-leaves-a-live-records-new-languages-behind" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Xcode leaves a live record's new languages behind
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#every-achievement-language-needs-a-picture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Every achievement language needs a picture
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#images" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1696,14 +1774,40 @@
 
 <h1 id="design-notes-game-center">Design notes: Game Center<a class="headerlink" href="#design-notes-game-center" title="Permanent link">&para;</a></h1>
 <p>These are the reasons behind decisions in <code>src/snakelane/gamecenter/</code>.</p>
+<h2 id="sync">Sync<a class="headerlink" href="#sync" title="Permanent link">&para;</a></h2>
+<h3 id="xcode-leaves-a-live-records-new-languages-behind">Xcode leaves a live record's new languages behind<a class="headerlink" href="#xcode-leaves-a-live-records-new-languages-behind" title="Permanent link">&para;</a></h3>
+<p>Klondike Solitaire's <code>.gamekit</code> gained eight languages for every achievement, leaderboard and
+activity (2026-11-14). Xcode's sync reported nothing wrong and App Store Connect still held
+en-US alone: every achievement and leaderboard's newest version was live, a localization hangs
+off a version, and App Store Connect doesn't edit a live one. Even the activities, whose
+version 3 was still being prepared, got none. So the earlier rule that the text is Xcode's (below)
+no longer holds. <code>gamecenter sync</code> writes each record's localized text and images where they
+differ from its newest version, making the next version first when that one is live, since
+changed text needs a new version just as a changed image does. It then fills the draft review
+submission, because a new version reaches players only through review. Records are still
+Xcode's: their ids, points and formatters are set once, and a record App Store Connect doesn't
+have is reported and skipped. A locale App Store Connect holds and the bundle doesn't is reported,
+never deleted, since deleting text from a live record isn't something a sync should decide.
+Only fields the bundle sets are compared or sent: a leaderboard's <code>description</code>, which Xcode's
+bundle doesn't carry, is left as it is.</p>
+<h3 id="every-achievement-language-needs-a-picture">Every achievement language needs a picture<a class="headerlink" href="#every-achievement-language-needs-a-picture" title="Permanent link">&para;</a></h3>
+<p>Klondike Solitaire's five achievements, each with eight new languages and a picture in en-US
+alone, were refused from the review submission ("not in valid state", 2026-11-15), while its
+leaderboards and activities, set up the same way, went in. App Store Connect wants a picture on
+every language of an achievement. A Game Center picture in this family carries no words, so a
+copy per language in the repo would be the same file nine times. <code>sync</code> instead gives an
+achievement language without a picture in the bundle the primary locale's (<code>primary_locale</code>,
+else the first of <code>locales</code>), or the record's only one. Leaderboards and activities are left
+as they are.</p>
 <h2 id="images">Images<a class="headerlink" href="#images" title="Permanent link">&para;</a></h2>
 <h3 id="xcode-syncs-the-records-not-the-images">Xcode syncs the records, not the images<a class="headerlink" href="#xcode-syncs-the-records-not-the-images" title="Permanent link">&para;</a></h3>
 <p>Xcode's Game Center editor keeps achievements, leaderboards and activities in a <code>*.gamekit</code>
 bundle in the repo and syncs it to App Store Connect. In Solitaire (2026-10-10) the records and
 their text arrived and the images didn't: each achievement and leaderboard image had to be
 uploaded by hand in the web UI. <code>gamecenter images push</code> does that step and nothing else. It
-never creates a record, localization or locale: those are Xcode's, and a second writer of them
-would be two authorities on identifiers App Store Connect never lets you rename.</p>
+never creates a record, localization or locale: records are Xcode's, and a second writer of them
+would be two authorities on identifiers App Store Connect never lets you rename. Localizations
+are <code>gamecenter sync</code>'s since 2026-11-15 (above).</p>
 <h3 id="the-bundle-is-read-through-its-localizations">The bundle is read through its localizations<a class="headerlink" href="#the-bundle-is-read-through-its-localizations" title="Permanent link">&para;</a></h3>
 <p>Image entries are keyed by a <code>localID</code> such as <code>grp.game.ach.winOne-en-US</code>. Splitting that on
 the last hyphen works until a vendor identifier or a locale (<code>zh-Hant-TW</code>) has one of its own.

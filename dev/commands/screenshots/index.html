@@ -1723,6 +1723,7 @@ You don't keep two numbers in step by hand.</p>
 snakelane<span class="w"> </span>preview<span class="w">                   </span><span class="c1"># record and encode ap-01.m4v for every device</span>
 snakelane<span class="w"> </span>preview<span class="w"> </span>--device<span class="w"> </span><span class="s2">"iPhone 17 Pro"</span>
 snakelane<span class="w"> </span>preview<span class="w"> </span>--encode-only<span class="w">     </span><span class="c1"># new captions or mix, from the kept recording</span>
+snakelane<span class="w"> </span>preview<span class="w"> </span>--ppo<span class="w"> </span>no-ads-first/promise<span class="w">   </span><span class="c1"># a product page optimization treatment's preview</span>
 </code></pre></div>
 <p><code>preview</code> launches the app into its video fixture on each simulator (or runs a video UI test),
 records it while the app plays itself,
@@ -1737,6 +1738,12 @@ captions should follow) in <code>/tmp/&lt;slug&gt;-preview-events.jsonl</code>; 
 is all a viewer sees with autoplay off, and it can't be changed once the version is approved. The
 dry run and each encode warn when a preview caption repeats ss-01's or ss-02's, which a portrait
 preview plays beside in search results.</p>
+<p><code>--ppo &lt;test&gt;/&lt;folder&gt;</code> records a <a href="../store/#product-page-optimizations">product page optimization</a>
+treatment's preview instead, with that treatment's <code>preview</code> block in <code>experiment.yml</code> laid over
+<code>previews</code> (other launch arguments, captions, simulators), into the treatment's own folder. The
+version deck's <code>ap-01.m4v</code> is left as it is; <code>store ppo push</code> uploads the new one.
+<a href="../../reference/config/#a-product-page-optimization-treatments-preview">The config reference</a>
+has the block's shape.</p>
 <h2 id="catching-developer-builds">Catching developer builds<a class="headerlink" href="#catching-developer-builds" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>snakelane<span class="w"> </span>check
 </code></pre></div>

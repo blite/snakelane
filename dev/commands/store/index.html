@@ -1735,8 +1735,9 @@ crop preview: check it in App Store Connect's product page preview tool before s
 <h2 id="product-page-optimizations">Product page optimizations<a class="headerlink" href="#product-page-optimizations" title="Permanent link">&para;</a></h2>
 <p>A <a href="https://developer.apple.com/help/app-store-connect/create-product-page-optimization-tests/overview-of-product-page-optimization">product page optimization</a>
 tests up to three treatments of the product page against the live one, each shown to a share of
-visitors. <code>store ppo push</code> creates the test and its treatments and places each treatment's creative
-assets, for art that should earn its place before it goes on the page for everyone:</p>
+visitors. <code>store ppo push</code> creates the test and its treatments, uploads each treatment's screenshots and
+App Previews and places its creative assets, for art that should earn its place before it goes on the page for
+everyone:</p>
 <div class="highlight"><pre><span></span><code>metadata/ppo/&lt;test&gt;/experiment.yml
     name: Search result art      the test's name in App Store Connect: how it is found again
     traffic: 50                  percent of visitors shown a treatment, split between them
@@ -1745,7 +1746,23 @@ assets, for art that should earn its place before it goes on the page for everyo
 metadata/ppo/&lt;test&gt;/&lt;folder&gt;/creative/&lt;locale&gt;/, .../creative/default/
     the treatment's search-result.*, product-page-header.*, universal.png, named and checked
     as for the version; creative/&lt;platform&gt;/ overrides
+metadata/ppo/&lt;test&gt;/&lt;folder&gt;/screenshots/&lt;platform&gt;/&lt;locale&gt;/{iphone,ipad}/ss-NN.jpg, ap-NN.m4v
+    the treatment's screenshots and App Previews (with the ap-NN.json poster sidecar),
+    laid out as the version's deck in metadata/screenshots/
 </code></pre></div>
+<p>A treatment's entry is its name, or <code>{name, preview}</code>, where <code>preview</code> is what
+<code>snakelane preview --ppo &lt;test&gt;/&lt;folder&gt;</code> records the treatment's App Preview with
+(<a href="../screenshots/">shoot, frame, preview</a>).</p>
+<p>A treatment needs screenshots, previews, creative assets or any mix for the platform. Its
+screenshots and previews follow the version deck's rules: the set from each file's pixel size, at
+most ten screenshots to a set, sizes Apple accepts, the developer-build check
+(<code>--allow-developer-chrome</code> as for <code>media push</code>), a preview checked as Apple would and sent with
+its poster frame. A set is replaced wholesale and a slot the folder no longer fills is deleted from
+the treatment; a locale with no folder keeps what the treatment has, and a treatment with no
+preview anywhere keeps its preview sets.</p>
+<p>App Store Connect fills a new treatment localization with copies of the live page's screenshot and
+preview sets, so a push deletes the copies the treatment's folder doesn't replace. A dry run plans
+the localization before it exists and can't read them, so it says so instead of listing them.</p>
 <div class="highlight"><pre><span></span><code>snakelane<span class="w"> </span>store<span class="w"> </span>ppo<span class="w"> </span>push<span class="w"> </span>--dry-run
 snakelane<span class="w"> </span>store<span class="w"> </span>ppo<span class="w"> </span>push
 snakelane<span class="w"> </span>store<span class="w"> </span>ppo<span class="w"> </span>show
@@ -1754,8 +1771,9 @@ snakelane<span class="w"> </span>store<span class="w"> </span>ppo<span class="w"
 test still being prepared is written: once it is submitted App Store Connect locks it, and a
 finished test's name is refused rather than reused, so the next test gets a new name. The files go
 through the App Asset Library as the version's do, uploaded once and found again by their bytes.</p>
-<p>Sending the test to review and starting it are done in App Store Connect, and so are treatment
-screenshots and app icons, which the push doesn't handle yet.</p>
+<p>Sending the test to review and starting it are done in App Store Connect, and so are a treatment's
+app icon, which the push doesn't handle yet. <code>store ppo show</code> lists each treatment's creative
+placements, screenshot sets and preview sets.</p>
 <h2 id="in-app-purchases-and-subscriptions">In-app purchases and subscriptions<a class="headerlink" href="#in-app-purchases-and-subscriptions" title="Permanent link">&para;</a></h2>
 <p><code>metadata/purchases/iap.yml</code> holds everything the app sells: one-time purchases under
 <code>products</code> and <a href="https://developer.apple.com/help/app-store-connect/manage-subscriptions/offer-auto-renewable-subscriptions">subscriptions</a> under <code>subscription_groups</code>.</p>

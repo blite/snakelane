@@ -1300,6 +1300,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#reshooting-single-shots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reshooting single shots
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#two-devices-cannot-share-a-deck-folder" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1917,6 +1928,17 @@
     <span class="md-ellipsis">
       
         Product page optimizations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-treatment-records-its-own-preview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A treatment records its own preview
       
     </span>
   </a>
@@ -2420,6 +2442,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#reshooting-single-shots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reshooting single shots
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#two-devices-cannot-share-a-deck-folder" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3044,6 +3077,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#a-treatment-records-its-own-preview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A treatment records its own preview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#media-show" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3129,6 +3173,10 @@ Connect takes), exits the pass, and the failed shoot puts the previous deck back
 <h3 id="what-a-shoot-clears">What a shoot clears<a class="headerlink" href="#what-a-shoot-clears" title="Permanent link">&para;</a></h3>
 <p>In <code>framed/</code>, every image goes, because the push uploads every image there and the two filters have to agree. With <code>ss-*</code> an image left from older naming (<code>&lt;device&gt;-NN.jpg</code>) survived every re-shoot and shipped beside the fresh deck. That happened in Solitaire (fixed 2026-09-12), and snakelane's first default reintroduced it (2026-10-02). In <code>raw/</code>, only the shots go: nothing uploads from <code>raw/</code>, and it is where comparison captures are kept on purpose (PuzzleReef's <code>unused-02-…-alt.png</code>).</p>
 <p>Only images are cleared, because the deck folders also hold the App Preview (<code>ap-01.*</code>), which takes minutes to record. Without the clear, a device change left the old set beside the new one, and the next push uploaded both: twelve near-duplicate shots in one ASC set. A full run sweeps every locale folder so a dropped locale stops shipping its old shots; a <code>--locales</code> run touches only the locales it re-shoots.</p>
+<h3 id="reshooting-single-shots">Reshooting single shots<a class="headerlink" href="#reshooting-single-shots" title="Permanent link">&para;</a></h3>
+<p><code>shoot --shots 05,06</code> exists because one bad frame used to cost a whole pass. Shooting Spider's Mac deck in nine locales (2026-11-15), another app's window was in front for four frames and a stray click hid the bar in a fifth; each meant reshooting six shots in that locale to replace one, and a failure anywhere put the entire previous deck back. A single-shot run asks xcodebuild for only those shots' test methods, sets aside only their raw and framed files, frames only them, and on failure restores only them: the rest of the deck is never moved.</p>
+<p>The methods are found by name. A deck's test already attaches <code>NN-Name</code>, and the tests that do it are named <code>testNN…</code> in every app that uses this, so the class's source under the project's folder is read for <code>func testNN…</code> rather than building first to ask xcodebuild to enumerate. A slot can have two methods, one per platform behind <code>#if os(…)</code> (Spider's <code>test04Layout</code> on iOS and <code>test04OnTop</code> on the Mac); both are asked for, since xcodebuild skips an <code>-only-testing</code> id the build doesn't have. Because of that, a shot that didn't come back is checked afterwards and fails the run. <code>screenshots.shot_tests</code> names the method for an app whose tests aren't numbered.</p>
+<p>It touches only the locales it shoots, never every locale folder: no pass refills the others. And it says how old the shots it left are, because a deck reshot in part can mix builds; that date is the raw capture's where there is one.</p>
 <h3 id="two-devices-cannot-share-a-deck-folder">Two devices cannot share a deck folder<a class="headerlink" href="#two-devices-cannot-share-a-deck-folder" title="Permanent link">&para;</a></h3>
 <p>Extracted filenames carry no device label, because the folder is the device class. Two devices mapped to the same folder would silently overwrite each other's <code>ss-NN</code> files and produce a deck that is half one phone and half another, so the shoot refuses.</p>
 <h3 id="a-failed-shoot-puts-the-previous-deck-back">A failed shoot puts the previous deck back<a class="headerlink" href="#a-failed-shoot-puts-the-previous-deck-back" title="Permanent link">&para;</a></h3>
@@ -3249,6 +3297,28 @@ Spades put its search result on the 1.7 version page and took it off again the s
 (2026-11-10), wanting it measured first, and snakelane could place creatives only on the version.
 The API takes a placement on a treatment localization as it does on a version localization, so
 <code>store ppo push</code> reuses the creative push's upload and placement and adds the test around it.</p>
+<p>Treatment screenshots came next (2026-11-17): Jigsaw Puzzles wanted a test whose only change is
+the first three screenshots, and its rule is that an App Store Connect gap is fixed in snakelane
+rather than by hand or a script in the app. A treatment localization owns <code>appScreenshotSets</code> as a
+version localization does, so the push runs the version deck's own mirror on it (<code>mirror_sets</code>):
+one set of rules for sizes, limits and replacement, not a second path that drifts.</p>
+<p>Its first real push (2026-11-17) found a new treatment localization already holding copies of the
+live page's sets (<code>APP_IPHONE_67</code>, <code>APP_IPHONE_DUO</code>, seven iPad shots), which the mirror deleted as
+it should. The dry run had planned an empty localization and shown none of that, so a dry run
+that creates one now says the copies will be cleared. Previews are mirrored only when the treatment
+has one somewhere: the copies are the live page's own, and deleting them would make a
+screenshots-only treatment differ in its preview too. The same day <code>ppo show</code> died on a 500 from
+the App Asset Library's image list, read to name placements a test without creative assets
+doesn't have; it now reads the library only when a placement needs naming.</p>
+<h3 id="a-treatment-records-its-own-preview">A treatment records its own preview<a class="headerlink" href="#a-treatment-records-its-own-preview" title="Permanent link">&para;</a></h3>
+<p>Jigsaw Puzzles' "No ads first" treatment wanted its own App Preview (another puzzle, other
+captions), and <code>preview</code> could only write the version deck's <code>ap-01.m4v</code> from <code>previews</code>. A
+treatment's <code>preview</code> block in <code>experiment.yml</code> lays the keys that differ over <code>previews</code> rather
+than repeating them: the recording is the version's in every other way, and a copy would drift.
+<code>launch_set</code> exists because a launch list is long and a treatment usually changes one argument of
+it. <code>--ppo</code> writes into the treatment's folder, with its masters kept apart under
+<code>.snakelane/&lt;slug&gt;/previews/ppo/</code>, so the version's clip and its <code>--encode-only</code> recording can't be
+overwritten by a treatment's.</p>
 <p>It stops short of review and starting. A treatment with new art is reviewed, alone or with a
 version, and starting a test changes what live visitors see, which belongs to a person in App Store
 Connect rather than to a sync. A finished test's name isn't reused because its results stay
