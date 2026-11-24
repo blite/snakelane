@@ -1,0 +1,21 @@
+$ snakelane --help
+snakelane 0.2.0 — App Store Connect from plain-text metadata/, without fastlane
+
+usage: snakelane [-C <repo>] [--config <file>] <command> [args…]
+
+commands:
+  auth          install and check the App Store Connect API key
+  store         listing text, categories, screenshots, previews, IAPs and subscriptions
+  ship          test → archive → TestFlight → submit for review
+  shoot         shoot the screenshot deck from the app's UI test
+  bump          set and stamp CFBundleVersion (the Archive post-action)
+  packs         package and upload Background Assets packs
+  check         OCR a deck for developer overlays (debug HUDs) before upload
+  frame         caption the deck again from its raw shots, without shooting
+  lint          lint the listing for what App Review rejects, offline
+  translations  track which translated fields are stale or unreviewed
+  status        what App Store Connect holds right now: versions, review, builds
+  init          write snakelane.yml and metadata/ for an Xcode project
+  gallery       an HTML page of every deck and a search-result mock, for review
+
+Run `snakelane <command> --help` for a command's own options.

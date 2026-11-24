@@ -1,0 +1,5 @@
+$ snakelane translations status
+  en-US    no overrides  (default text: name, subtitle, description, keywords, promotional_text, release_notes)
+  en-AU    keywords: current  (default text: name, subtitle, description, promotional_text, release_notes)
+  de-DE    subtitle: stale, description: stale, keywords: current, promotional_text: current, release_notes: current  (default text: name)
+2 stale, 0 unreviewed, 0 untracked, 4 current

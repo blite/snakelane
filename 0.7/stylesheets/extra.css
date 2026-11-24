@@ -1,0 +1,55 @@
+/* One green everywhere: header, links, notes. */
+:root, [data-md-color-scheme="default"] {
+  --md-primary-fg-color: #2f6b45;
+  --md-primary-fg-color--light: #3f8a5a;
+  --md-primary-fg-color--dark: #24543a;
+  --md-accent-fg-color: #3fa35c;
+  --md-typeset-a-color: #2f7d4f;
+}
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #2f6b45;
+  --md-primary-fg-color--light: #3f8a5a;
+  --md-primary-fg-color--dark: #24543a;
+  --md-accent-fg-color: #6fcf8f;
+  --md-typeset-a-color: #7fd49a;
+}
+
+/* Notes in the theme's green rather than Material's default blue. */
+.md-typeset .admonition.note, .md-typeset details.note { border-color: var(--md-primary-fg-color); }
+.md-typeset .note > .admonition-title, .md-typeset .note > summary { background-color: rgb(47 107 69 / 10%); }
+.md-typeset .note > .admonition-title::before, .md-typeset .note > summary::before {
+  background-color: var(--md-primary-fg-color);
+}
+
+/* Firmer headings than Material's light grey 300. */
+.md-typeset h1 { font-weight: 600; color: var(--md-default-fg-color); letter-spacing: -0.01em; }
+.md-typeset h2 { font-weight: 600; }
+
+/* The home page's opening line. */
+.md-typeset .lead { font-size: 1.15em; line-height: 1.5; }
+
+/* Screenshots of pages: a frame, so a light image doesn't float on a light or dark page. */
+.md-typeset img.shot, .md-typeset .showcase img {
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 6px;
+}
+
+/* Showcase cards: more to a row, and the settings wrap instead of scrolling. */
+/* Material's rem is 20px, so 9rem is about 180px: three cards a row in the content column. */
+.md-typeset .grid.cards.showcase { grid-template-columns: repeat(auto-fill, minmax(min(100%, 9rem), 1fr)); }
+.md-typeset .showcase img { width: 100%; height: auto; }
+.md-typeset .showcase pre > code { white-space: pre-wrap; }
+
+/* A key or rule name in a table's first column stays on one line. */
+.md-typeset td:first-child code { white-space: nowrap; }
+
+/* The home page's row of framed screenshots: six across, two rows of three on a phone. */
+.md-typeset .frame-strip > p { display: grid; margin: 0; grid-template-columns: repeat(6, 1fr); gap: 0.6rem; }
+.md-typeset .frame-strip a { display: block; }
+.md-typeset .frame-strip img {
+  width: 100%; height: auto; border-radius: 6px;
+  border: 1px solid var(--md-default-fg-color--lightest);
+}
+@media screen and (max-width: 44.9375em) {
+  .md-typeset .frame-strip > p { grid-template-columns: repeat(3, 1fr); }
+}
