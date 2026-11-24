@@ -107,6 +107,16 @@ def test_no_files_means_no_plan(tmp_path: Path) -> None:
     assert creative.build_plan(tmp_path, "ios", ["en-US", "de-DE"]) == {}
 
 
+def test_a_mac_push_skips_the_shared_creative_assets(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    # macOS versions have no creative-asset slots: the files every platform shares are iOS's alone.
+    image(tmp_path / "creative" / "default" / "search-result.jpg", 1920, 1280)
+    config = {"bundle_id": "com.example.App", "locales": ["en-US"]}
+    assert creative.creative_plan(tmp_path, config, "macos") == {}
+    assert "macos has no creative assets" in capsys.readouterr().out
+    assert creative.creative_plan(tmp_path, config, "ios") == {
+        "en-US": {SEARCH: tmp_path / "creative" / "default" / "search-result.jpg"}}
+
+
 # --- the spec check --------------------------------------------------------------------------------
 
 

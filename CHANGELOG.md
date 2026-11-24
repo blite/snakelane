@@ -11,6 +11,9 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
   Japanese Hiragino Sans (kana first, so its kanji stay Japanese) and Chinese Hiragino Sans GB.
   Hebrew and Devanagari need Pillow's raqm layout, as Arabic does, and stop without it. Greek in
   capitals drops its tonos (ΧΩΡΙΣ, not ΧΩΡΊΣ).
+- **A macOS `store media push` leaves the creative assets alone.** App Store Connect has no
+  search-result or product page header slots for a Mac version, but the shared `creative/` files
+  were placed on it anyway; only iOS takes them now (`creative.CREATIVE_PLATFORMS`).
 - **`store ppo push` uploads a treatment's screenshots.** Put them in
   `ppo/<test>/<folder>/screenshots/<platform>/<locale>/` (`iphone/`, `ipad/`, … as in the version
   deck); they go through the version push's code and rules: the set from the pixel size, ten to a

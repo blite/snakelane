@@ -18,6 +18,9 @@ The sizes, formats and limits are read from Apple's reference data on every run 
 here, as Apple asks: the help page and the API already disagree on the header's formats.
 Why: docs/design/screenshots.md#creative-assets-are-checked-against-apples-reference-data
 
+Only iOS takes them (`CREATIVE_PLATFORMS`): App Store Connect has no such slots for a Mac version yet,
+so a macOS push skips them, even with `creative/` files that every platform shares.
+
 No snakelane.yml keys: the files are the configuration.
 """
 
@@ -352,8 +355,16 @@ def print_plan(plan: dict[str, dict[str, Path]], folder: Path) -> None:
             print(f"  {locale:<8} {SLOT_NAMES[kind]:<20} {path.relative_to(folder)}")
 
 
+CREATIVE_PLATFORMS = frozenset({"ios"})  # the platforms whose versions have creative-asset slots
+
+
 def creative_plan(folder: Path, app_config: dict[str, Any], platform: str) -> dict[str, dict[str, Path]]:
-    """Each locale's slot files, printed; empty when there are none (nothing to do)."""
+    """Each locale's slot files, printed; empty when there are none (nothing to do), or the platform
+    takes no creative assets."""
+    if platform not in CREATIVE_PLATFORMS:
+        print(f"{platform} has no creative assets in App Store Connect (only {', '.join(sorted(CREATIVE_PLATFORMS))}) "
+              "— skipped")
+        return {}
     if not (plan := build_plan(folder, platform, app_config["locales"])):
         print(f"no creative assets for {platform} under {folder.name}/creative/ or {folder.name}/{platform}/creative/ "
               "— nothing to do (a slot without a file is left as it is live)")
