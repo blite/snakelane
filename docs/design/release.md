@@ -75,7 +75,15 @@ words:
   certificate"): the certificate was made after Xcode built the profile around the cloud one.
   Cloudless Cam hit this an hour after the previous case, once its certificate existed.
 
-All three also print "Cloud signing permission error", because the export tries the cloud
+- **No installer certificate** ('No signing certificate "Mac Installer Distribution" found'): a
+  Mac build's `.pkg` is signed with a second certificate. Jigsaw's Mac export (2026-11-13) printed
+  this together with the profile problem, and `ship` named only the profile. The Xcode upload
+  fixed the profile and left the installer certificate missing, since Xcode signs the package
+  with the cloud certificate, so the next `ship` would have failed again. The no-certificate
+  pattern now skips it, every matching problem is reported, and the fix is adding the
+  certificate in Manage Certificates; on its own it needs no Xcode upload.
+
+All of them also print "Cloud signing permission error", because the export tries the cloud
 certificate first. The first version matched that line and called every one of them a first
 upload, which sent an app with a dozen builds in TestFlight looking for a missing profile.
 `SIGNING_PROBLEMS` names each by its own line and leaves anything else as xcodebuild's error.

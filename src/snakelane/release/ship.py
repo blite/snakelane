@@ -147,34 +147,40 @@ def upload(app: App, archive_path: Path) -> None:
                     "-authenticationKeyID", credentials.key_id, "-authenticationKeyIssuerID", credentials.issuer_id],
                    env)
     except subprocess.CalledProcessError as error:
-        if problem := signing_problem(error.output or ""):
-            raise SystemExit(signing_failure_message(app, archive_path, problem)) from None
+        if problems := signing_problems(error.output or ""):
+            raise SystemExit(signing_failure_message(app, archive_path, *problems)) from None
         raise
 
 
-# Why export signing fails, told apart by the line xcodebuild prints for each. All three also
+# Why export signing fails, told apart by the line xcodebuild prints for each. All of them also
 # print "Cloud signing permission error" (the export tries Apple's cloud certificate first), so
-# that line names none of them. Why: docs/design/release.md#export-signing-failures
+# that line names none of them. One export can print several; each is reported, since fixing
+# only the first leaves the next ship to fail on the rest.
+# Why: docs/design/release.md#export-signing-failures
 SIGNING_PROBLEMS = (
     # The App Store profile predates this Mac's certificate, or Xcode made it with the cloud one.
     ("profile-lacks-certificate", re.compile(r"Provisioning profile .* doesn't include signing certificate")),
     # No Apple Distribution certificate with its private key in this Mac's keychain.
-    ("no-certificate", re.compile(r'No signing certificate "[^"]*Distribution" found')),
+    ("no-certificate", re.compile(r'No signing certificate "(?!Mac Installer)[^"]*Distribution" found')),
+    # A Mac build's .pkg is signed with a second certificate of its own. An upload from Xcode
+    # signs it with the cloud one and leaves this Mac without it, so it outlives the other fixes.
+    ("no-installer-certificate", re.compile(r'No signing certificate "Mac Installer Distribution" found')),
     # A new bundle id: no App Store profile at all yet.
     ("no-profile", re.compile(r"No profiles for ")),
 )
 
 
-def signing_problem(output: str) -> str | None:
-    """Which signing problem stopped an export, or None for any other failure."""
-    return next((name for name, line in SIGNING_PROBLEMS if line.search(output)), None)
+def signing_problems(output: str) -> list[str]:
+    """Every signing problem that stopped an export, in SIGNING_PROBLEMS order; empty for any other
+    failure."""
+    return [name for name, line in SIGNING_PROBLEMS if line.search(output)]
 
 
-def signing_failure_message(app: App, archive_path: Path, problem: str) -> str:
+def signing_failure_message(app: App, archive_path: Path, *problems: str) -> str:
     """What went wrong signing, and the fix in Xcode: it signs this archive as the user's Apple ID and
     remakes the App Store profile with this Mac's certificate, so the next ship can sign."""
     bundle_id = app.config["bundle_id"]
-    cause = {
+    causes = {
         "no-profile": (
             f"{bundle_id} has no App Store provisioning profile yet (a new app's first upload), and this API "
             "key isn't allowed to make one."),
@@ -185,21 +191,33 @@ def signing_failure_message(app: App, archive_path: Path, problem: str) -> str:
             f"the App Store provisioning profile for {bundle_id} doesn't include this Mac's Apple Distribution "
             "certificate (it was made before the certificate existed), and this API key isn't allowed to "
             "remake it."),
-    }[problem]
+        "no-installer-certificate": (
+            "this Mac has no Mac Installer Distribution certificate, which signs a Mac build's installer "
+            "package, and this API key isn't allowed to use Apple's cloud-managed one. An upload from Xcode "
+            "does not add it: Xcode signs the package with the cloud certificate."),
+    }
+    cause = "; and ".join(causes[problem] for problem in problems)
+    manage_certificates = "Xcode → Settings → Accounts → your team → Manage Certificates → + → "
     steps = []
-    if problem == "no-certificate":
-        steps.append("add one in Xcode → Settings → Accounts → your team → Manage Certificates → + → "
-                     "Apple Distribution")
-    elif problem == "no-profile":
+    if "no-installer-certificate" in problems:
+        steps.append(f"add one in {manage_certificates}Mac Installer Distribution")
+    if "no-certificate" in problems:
+        steps.append(f"add one in {manage_certificates}Apple Distribution")
+    elif "no-profile" in problems:
         # Xcode builds the new profile around whatever certificates exist; with none on this Mac
         # it uses the cloud one, and the next ship fails as no-certificate.
-        steps.append("if this Mac has no Apple Distribution certificate, add one first in Xcode → Settings → "
-                     "Accounts → your team → Manage Certificates → + → Apple Distribution")
-    steps.append(
-        f"upload this archive from Xcode: open {shlex.quote(str(archive_path))}, then Distribute App → App "
-        "Store Connect → Upload. Xcode signs as your Apple ID and remakes the App Store profile with this "
-        "Mac's certificate, so the next `snakelane ship` can sign. The build number is already stamped; "
-        "`snakelane ship symbols` sends its dSYMs if the app uses Sentry.")
+        steps.append(f"if this Mac has no Apple Distribution certificate, add one first in "
+                     f"{manage_certificates}Apple Distribution")
+    if all(problem == "no-installer-certificate" for problem in problems):
+        # The profile already holds this Mac's certificate; only the package signer is missing.
+        steps.append("run `snakelane ship` again; the export can sign once the certificate is in this "
+                     "Mac's keychain.")
+    else:
+        steps.append(
+            f"upload this archive from Xcode: open {shlex.quote(str(archive_path))}, then Distribute App → "
+            "App Store Connect → Upload. Xcode signs as your Apple ID and remakes the App Store profile with "
+            "this Mac's certificate, so the next `snakelane ship` can sign. The build number is already "
+            "stamped; `snakelane ship symbols` sends its dSYMs if the app uses Sentry.")
     numbered = "".join(f"  {n}. {step}\n" for n, step in enumerate(steps, 1))
     return (
         f"the archive is built, but it can't be signed for the App Store: {cause}\n"

@@ -44,6 +44,12 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
   language of the `.gamekit`. A translation runs longer than its English, Xcode doesn't check, and
   the 409 stops `gamecenter sync` partway (Spider Solitaire's German daily board, 37 characters,
   and then its German Spiderette daily activity, which the rule didn't yet cover).
+- **A failed export names every signing problem, and a Mac's missing installer certificate.** One
+  export can print several; `ship` reported only the first, so fixing it led straight into the
+  next. A Mac build's `.pkg` needs a Mac Installer Distribution certificate of its own, which an
+  upload from Xcode never adds (Xcode signs the package with the cloud certificate). It now has
+  its own cause and its own Manage Certificates step, and when it is the only problem the message
+  says to rerun `ship` rather than upload from Xcode again.
 - **`packs package` adds the pack's record row.** A pack the record didn't list used to build
   and then fail at `upload` as unknown. `package` now appends its row (item count, archive size,
   `uploaded: false`) and never rewrites an existing one. `available_from_version` stays null

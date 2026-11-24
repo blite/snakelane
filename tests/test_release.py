@@ -162,7 +162,7 @@ def test_any_other_export_failure_still_raises_as_it_was(tmp_path: Path, monkeyp
     monkeypatch.setattr(ship, "run_logged", failing_export)
     with pytest.raises(subprocess.CalledProcessError):
         ship.upload(app, tmp_path / "Example-ios.xcarchive")
-    assert ship.signing_problem("error: Copy failed") is None
+    assert ship.signing_problems("error: Copy failed") == []
 
 
 # What -exportArchive printed for Cloudless Cam on 2026-10-30, before and then after the Mac had an
@@ -186,10 +186,44 @@ include signing certificate "Apple Distribution: Example (TEAM)".
 def test_each_signing_failure_is_named_by_its_own_line_not_the_cloud_one() -> None:
     from snakelane.release import ship
 
-    assert ship.signing_problem(FIRST_EXPORT_OUTPUT) == "no-profile"
-    assert ship.signing_problem(NO_CERTIFICATE_OUTPUT) == "no-certificate"
-    assert ship.signing_problem(PROFILE_LACKS_CERTIFICATE_OUTPUT) == "profile-lacks-certificate"
-    assert ship.signing_problem(CLOUD_LINE + "** EXPORT FAILED **\n") is None
+    assert ship.signing_problems(FIRST_EXPORT_OUTPUT) == ["no-profile"]
+    assert ship.signing_problems(NO_CERTIFICATE_OUTPUT) == ["no-certificate"]
+    assert ship.signing_problems(PROFILE_LACKS_CERTIFICATE_OUTPUT) == ["profile-lacks-certificate"]
+    assert ship.signing_problems(CLOUD_LINE + "** EXPORT FAILED **\n") == []
+
+
+# What -exportArchive printed for Jigsaw's Mac build on 2026-11-13: three problems at once. The
+# profile one was fixed by an upload from Xcode; the installer certificate was not.
+MAC_EXPORT_OUTPUT = CLOUD_LINE + """\
+error: exportArchive No signing certificate "Mac Installer Distribution" found
+  No "Mac Installer Distribution" signing certificate matching team ID "TEAM" with a private key was found.
+error: exportArchive Provisioning profile "Mac Team Store Provisioning Profile: com.example.app" doesn't \
+include signing certificate "Apple Distribution: Example (TEAM)".
+** EXPORT FAILED **
+"""
+MAC_INSTALLER_ONLY_OUTPUT = CLOUD_LINE + """\
+error: exportArchive No signing certificate "Mac Installer Distribution" found
+** EXPORT FAILED **
+"""
+
+
+def test_a_missing_installer_certificate_is_its_own_problem_and_is_never_dropped(tmp_path: Path) -> None:
+    from snakelane.release import ship
+
+    assert ship.signing_problems(MAC_EXPORT_OUTPUT) == ["profile-lacks-certificate", "no-installer-certificate"]
+    assert ship.signing_problems(MAC_INSTALLER_ONLY_OUTPUT) == ["no-installer-certificate"]
+
+    app = make_app(tmp_path, scheme="Example", team_id="TEAM", bundle_id="com.example.app")
+    archive = tmp_path / "build" / "Example-macos.xcarchive"
+    both = ship.signing_failure_message(app, archive, *ship.signing_problems(MAC_EXPORT_OUTPUT))
+    assert "doesn't include this Mac's Apple Distribution" in both
+    assert "+ → Mac Installer Distribution" in both
+    assert f"open {archive}" in both
+
+    installer_only = ship.signing_failure_message(app, archive, "no-installer-certificate")
+    assert "+ → Mac Installer Distribution" in installer_only
+    assert "Distribute App" not in installer_only
+    assert "run `snakelane ship` again" in installer_only
 
 
 def test_an_existing_app_is_not_told_it_is_on_its_first_upload(tmp_path: Path) -> None:

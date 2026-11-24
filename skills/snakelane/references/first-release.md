@@ -134,7 +134,11 @@ each one:
 - **Profile without the certificate** (`Provisioning profile … doesn't include signing
   certificate`): the certificate was made after Xcode built the profile.
 
-All three also print `Cloud signing permission error`; that line alone names none of them.
+- **No installer certificate** (`No signing certificate "Mac Installer Distribution" found`, Mac
+  only): the `.pkg` is signed with its own certificate. An Xcode upload doesn't add it; make one
+  in Manage Certificates (+ → Mac Installer Distribution) and run `ship` again.
+
+All of them also print `Cloud signing permission error`; that line alone names none of them.
 Check `~/Library/Developer/Xcode/UserData/Provisioning Profiles/` to see what a profile holds.
 
 The fix is in Xcode, and it's the user's account so the user does it:
