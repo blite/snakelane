@@ -1,3 +1,3 @@
 """snakelane: App Store Connect from a plain-text metadata/ tree, without fastlane."""
 
-__version__ = "0.6.0"
+__version__ = "0.7.0"

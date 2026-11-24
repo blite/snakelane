@@ -4,7 +4,7 @@ All notable changes to snakelane. Versions follow [semver](https://semver.org); 
 major version is 0, a change that needs new `snakelane.yml` keys or changes a command's
 behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
-## Unreleased
+## 0.7.0
 
 - **Captions in Greek, Hebrew, Hindi, Japanese and Chinese draw in a face that has their
   letters.** Greek takes SF's, Hebrew Arial Hebrew (SF Hebrew has no comma), Devanagari Kohinoor,
