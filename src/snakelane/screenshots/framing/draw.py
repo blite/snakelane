@@ -75,6 +75,16 @@ def ink_of(app: App, theme: Theme) -> tuple[int, int, int]:
     return rgb(app, theme.fill[1] if is_gradient(theme.fill) else theme.fill)
 
 
+def caps(text: str) -> str:
+    """`text` in capitals. Greek drops its tonos in all caps (ΧΩΡΙΣ, not ΧΩΡΊΣ), which
+    `str.upper` keeps; the diaeresis stays."""
+    upper = text.upper()
+    if not any("\u0370" <= c <= "\u03FF" for c in upper):
+        return upper
+    import unicodedata
+    return unicodedata.normalize("NFC", unicodedata.normalize("NFD", upper).replace("\u0301", ""))
+
+
 def load_face(app: App, font: str | None, face: str, size: int, strict: bool = True):
     """`face` of `font` (default Helvetica Neue); `strict` refuses a face the font lacks."""
     path = str(repo_path(app, font)) if font else DEFAULT_FONT
@@ -250,7 +260,7 @@ def parse_line(theme: Theme, line: str) -> list[Run]:
 
     def flush() -> None:
         if text := "".join(buf):
-            runs.append(Run(text.upper() if theme.case == "upper" else text, on["**"], on["*"],
+            runs.append(Run(caps(text) if theme.case == "upper" else text, on["**"], on["*"],
                             colours[-1] if colours else ("accent" if on["=="] else None)))
         buf.clear()
 

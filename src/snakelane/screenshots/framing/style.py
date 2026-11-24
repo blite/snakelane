@@ -131,10 +131,19 @@ SCRIPT_FONTS: list[tuple[re.Pattern[str], dict[str, Any]]] = [
      {"font": f"{FONTS}/SFArabic.ttf", "font_face": "Heavy"}),  # Arabic
     (re.compile("[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]"),
      {"font": f"{FONTS}/AppleSDGothicNeo.ttc", "font_face": "Heavy"}),  # Korean
-    (re.compile("[\u0400-\u04FF\u01A0-\u01B0\u1EA0-\u1EFF]"),
-     {"font": f"{FONTS}/SFNS.ttf", "font_face": "Heavy"}),  # Cyrillic, Vietnamese
+    (re.compile("[\u0400-\u04FF\u01A0-\u01B0\u1EA0-\u1EFF\u0370-\u03FF]"),
+     {"font": f"{FONTS}/SFNS.ttf", "font_face": "Heavy"}),  # Cyrillic, Vietnamese, Greek
+    (re.compile("[\u0590-\u05FF]"), {"font": f"{FONTS}/ArialHB.ttc", "font_face": "Bold"}),  # Hebrew (SF Hebrew has no comma)
+    (re.compile("[\u0900-\u097F]"), {"font": f"{FONTS}/Kohinoor.ttc", "font_face": "Bold"}),  # Devanagari
+    # Kana first: a Japanese caption's kanji stay in the Japanese face. Han without kana is
+    # Chinese; Hiragino Sans GB draws simplified and traditional alike (GB 18030).
+    (re.compile("[\u3040-\u30FF]"), {"font": f"{FONTS}/ヒラギノ角ゴシック W8.ttc", "font_face": "W8"}),  # Japanese
+    (re.compile("[\u4E00-\u9FFF\u3400-\u4DBF]"),
+     {"font": f"{FONTS}/Hiragino Sans GB.ttc", "font_face": "W6"}),  # Chinese
 ]
 ARABIC = re.compile("[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]")
+# Scripts Pillow's basic layout draws wrong (right to left, or conjuncts unjoined): raqm or nothing.
+NEEDS_RAQM = re.compile("[\u0590-\u05FF\u0900-\u097F]")
 
 
 @functools.cache
@@ -173,6 +182,11 @@ def for_text(style: Style, text: str | list[str]) -> Style:
         if not features.check("raqm"):
             raise SystemExit("an Arabic caption needs Pillow's raqm layout: brew install libraqm, and run "
                              "snakelane with DYLD_LIBRARY_PATH=/opt/homebrew/lib")
+    if NEEDS_RAQM.search(text):
+        from PIL import features
+        if not features.check("raqm"):
+            raise SystemExit("a Hebrew or Devanagari caption needs Pillow's raqm layout: brew install libraqm, "
+                             "and run snakelane with DYLD_LIBRARY_PATH=/opt/homebrew/lib")
     for script, font in SCRIPT_FONTS:
         found = set(script.findall(text))
         if found and not _covers(style.theme.font, style.theme.font_face, found):

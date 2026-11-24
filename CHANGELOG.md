@@ -6,6 +6,11 @@ behaviour bumps the minor version. Each release is tagged `vX.Y.Z`.
 
 ## Unreleased
 
+- **Captions in Greek, Hebrew, Hindi, Japanese and Chinese draw in a face that has their
+  letters.** Greek takes SF's, Hebrew Arial Hebrew (SF Hebrew has no comma), Devanagari Kohinoor,
+  Japanese Hiragino Sans (kana first, so its kanji stay Japanese) and Chinese Hiragino Sans GB.
+  Hebrew and Devanagari need Pillow's raqm layout, as Arabic does, and stop without it. Greek in
+  capitals drops its tonos (ΧΩΡΙΣ, not ΧΩΡΊΣ).
 - **`store ppo push` uploads a treatment's screenshots.** Put them in
   `ppo/<test>/<folder>/screenshots/<platform>/<locale>/` (`iphone/`, `ipad/`, … as in the version
   deck); they go through the version push's code and rules: the set from the pixel size, ten to a
